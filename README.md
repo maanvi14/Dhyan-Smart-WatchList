@@ -6,11 +6,10 @@
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 
-> **"Don’t build the obvious watchlist. Build the version you believe should exist — and be ready to explain why."**
 
 ---
 
-## 🎯 100-Word Product Pitch
+## 🎯 Product Pitch
 
 I built **Dhyan (ध्यान)**—an end-to-end evidence-first smart watchlist using **Next.js 14, Node/Express, Socket.io, and FastAPI** that turns raw market noise into verified truth.
 
