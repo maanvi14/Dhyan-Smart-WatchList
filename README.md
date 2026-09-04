@@ -10,13 +10,6 @@
 
 ---
 
-## 🎯 100-Word Product Pitch
-
-Every Indian retail watchlist (Groww, Kite, INDmoney) tells investors *that* a stock moved with red/green tickers. None tell them **if they can trust why**. Retail investors drown in noise, market rumors, and unverified WhatsApp/Telegram forwards. 
-
-We built **Dhyan (ध्यान)** — an ambient-intelligence watchlist that replaces noisy tickers with verified truth. Dhyan computes personalized watermark diffs since your last visit, tags every movement with deterministic confidence tiers (🟢 **Confirmed** via NSE/BSE filings, 🟡 **Unexplained**, 🔴 **Uncertain/Stale**), generates audio executive briefings, maps sector risk, and verifies forwarded social stock tips with cryptographic evidence traces. Zero hallucinations. Never predicts.
-
----
 
 ## 💡 The Problem Statement vs. How Dhyan Solves It
 
@@ -56,7 +49,7 @@ Groww democratized Indian investing by turning confusing demat account forms int
 
 ---
 
-## 🌟 Feature-by-Feature Tour (Senior Engineer & Product Pitch)
+## 🌟 Feature-by-Feature Tour
 
 ### 1. Watermark Diff Engine (`lastViewedAt`)
 - Unlike naive systems with boolean `read: true` flags that break on multiple devices, Dhyan tracks a monotonic high-watermark timestamp for each stock.
@@ -139,33 +132,4 @@ npm run dev
 docker-compose up --build
 ```
 
----
 
-## 🎬 3-Minute Live Demo Script for Judges
-
-| Time | Flow | What to Do & Say |
-|---|---|---|
-| **0:00 - 0:45** | **The Hook: "Verify a Tip"** | Open **"Ask Dhyan"** → click **"Verify a Tip"** tab.<br>Paste: `"TCS dividend 75 rupees announced buy before ex-date"`<br>Click **Verify Tip** → Show 🟢 **CONFIRMED** verdict with actual NSE filing evidence.<br>Click **Share Card** → show the downloadable 1080x1080 verified card. |
-| **0:45 - 1:30** | **The Return Visit: Watermark Diff** | Click **Continue as Demo User**.<br>Point out the **"Time Away"** banner (*"You last checked 14 hours ago..."*).<br>Show the **Watermark Delta Sparklines** (muted grey past vs. glowing delta).<br>Click **"Needs Attention First"** toggle to auto-prioritize critical moves. |
-| **1:30 - 2:15** | **Executive Story & 60s Voice Briefing** | Click the **"N changes since you last checked"** banner.<br>Show the **Executive Market Story** card.<br>Click **"▶ 60s Audio Briefing"** (listen to the audio synthesis in EN or toggle to HI). |
-| **2:15 - 2:45** | **Visual Evidence & Unexplained Anomaly** | Expand a 🟢 **Confirmed** event card: show **Sector Divergence Bar** and **Causal Dot Timeline**.<br>Expand a 🟡 **Unexplained** event card: emphasize that Dhyan **refuses to fabricate** reasons when volume moves without news. |
-| **2:45 - 3:00** | **Chaos Engineering (Resilience)** | Click the **Wrench** icon in the header → Click **"KILL FEED"**.<br>Watch the UI instantly degrade gracefully to 🔴 **Uncertain / STALE** with Redwood borders.<br>Click **"REVIVE FEED"** to restore live status. |
-
----
-
-## 🚀 Deployment Strategy: Where to Deploy?
-
-### Recommendation: **Render / Railway / Vercel**
-- **Frontend (Next.js 14)**: Deploy to **Vercel** with zero configuration (`npm run build`).
-- **Backend (Express + Socket.io)**: Deploy as a Web Service on **Render** or **Railway** (requires persistent WebSocket support; serverless lambdas drop persistent socket connections).
-- **AI Service (FastAPI)**: Deploy as a Python Web Service on **Render**.
-- **Database**: SQLite locally, PostgreSQL on Supabase or Neon in production (Prisma schema is 100% Postgres-ready).
-
----
-
-## 👩‍💻 Author & Submission Details
-
-- **Submission**: Groww Code 2026 Hackathon
-- **Repository**: [github.com/maanvi14/Dhyan-Smart-WatchList](https://github.com/maanvi14/Dhyan-Smart-WatchList)
-- **Developer**: Maanvi Verma (`maanvi.verma14@gmail.com`)
-- **License**: MIT
