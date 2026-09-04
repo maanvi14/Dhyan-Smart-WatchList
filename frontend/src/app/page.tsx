@@ -56,22 +56,15 @@ export default function WatchlistHomePage() {
 
       const data = await watchlistApi.getWatchlist(u.watchlistId);
       setWatchlistData(data);
-      setItems(data.items || []);
+      const fetchedItems = data.items || [];
+      setItems(fetchedItems);
 
-      const symbols = (data.items || []).map((i: WatchlistItemPrice) => i.symbol);
+      const symbols = fetchedItems.map((i: WatchlistItemPrice) => i.symbol);
       subscribeToSymbols(symbols);
 
-      const [unreadRes, concRes] = await Promise.all([
-        watchlistApi.getUnreadCount(u.watchlistId),
-        watchlistApi.getConcentration(u.watchlistId)
-      ]);
-      setUnreadCount(unreadRes.unreadCount || 0);
-      setConcentrationWarning(concRes.concentrationWarning);
-      if (concRes.breakdown) setSectorBreakdown(concRes.breakdown);
-
-      // Compute contextual "Time Away" from earliest/latest watermark
-      if (data.items && data.items.length > 0) {
-        const watermarks = data.items
+      // Compute contextual "Time Away" IMMEDIATELY from items
+      if (fetchedItems.length > 0) {
+        const watermarks = fetchedItems
           .map((it: any) => it.lastViewedAt ? new Date(it.lastViewedAt).getTime() : new Date(it.addedAt).getTime())
           .filter(Boolean);
         
@@ -95,6 +88,34 @@ export default function WatchlistHomePage() {
         } else {
           setTimeAwayString("Welcome to Dhyan — verified corporate filings and abnormal divergence updates will appear below:");
         }
+      }
+
+      // Safe secondary fetches for badge and radar
+      try {
+        const [unreadRes, concRes] = await Promise.all([
+          watchlistApi.getUnreadCount(u.watchlistId).catch(() => ({ unreadCount: 0 })),
+          watchlistApi.getConcentration(u.watchlistId).catch(() => ({ concentrationWarning: null, breakdown: [] }))
+        ]);
+        setUnreadCount(unreadRes?.unreadCount || 0);
+        setConcentrationWarning(concRes?.concentrationWarning || null);
+        if (concRes?.breakdown && concRes.breakdown.length > 0) {
+          setSectorBreakdown(concRes.breakdown);
+        } else {
+          // Fallback client-side sector breakdown calculation from fetched items
+          const secCounts: Record<string, number> = {};
+          fetchedItems.forEach((it: any) => {
+            const sec = it.sector || "General";
+            secCounts[sec] = (secCounts[sec] || 0) + 1;
+          });
+          const localBreakdown = Object.entries(secCounts).map(([sector, count]) => ({
+            sector,
+            count,
+            pct: fetchedItems.length > 0 ? Math.round((count / fetchedItems.length) * 100) : 0
+          })).sort((a, b) => b.pct - a.pct);
+          setSectorBreakdown(localBreakdown);
+        }
+      } catch (secErr) {
+        console.warn("Secondary data fetch failed, using fallbacks", secErr);
       }
     } catch (err: any) {
       console.error("Failed to load watchlist", err);

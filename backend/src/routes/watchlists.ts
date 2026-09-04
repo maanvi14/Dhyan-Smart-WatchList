@@ -400,13 +400,14 @@ router.get("/:id/unread-count", async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const countResult: any[] = await prisma.$queryRaw`
-      SELECT COUNT(*)::int as count FROM "ChangeEvent" ce
+      SELECT COUNT(*) as count FROM "ChangeEvent" ce
       JOIN "WatchlistItem" wi ON ce."watchlistItemId" = wi.id
       WHERE wi."watchlistId" = ${id}
       AND ce."detectedAt" > COALESCE(wi."lastViewedAt", wi."addedAt")
     `;
 
-    const count = countResult[0]?.count ? Number(countResult[0].count) : 0;
+    const rawVal = countResult[0]?.count;
+    const count = rawVal !== undefined ? Number(rawVal) : 0;
     res.json({ watchlistId: id, unreadCount: count });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
