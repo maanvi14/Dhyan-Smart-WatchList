@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, TrendingUp, TrendingDown, Clock, ShieldCheck, FileCheck, X, Download } from "lucide-react";
+import { ArrowLeftRight, TrendingUp, TrendingDown, Clock, ShieldCheck, FileCheck, X, Download, Waves, Anchor, Building2 } from "lucide-react";
 import { ChangeEventData } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -20,6 +20,62 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
 
   return (
     <div className="mt-3 pt-3 border-t border-surfaceBorder/80 space-y-3">
+
+      {/* 🌊 Ripple Effect / Contagion Alert Banner */}
+      {event.isRippleEffect && event.rippleSourceName && (
+        <div className="bg-purple-500/10 border border-purple-500/40 rounded-xl p-3 flex items-start space-x-2.5">
+          <Waves className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+          <div>
+            <div className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider mb-0.5">
+              ⚡ Ripple Effect — Sector Contagion Alert
+            </div>
+            <p className="text-[11px] text-foreground leading-relaxed">
+              A high-magnitude event was detected on <span className="font-bold text-purple-300">{event.rippleSourceName}</span> in the same sector.{" "}
+              {event.symbol.replace("NSE:", "")} is a sector peer — no confirmed catalyst found yet. Monitor for contagion spread.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 🐋 Promoter / Institutional "Skin in the Game" Panel */}
+      {event.insiderData && event.insiderData.length > 0 && (
+        <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-3 space-y-2">
+          <div className="flex items-center space-x-1.5 text-[10px] font-mono text-teal-400 font-bold uppercase tracking-wider">
+            <Anchor className="w-3.5 h-3.5" />
+            <span>Promoter &amp; Institutional "Skin in the Game"</span>
+          </div>
+          {event.insiderData.map((trade, i) => (
+            <div key={i} className="flex items-center justify-between bg-surface/60 border border-surfaceBorder/50 rounded-lg px-3 py-2">
+              <div className="flex items-center space-x-2 min-w-0">
+                <Building2 className="w-3.5 h-3.5 text-muted shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold text-foreground truncate">{trade.traderName}</div>
+                  <div className="flex items-center space-x-1.5 mt-0.5">
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                      trade.traderType === "PROMOTER" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
+                      trade.traderType === "FII" ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" :
+                      trade.traderType === "DII" ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30" :
+                      "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                    }`}>{trade.traderType}</span>
+                    <span className="text-[10px] text-muted font-mono">{trade.source}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right shrink-0 ml-3">
+                <div className={`text-[12px] font-bold font-mono ${trade.action === "BUY" ? "text-emerald-400" : "text-rose-400"}`}>
+                  {trade.action === "BUY" ? "▲ BUY" : "▼ SELL"}
+                </div>
+                <div className="text-[10px] text-muted font-mono">₹{trade.valueInCr.toFixed(0)}Cr</div>
+              </div>
+            </div>
+          ))}
+          {event.insiderNarrative && (
+            <p className="text-[10px] text-teal-300/80 font-mono leading-relaxed pt-1 border-t border-teal-500/20">
+              ✓ {event.insiderNarrative}
+            </p>
+          )}
+        </div>
+      )}
       {/* 1. Sector Divergence Bar */}
       <div className="bg-surfaceElevated border border-surfaceBorder rounded-xl p-3">
         <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">

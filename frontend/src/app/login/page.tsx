@@ -39,6 +39,10 @@ export default function LoginPage() {
       }
       localStorage.setItem("dhyan_token", res.token);
       localStorage.setItem("dhyan_user", JSON.stringify(res.user));
+      // Zero-Click Handoff: store handoff context for the main page to pick up
+      if (res.handoff) {
+        localStorage.setItem("dhyan_handoff", JSON.stringify(res.handoff));
+      }
       router.push("/");
     } catch (err: any) {
       setError(err.response?.data?.error || "Authentication failed");
@@ -54,6 +58,10 @@ export default function LoginPage() {
       const res = await authApi.demoLogin();
       localStorage.setItem("dhyan_token", res.token);
       localStorage.setItem("dhyan_user", JSON.stringify(res.user));
+      // Zero-Click Handoff: store handoff context for the main page to pick up
+      if (res.handoff) {
+        localStorage.setItem("dhyan_handoff", JSON.stringify(res.handoff));
+      }
       router.push("/");
     } catch (err: any) {
       setError(err.response?.data?.error || "Demo access failed");

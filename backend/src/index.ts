@@ -9,7 +9,7 @@ import debugRoutes from "./routes/debug";
 import chatRoutes from "./routes/chat";
 import verifyTipRoutes from "./routes/verifyTip";
 import { priceFeed, SnapshotData } from "./feed/priceFeed";
-import { processSnapshotForChange } from "./engine/changeDetector";
+import { processSnapshotForChange, generateRippleEvent, getSectorPeers } from "./engine/changeDetector";
 import { prisma } from "./db";
 
 dotenv.config();
@@ -114,6 +114,66 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
               watchlistId: item.watchlistId,
               event: created
             });
+
+            // 🌊 RIPPLE EFFECT: If this is a high-magnitude event, sweep sector peers
+            if (changeResult.magnitude >= 50) {
+              const peers = getSectorPeers(snapshot.symbol);
+              if (peers.length > 0) {
+                // Find any watchlist items tracking these peer symbols
+                const peerItems = await prisma.watchlistItem.findMany({
+                  where: { symbol: { in: peers } },
+                  include: { watchlist: true }
+                });
+
+                const symbolInfo = (await import("./feed/symbols")).getSymbolInfo(snapshot.symbol);
+                const sector = symbolInfo?.sector || "General";
+
+                for (const peerItem of peerItems) {
+                  // Avoid ripple events for the same pair within 1 hour
+                  const recentRipple = await prisma.changeEvent.findFirst({
+                    where: {
+                      watchlistItemId: peerItem.id,
+                      isRippleEffect: true,
+                      rippleSourceSymbol: snapshot.symbol,
+                      detectedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }
+                    }
+                  });
+
+                  if (!recentRipple) {
+                    const rippleResult = generateRippleEvent(
+                      peerItem.symbol,
+                      snapshot.symbol,
+                      changeResult.magnitude,
+                      sector
+                    );
+
+                    const rippleEvent = await prisma.changeEvent.create({
+                      data: {
+                        watchlistItemId: peerItem.id,
+                        symbol: peerItem.symbol,
+                        confidenceTier: rippleResult.confidenceTier,
+                        magnitude: rippleResult.magnitude,
+                        narrative: rippleResult.narrative,
+                        evidenceTrace: JSON.stringify(rippleResult.evidenceTrace),
+                        sectorDivergence: false,
+                        volumeDivergence: false,
+                        detectedAt: rippleResult.detectedAt,
+                        isRippleEffect: true,
+                        rippleSourceSymbol: snapshot.symbol
+                      }
+                    });
+
+                    console.log(`[Ripple] Created contagion alert for ${peerItem.symbol} (source: ${snapshot.symbol})`);
+
+                    io.emit("new_change_event", {
+                      watchlistId: peerItem.watchlistId,
+                      event: rippleEvent,
+                      isRipple: true
+                    });
+                  }
+                }
+              }
+            }
           }
         }
       }

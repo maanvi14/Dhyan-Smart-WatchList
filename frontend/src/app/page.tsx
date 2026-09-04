@@ -9,10 +9,10 @@ import { AddSymbolModal } from "@/components/AddSymbolModal";
 import { AskDhyanChat } from "@/components/AskDhyanChat";
 import { SectorRiskRadar } from "@/components/SectorRiskRadar";
 import { WatermarkSparkline } from "@/components/WatermarkSparkline";
-import { watchlistApi, WatchlistItemPrice, User } from "@/lib/api";
+import { watchlistApi, WatchlistItemPrice, User, UnreadSummary } from "@/lib/api";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { useI18n } from "@/lib/i18n";
-import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles } from "lucide-react";
+import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Anchor, Smartphone } from "lucide-react";
 
 export default function WatchlistHomePage() {
   const router = useRouter();
@@ -21,6 +21,8 @@ export default function WatchlistHomePage() {
   const [watchlistData, setWatchlistData] = useState<any>(null);
   const [items, setItems] = useState<WatchlistItemPrice[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  // 🆕 Rich Unread Inbox summary
+  const [unreadSummary, setUnreadSummary] = useState<UnreadSummary | null>(null);
   const [concentrationWarning, setConcentrationWarning] = useState<string | null>(null);
   const [sectorBreakdown, setSectorBreakdown] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -33,6 +35,9 @@ export default function WatchlistHomePage() {
 
   // Time-away contextual state
   const [timeAwayString, setTimeAwayString] = useState<string>("");
+
+  // 🆕 Zero-Click Cross-Device Handoff toast state
+  const [handoffToast, setHandoffToast] = useState<{ previousDevice: string; currentDevice: string } | null>(null);
 
   const loadData = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("dhyan_token") : null;
@@ -92,11 +97,13 @@ export default function WatchlistHomePage() {
 
       // Safe secondary fetches for badge and radar
       try {
-        const [unreadRes, concRes] = await Promise.all([
+        const [unreadRes, unreadSummaryRes, concRes] = await Promise.all([
           watchlistApi.getUnreadCount(u.watchlistId).catch(() => ({ unreadCount: 0 })),
+          watchlistApi.getUnreadSummary(u.watchlistId).catch(() => null),
           watchlistApi.getConcentration(u.watchlistId).catch(() => ({ concentrationWarning: null, breakdown: [] }))
         ]);
         setUnreadCount(unreadRes?.unreadCount || 0);
+        if (unreadSummaryRes) setUnreadSummary(unreadSummaryRes);
         setConcentrationWarning(concRes?.concentrationWarning || null);
         if (concRes?.breakdown && concRes.breakdown.length > 0) {
           setSectorBreakdown(concRes.breakdown);
@@ -131,6 +138,20 @@ export default function WatchlistHomePage() {
 
   useEffect(() => {
     loadData();
+
+    // 🆕 Zero-Click Cross-Device Handoff: check if login page stored handoff info
+    const handoffData = typeof window !== "undefined" ? localStorage.getItem("dhyan_handoff") : null;
+    if (handoffData) {
+      try {
+        const parsed = JSON.parse(handoffData);
+        if (parsed?.previousDevice && parsed?.currentDevice) {
+          setHandoffToast(parsed);
+          localStorage.removeItem("dhyan_handoff"); // consume once
+          // Auto-dismiss after 6 seconds
+          setTimeout(() => setHandoffToast(null), 6000);
+        }
+      } catch (_) {}
+    }
 
     const socket = getSocket();
     socket.on("price_tick", (snapshot: any) => {
@@ -216,6 +237,29 @@ export default function WatchlistHomePage() {
 
       <main className="max-w-4xl mx-auto px-4 pt-4">
 
+        {/* 📱 Zero-Click Cross-Device Handoff Toast (fixed bottom, auto-dismiss) */}
+        {handoffToast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+            <div className="bg-surface border border-brand-500/50 rounded-2xl p-4 shadow-2xl shadow-brand-500/10 flex items-start space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center shrink-0">
+                <Smartphone className="w-4 h-4 text-brand-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-mono font-bold text-brand-500 uppercase tracking-wider">
+                  Continuing from {handoffToast.previousDevice}
+                </div>
+                <div className="text-xs text-foreground mt-0.5 leading-relaxed">
+                  Now on <span className="font-bold">{handoffToast.currentDevice}</span>. Your watermarks and unread counts have been seamlessly synced across devices.
+                </div>
+              </div>
+              <button
+                onClick={() => setHandoffToast(null)}
+                className="text-muted hover:text-foreground shrink-0 text-lg leading-none"
+              >×</button>
+            </div>
+          </div>
+        )}
+
         {/* Market Feed Status Banner */}
         <div className={`p-3 rounded-2xl mb-4 border flex items-center justify-between text-xs backdrop-blur shadow-sm ${
           feedStatus?.status === "killed"
@@ -290,12 +334,12 @@ export default function WatchlistHomePage() {
           totalCount={items.length}
         />
 
-        {/* Persistent Flagship Unread Badge Banner */}
+        {/* 📬 Persistent Flagship Unread Inbox Banner (Unread Inbox Architecture) */}
         <Link
           href="/since-last-checked"
           className="group block bg-gradient-to-r from-brand-500/10 via-teal-500/10 to-surfaceElevated border border-brand-500/30 hover:border-brand-500/60 rounded-2xl p-4 mb-6 transition-all shadow-md active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500">
                 <Bell className="w-5 h-5" />
@@ -318,12 +362,59 @@ export default function WatchlistHomePage() {
                 </p>
               </div>
             </div>
-
             <div className="text-xs font-semibold text-brand-500 flex items-center space-x-1 group-hover:translate-x-1 transition-transform font-mono">
               <span>{t("view_diff")}</span>
               <span>→</span>
             </div>
           </div>
+
+          {/* Rich Inbox Summary — breakdown pills */}
+          {unreadSummary && unreadSummary.total > 0 && (
+            <div className="space-y-2.5 pt-2 border-t border-surfaceBorder/50">
+              <div className="flex flex-wrap gap-2">
+                {unreadSummary.confirmed > 0 && (
+                  <span className="flex items-center space-x-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                    <span>🟢</span><span>{unreadSummary.confirmed} Confirmed</span>
+                  </span>
+                )}
+                {unreadSummary.unexplained > 0 && (
+                  <span className="flex items-center space-x-1 bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                    <span>🟡</span><span>{unreadSummary.unexplained} Unexplained</span>
+                  </span>
+                )}
+                {unreadSummary.uncertain > 0 && (
+                  <span className="flex items-center space-x-1 bg-redwood-bg border border-redwood-border text-redwood-text text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                    <span>🔴</span><span>{unreadSummary.uncertain} Uncertain</span>
+                  </span>
+                )}
+                {unreadSummary.rippleAlerts > 0 && (
+                  <span className="flex items-center space-x-1 bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                    <Waves className="w-3 h-3" />
+                    <span>{unreadSummary.rippleAlerts} Ripple</span>
+                  </span>
+                )}
+              </div>
+              {/* Top event preview list */}
+              {unreadSummary.topEvents.length > 0 && (
+                <div className="space-y-1">
+                  {unreadSummary.topEvents.map((ev, i) => (
+                    <div key={i} className="flex items-center justify-between text-[11px] font-mono">
+                      <div className="flex items-center space-x-1.5">
+                        <span className={ev.tier === "CONFIRMED" ? "text-emerald-400" : ev.tier === "UNEXPLAINED" ? "text-amber-400" : "text-redwood-text"}>
+                          {ev.tier === "CONFIRMED" ? "🟢" : ev.tier === "UNEXPLAINED" ? "🟡" : "🔴"}
+                        </span>
+                        <span className="font-bold text-foreground">{ev.name}</span>
+                        {ev.isRipple && (
+                          <span className="text-purple-400 text-[9px]">⚡ via {ev.rippleSource}</span>
+                        )}
+                      </div>
+                      <span className="text-muted text-[10px]">mag {ev.magnitude.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Link>
 
         {/* Watchlist Header & Action Controls */}

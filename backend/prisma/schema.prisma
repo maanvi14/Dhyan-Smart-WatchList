@@ -66,6 +66,11 @@ model ChangeEvent {
   sectorDivergence Boolean       @default(false)
   volumeDivergence Boolean       @default(false)
   detectedAt       DateTime      @default(now())
+  // New: Ripple Effect contagion flag
+  isRippleEffect   Boolean       @default(false)
+  rippleSourceSymbol String?     // which symbol triggered this contagion warning
+  // New: Insider/Promoter trade link
+  insiderTradeData String?       // JSON: { traderType, action, shares, value, timestamp }
   watchlistItem    WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
 }
 
@@ -73,6 +78,23 @@ model UserSession {
   id           String   @id @default(uuid())
   userId       String
   deviceInfo   String?
+  // New: for Zero-Click Cross-Device Handoff
+  lastDevice   String?  // e.g. "Desktop Chrome", "Mobile Safari"
   lastActiveAt DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// New: Insider / Promoter / Institutional Trade mock store
+model InsiderTrade {
+  id          String   @id @default(uuid())
+  symbol      String
+  traderName  String   // e.g. "Promoter Group", "FII: Blackrock"
+  traderType  String   // PROMOTER | FII | DII | INSIDER
+  action      String   // BUY | SELL
+  shares      Float
+  valueInCr   Float    // value in INR crores
+  filedAt     DateTime @default(now())
+  source      String   @default("BSE_BULK_DEAL") // BSE_BULK_DEAL | NSE_BLOCK_DEAL | SAST
+
+  @@index([symbol, filedAt])
 }

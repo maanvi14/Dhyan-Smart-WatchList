@@ -6,6 +6,43 @@ import { prisma } from "../db";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "dhyan-secret-key-2026";
 
+// ── Zero-Click Cross-Device Handoff helper ─────────────────────────────────
+function parseDeviceLabel(userAgent: string | undefined): string {
+  if (!userAgent) return "Unknown Device";
+  const ua = userAgent.toLowerCase();
+  const isMobile = /mobile|android|iphone|ipad/.test(ua);
+  const platform = isMobile ? "Mobile" : "Desktop";
+  if (ua.includes("chrome") && !ua.includes("edg")) return `${platform} Chrome`;
+  if (ua.includes("safari") && !ua.includes("chrome")) return `${platform} Safari`;
+  if (ua.includes("firefox")) return `${platform} Firefox`;
+  if (ua.includes("edg")) return `${platform} Edge`;
+  return `${platform} Browser`;
+}
+
+async function upsertSessionAndDetectHandoff(
+  userId: string,
+  currentDeviceLabel: string
+): Promise<{ previousDevice: string | null }> {
+  // Find or create the session record for this user
+  const existing = await prisma.userSession.findFirst({ where: { userId } });
+  const previousDevice = existing?.lastDevice || null;
+
+  if (existing) {
+    await prisma.userSession.update({
+      where: { id: existing.id },
+      data: { lastDevice: currentDeviceLabel, deviceInfo: currentDeviceLabel }
+    });
+  } else {
+    await prisma.userSession.create({
+      data: { userId, lastDevice: currentDeviceLabel, deviceInfo: currentDeviceLabel }
+    });
+  }
+
+  // Only flag as handoff if the device actually changed
+  const isHandoff = previousDevice && previousDevice !== currentDeviceLabel;
+  return { previousDevice: isHandoff ? previousDevice : null };
+}
+
 // GET Demo Info (Dynamic seed stock count)
 router.get("/demo-info", async (req, res) => {
   try {
@@ -91,6 +128,11 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+
+    // Zero-Click Cross-Device Handoff detection
+    const deviceLabel = parseDeviceLabel(req.headers["user-agent"]);
+    const { previousDevice } = await upsertSessionAndDetectHandoff(user.id, deviceLabel).catch(() => ({ previousDevice: null }));
+
     res.json({
       token,
       user: {
@@ -100,7 +142,9 @@ router.post("/login", async (req, res) => {
         investmentStyle: user.investmentStyle,
         lowDataMode: user.lowDataMode,
         watchlistId: user.watchlists[0]?.id
-      }
+      },
+      // Handoff data: null if same device, device name string if different
+      handoff: previousDevice ? { previousDevice, currentDevice: deviceLabel } : null
     });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -136,6 +180,11 @@ router.post("/demo", async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+
+    // Zero-Click Cross-Device Handoff detection
+    const deviceLabel = parseDeviceLabel(req.headers["user-agent"]);
+    const { previousDevice } = await upsertSessionAndDetectHandoff(user.id, deviceLabel).catch(() => ({ previousDevice: null }));
+
     res.json({
       token,
       user: {
@@ -145,7 +194,8 @@ router.post("/demo", async (req, res) => {
         investmentStyle: user.investmentStyle,
         lowDataMode: user.lowDataMode,
         watchlistId: user.watchlists[0]?.id
-      }
+      },
+      handoff: previousDevice ? { previousDevice, currentDevice: deviceLabel } : null
     });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

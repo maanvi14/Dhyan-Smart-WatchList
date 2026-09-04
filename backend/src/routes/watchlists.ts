@@ -4,6 +4,7 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { priceFeed } from "../feed/priceFeed";
 import { getSymbolInfo, SYMBOL_UNIVERSE } from "../feed/symbols";
 import { getFilingsForSymbol } from "../feed/filingsStore";
+import { getInsiderTradesForSymbol, buildInsiderNarrative } from "../feed/insiderStore";
 import { checkWatchlistConcentration, generateConfirmedSilenceEvent } from "../engine/changeDetector";
 
 const router = Router();
@@ -278,6 +279,19 @@ router.get("/:id/since-last-checked", async (req: AuthRequest, res: Response) =>
           summary: filings[0].summary
         } : null;
 
+        // 🐋 Skin in the Game: insider / promoter trades
+        const insiderTrades = getInsiderTradesForSymbol(e.symbol, 24);
+        const insiderNarrative = insiderTrades.length > 0 ? buildInsiderNarrative(insiderTrades) : null;
+        const insiderData = insiderTrades.length > 0 ? insiderTrades.map(t => ({
+          traderName: t.traderName,
+          traderType: t.traderType,
+          action: t.action,
+          shares: t.shares,
+          valueInCr: t.valueInCr,
+          source: t.source,
+          filedAt: t.filedAt
+        })) : null;
+
         return {
           ...e,
           name: info?.name || e.symbol,
@@ -290,6 +304,13 @@ router.get("/:id/since-last-checked", async (req: AuthRequest, res: Response) =>
             ? `Historical Pattern: ${historicalCount} significant moves logged for ${e.symbol} across past sessions.`
             : null,
           filingData,
+          // 🐋 Insider / Promoter data
+          insiderData,
+          insiderNarrative,
+          // 🌊 Ripple Effect metadata
+          isRippleEffect: Boolean(e.isRippleEffect),
+          rippleSourceSymbol: e.rippleSourceSymbol || null,
+          rippleSourceName: e.rippleSourceSymbol ? (getSymbolInfo(e.rippleSourceSymbol)?.name || e.rippleSourceSymbol) : null,
           evidenceTrace: typeof e.evidenceTrace === "string" ? JSON.parse(e.evidenceTrace) : e.evidenceTrace
         };
       })
@@ -409,6 +430,63 @@ router.get("/:id/unread-count", async (req: AuthRequest, res: Response) => {
     const rawVal = countResult[0]?.count;
     const count = rawVal !== undefined ? Number(rawVal) : 0;
     res.json({ watchlistId: id, unreadCount: count });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// GET rich unread inbox summary (Unread Inbox Architecture)
+router.get("/:id/unread-summary", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const rawEvents: any[] = await prisma.$queryRaw`
+      SELECT
+        ce.id,
+        ce.symbol,
+        ce."confidenceTier",
+        ce.magnitude,
+        ce."isRippleEffect",
+        ce."rippleSourceSymbol",
+        ce."detectedAt"
+      FROM "ChangeEvent" ce
+      JOIN "WatchlistItem" wi ON ce."watchlistItemId" = wi.id
+      WHERE wi."watchlistId" = ${id}
+      AND ce."detectedAt" > COALESCE(wi."lastViewedAt", wi."addedAt")
+      ORDER BY ce.magnitude DESC
+    `;
+
+    const total = rawEvents.length;
+    const confirmed = rawEvents.filter(e => e.confidenceTier === "CONFIRMED" && !e.isRippleEffect).length;
+    const unexplained = rawEvents.filter(e => e.confidenceTier === "UNEXPLAINED" && !e.isRippleEffect).length;
+    const uncertain = rawEvents.filter(e => e.confidenceTier === "UNCERTAIN").length;
+    const rippleCount = rawEvents.filter(e => Boolean(e.isRippleEffect)).length;
+
+    // Top 3 high-priority events for the inbox preview
+    const topEvents = rawEvents.slice(0, 3).map(e => {
+      const info = getSymbolInfo(e.symbol);
+      return {
+        symbol: e.symbol,
+        name: info?.name || e.symbol,
+        tier: e.confidenceTier,
+        magnitude: e.magnitude,
+        isRipple: Boolean(e.isRippleEffect),
+        rippleSource: e.rippleSourceSymbol
+          ? getSymbolInfo(e.rippleSourceSymbol)?.name || e.rippleSourceSymbol
+          : null,
+        detectedAt: e.detectedAt
+      };
+    });
+
+    res.json({
+      watchlistId: id,
+      total,
+      confirmed,
+      unexplained,
+      uncertain,
+      rippleAlerts: rippleCount,
+      topEvents
+    });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }

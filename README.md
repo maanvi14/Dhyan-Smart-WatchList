@@ -67,8 +67,13 @@ Fully Deployed on Vercel - https://dhyan-smart-watch-list.vercel.app/login
 ## 🌟 Comprehensive Feature Set
 
 - **Personal Watermark Timeline**: Dynamic contextual banner computing time away in hours/minutes.
+- **Unread Inbox Architecture**: Structured "while you were away" inbox with breakdown pills (Confirmed, Unexplained, Uncertain, Ripple) and priority mover previews.
 - **Watermark Delta Sparklines**: Dual-zone mini-charts where pre-visit price action is muted slate and new action glows with a pulsing coordinate dot.
 - **Sector Risk Radar**: Real-time distribution progress/donut bar warning against portfolio concentration (>50% single-sector exposure).
+- **Ripple Effect & Sector Contagion Engine**: Automatically flags related sector peers when major catalytic moves hit flagship stocks.
+- **Promoter & Institutional "Skin in the Game" Overlay**: Ingests bulk/block deals & insider trading disclosures to corroborate unexplained divergence.
+- **Historical "Unexplained" Resolution**: Contextualizes non-catalyst anomalies with deterministic memory of prior 30-day outcomes.
+- **Zero-Click Cross-Device Handoff**: Auto-detects device transitions (Desktop ↔ Mobile) and synchronizes unread states via server-persisted monotonic timestamps.
 - **"Needs Attention First" Priority Sort**: Instant 1-tap reordering bubbling verified filings and critical anomalies to the top.
 - **60-Second Executive Audio Morning Brief**: Conversational Web Speech API market synthesis in English and Hindi.
 - **Visual Evidence Suite**: Step-by-step causal timelines, sector spread bars, and official Regulation 30 disclosure drawers.

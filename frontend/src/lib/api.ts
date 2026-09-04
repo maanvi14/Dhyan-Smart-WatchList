@@ -50,6 +50,16 @@ export interface WatchlistItemPrice {
   } | null;
 }
 
+export interface InsiderTradeItem {
+  traderName: string;
+  traderType: "PROMOTER" | "FII" | "DII" | "INSIDER";
+  action: "BUY" | "SELL";
+  shares: number;
+  valueInCr: number;
+  source: string;
+  filedAt: string;
+}
+
 export interface ChangeEventData {
   id: string;
   watchlistItemId: string;
@@ -75,6 +85,31 @@ export interface ChangeEventData {
     timestamp: string;
     summary: string;
   } | null;
+  // 🐋 Skin in the Game
+  insiderData?: InsiderTradeItem[] | null;
+  insiderNarrative?: string | null;
+  // 🌊 Ripple Effect
+  isRippleEffect?: boolean;
+  rippleSourceSymbol?: string | null;
+  rippleSourceName?: string | null;
+}
+
+export interface UnreadSummary {
+  watchlistId: string;
+  total: number;
+  confirmed: number;
+  unexplained: number;
+  uncertain: number;
+  rippleAlerts: number;
+  topEvents: {
+    symbol: string;
+    name: string;
+    tier: string;
+    magnitude: number;
+    isRipple: boolean;
+    rippleSource: string | null;
+    detectedAt: string;
+  }[];
 }
 
 export const authApi = {
@@ -107,6 +142,10 @@ export const watchlistApi = {
   },
   getUnreadCount: async (watchlistId: string) => {
     const res = await api.get(`/watchlists/${watchlistId}/unread-count`);
+    return res.data;
+  },
+  getUnreadSummary: async (watchlistId: string) => {
+    const res = await api.get(`/watchlists/${watchlistId}/unread-summary`);
     return res.data;
   },
   markSeen: async (watchlistId: string) => {
