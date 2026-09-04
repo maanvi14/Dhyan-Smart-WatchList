@@ -11,7 +11,7 @@
 
 ## 🎯 Product Pitch
 
-I built **Dhyan (ध्यान)**—an end-to-end evidence-first smart watchlist using **Next.js 14, Node/Express, Socket.io, and FastAPI** that turns raw market noise into verified truth.
+I built **Dhyan (ध्यान)** - an end-to-end evidence-first smart watchlist using **Next.js 14, Node/Express, Socket.io, and FastAPI** that turns raw market noise into verified truth.
 
 Dhyan defines *meaningful change* through causal divergence: abnormal volume, sector spreads, and official **NSE/BSE regulatory filings**. A cross-device **temporal watermark engine** (`lastViewedAt`) isolates what happened in your absence via **dual-zone delta sparklines**, **sector-risk radars**, and **60s audio briefings**. Movements are deterministically categorized into **Confirmed**, **Unexplained**, or **Uncertain** tiers with audit traces. Stale data degrades honestly, while **"Verify a Tip"** fact-checks social media rumors into shareable cards. Fully responsive on mobile. Never predicts.
 
