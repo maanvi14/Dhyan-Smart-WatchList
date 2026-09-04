@@ -1,4 +1,4 @@
-# Dhyan (ध्यान) — Smart Market Watchlist
+# Dhyan (ध्यान) — Evidence-First Smart Market Watchlist
 
 [![Groww Code 2026](https://img.shields.io/badge/Groww_Code-2026-00D09C?style=for-the-badge&logo=appveyor)](https://github.com/maanvi14/Dhyan-Smart-WatchList)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -12,83 +12,128 @@
 
 ## 🎯 100-Word Product Pitch
 
-Every Indian retail watchlist (Groww, Kite, INDmoney) tells investors *that* a stock moved with red/green tickers. None tell them **if they can trust why**. Retail investors drown in noise, market rumors, and unverified WhatsApp/Telegram forwards. 
+I built **Dhyan (ध्यान)**—an end-to-end evidence-first smart watchlist using **Next.js 14, Node/Express, Socket.io, and FastAPI** that turns raw market noise into verified truth.
 
-We built **Dhyan (ध्यान)** — an ambient-intelligence watchlist that replaces noisy tickers with verified truth. Dhyan computes personalized watermark diffs since your last visit, tags every movement with deterministic confidence tiers (🟢 **Confirmed** via NSE/BSE filings, 🟡 **Unexplained**, 🔴 **Uncertain/Stale**), generates audio executive briefings, maps sector risk, and verifies forwarded social stock tips with cryptographic evidence traces. Zero hallucinations. Never predicts.
-
----
-
-## 💡 The Problem Statement vs. How Dhyan Solves It
-
-| Problem Statement Prompt | Traditional Watchlists (Groww / Kite / Yahoo) | How Dhyan Re-imagines It |
-|---|---|---|
-| **What counts as a "meaningful change"?** | Simple % threshold (e.g. ±2%). Treats market-wide beta shifts as individual stock news. | **Causal Triad**: A change is meaningful *only* if there is sector divergence, abnormal volume, and an exchange filing drop (or lack thereof). |
-| **What information to surface?** | Endless candlesticks, repetitive tables, and promotional chat widgets. | **Executive Truth**: Contextual *"Time Away"* timeline, **Watermark Delta Sparklines** (muted past vs. glowing delta), **Visual Evidence Cards**, and a **60s Morning Audio Briefing**. |
-| **How state persists across sessions?** | Static boolean "seen" flags or lost entirely on browser refresh. | **Watermark Model**: Monotonic per-item timestamp (`lastViewedAt`). Diff queries compute dynamically against this watermark across all devices. |
-| **How to handle stale, delayed, or conflicting data?** | Silent freezes, flashing misleading old prices, or infinite loading spinners. | **Honest Graceful Degradation**: 3-state heartbeat (Active/Delayed/Killed). Immediate Redwood tier tagging (🔴 **Uncertain**) if heartbeat lags >30s. |
-| **How system scales for large watchlists & users?** | Heavy client polling hitting databases per stock every second. | **Delta Polling + Socket.io**: In-memory Redis/Feed Cache broadcast ticks; heavy NLP/Filing verification runs asynchronously only when thresholds trip. |
-| **Where to keep simple vs. add complexity?** | Over-complicated predictive graphs and financial jargon. | **Simple UI, Complex Engine**: Deterministic classification rules (zero LLM hallucinations on tiers), high-contrast bilingual design, client-side SVG card generation. |
+Dhyan defines *meaningful change* through causal divergence: abnormal volume, sector spreads, and official **NSE/BSE regulatory filings**. A cross-device **temporal watermark engine** (`lastViewedAt`) isolates what happened in your absence via **dual-zone delta sparklines**, **sector-risk radars**, and **60s audio briefings**. Movements are deterministically categorized into **Confirmed**, **Unexplained**, or **Uncertain** tiers with audit traces. Stale data degrades honestly, while **"Verify a Tip"** fact-checks social media rumors into shareable cards. Fully responsive on mobile. Never predicts.
 
 ---
 
-## ⚔️ Market Competitor Analysis & The Groww Analogy
+## 🏛️ Core Engineering Decisions: Architecture
 
 ```
-   NOISE / SPECULATION
-          ▲
-          │      • Telegram Channels & WhatsApp Groups (Unverified noise)
-          │      • Twitter/FinTwit "Gurus"
-          │
-          │                                  • Moneycontrol / ET Markets (Ad-heavy portals)
-          │
-          │      • Groww / Zerodha Kite (Clean UX, but zero verification or causal context)
-          │
-          └────────────────────────────────────────────────────────► TRUTH / EVIDENCE
-                                             ★ DHYAN (ध्यान)
-                                               (Clean Groww-like UX + Deterministic Evidence Trail)
+ ┌─────────────────────────────────────────────────────────────┐
+ │                Next.js 14 Responsive Frontend               │
+ │    (App Router + Tailwind + NextThemes + i18n + WebSpeech)  │
+ └──────────────────────────────┬──────────────────────────────┘
+                                │ REST / Socket.io
+ ┌──────────────────────────────▼──────────────────────────────┐
+ │                Node.js + Express Monolith                   │
+ │  ┌────────────────────────┐    ┌─────────────────────────┐  │
+ │  │ Causal Engine (Triad)  │    │ Resilience Feed Poller  │  │
+ │  │ Divergence + Volume    │    │ (yfinance + Fallback)   │  │
+ │  └───────────┬────────────┘    └─────────────────────────┘  │
+ └──────────────┼──────────────────────────────────────────────┘
+                │ Verification Request
+ ┌──────────────▼─────────────────────────────┐   ┌────────────┐
+ │    FastAPI NLP & Fact Verification         │   │ SQLite /   │
+ │   (Groq Llama 3.3 70B / Rule Fallback)     │   │ PostgreSQL │
+ └────────────────────────────────────────────┘   └────────────┘
 ```
 
-### The Groww Analogy & How Dhyan Elevates It
-Groww democratized Indian investing by turning confusing demat account forms into a clean, intuitive, one-tap mobile experience. **However, Groww's watchlist still stops at the price.**
-- When a Groww user sees Tata Motors up +5%, they close Groww and open WhatsApp or Twitter to ask: *"Why is Tata Motors up?"*
-- In those groups, they get targeted by pump-and-dump operators.
-- **Dhyan is the natural next step for Groww**: It keeps the clean, calm, accessible fintech ethos of Groww, but answers the *"Why"* right inside the app backed by official SEBI/NSE regulatory filings.
+### Key Technical Choices & Simplicity Trade-Offs
+
+1. **Monotonic Temporal Watermark Engine (`lastViewedAt`)**
+   - *Decision*: Instead of fragile per-event boolean `is_read: true` flags that break across devices or browser cache clears, Dhyan tracks a high-watermark timestamp per item.
+   - *Benefit*: Any return visit diff is a simple temporal SQL range query (`detectedAt > lastViewedAt`), enabling deterministic sync across mobile and desktop.
+
+2. **Deterministic Classification + Zero Hallucination AI**
+   - *Decision*: An LLM is **never** permitted to decide confidence tiers. Classification follows strict deterministic rules:
+     - 🟢 **CONFIRMED**: Official exchange corporate announcement (NSE/BSE Regulation 30) matches within the event window.
+     - 🟡 **UNEXPLAINED**: Volume/price anomaly without corresponding regulatory disclosure.
+     - 🔴 **UNCERTAIN**: Data feed heartbeat is stale (>30s) or conflicting.
+   - *Benefit*: Eliminates financial hallucinations while using AI strictly for natural language synthesis.
+
+3. **Causal Triad Definition of "Meaningful Change"**
+   - *Decision*: A stock movement is only flagged if it breaks from systemic market beta:
+     $$\text{Divergence Spread} = \Delta \text{Stock \%} - \Delta \text{Sector Benchmark \%}$$
+   - *Benefit*: Distinguishes market-wide tides from genuine company-specific news catalysts.
+
+4. **Client-Side Canvas Vector Card Generation**
+   - *Decision*: Branded 1080x1080 social share cards are rendered entirely client-side using pure SVG & HTML5 Canvas API with native Web Share API integration.
+   - *Benefit*: Zero server-side headless browser (Puppeteer) CPU overhead or cloud costs.
 
 ---
 
-## 🌟 Feature-by-Feature Tour (Senior Engineer & Product Pitch)
+## 🌟 Comprehensive Feature Set
 
-### 1. Watermark Diff Engine (`lastViewedAt`)
-- Unlike naive systems with boolean `read: true` flags that break on multiple devices, Dhyan tracks a monotonic high-watermark timestamp for each stock.
-- The `/watchlists/:id/since-last-checked` endpoint runs a temporal join between `ChangeEvent.detectedAt` and `WatchlistItem.lastViewedAt`.
-- **Confirmed Silence**: If you return after 48 hours and nothing abnormal happened, Dhyan explicitly tells you *"All stocks held steady with zero abnormal spikes"* — eliminating FOMO anxiety.
-
-### 2. Deterministic Confidence Tiers (Zero Hallucination Architecture)
-An LLM **never** decides whether a stock move is verified. The tiering engine follows strict deterministic rules:
-- 🟢 **CONFIRMED**: Official exchange corporate announcement (NSE/BSE Regulation 30) matches within the event detection window.
-- 🟡 **UNEXPLAINED**: Abnormal price/volume anomaly without any corresponding regulatory disclosure.
-- 🔴 **UNCERTAIN**: Data feed heartbeat is stale or data feeds conflict.
-
-### 3. "Verify a Tip" (WhatsApp & Telegram Claim Verification)
-- 80%+ of Indian retail investors receive unverified stock tips via social media.
-- Users can paste any raw message into Dhyan.
-- Dhyan uses regex word-boundary symbol detection across its universe, queries the 30-day regulatory filing repository, checks directional price movement, and returns an evidence verdict with a client-side generated branded 1080x1080 PNG share card.
-
-### 4. 60-Second Executive Audio Briefing
-- Integrated Web Speech API synthesizes an executive conversational summary (in English or Hindi).
-- Automatically dedupes symbols, names the top 3 absolute movers, highlights verified corporate catalysts, and flags uncorroborated volume moves.
-
-### 5. Sector Risk Radar & Watermark Delta Sparklines
-- **Sector Risk Radar**: Computes real-time sector weightings and warns when a portfolio has >50% concentration risk in a single sector.
-- **Delta Sparklines**: Dual-zone intraday SVG sparklines where the period before your visit is muted slate, and the period since your visit glows in Emerald or Redwood with a pulsing live coordinate dot.
-
-### 6. Grounded "Ask Dhyan" Chat with Non-Predictive Refusal
-- Grounded strictly in verified watchlist state and filing disclosures.
-- If asked speculative questions (*"Will Reliance go up tomorrow?"* or *"Should I buy IRCTC?"*), it gracefully refuses with an amber **NON-PREDICTIVE REFUSAL** banner.
+- **Personal Watermark Timeline**: Dynamic contextual banner computing time away in hours/minutes.
+- **Watermark Delta Sparklines**: Dual-zone mini-charts where pre-visit price action is muted slate and new action glows with a pulsing coordinate dot.
+- **Sector Risk Radar**: Real-time distribution progress/donut bar warning against portfolio concentration (>50% single-sector exposure).
+- **"Needs Attention First" Priority Sort**: Instant 1-tap reordering bubbling verified filings and critical anomalies to the top.
+- **60-Second Executive Audio Morning Brief**: Conversational Web Speech API market synthesis in English and Hindi.
+- **Visual Evidence Suite**: Step-by-step causal timelines, sector spread bars, and official Regulation 30 disclosure drawers.
+- **"Verify a Tip" (WhatsApp/Telegram Fact-Checker)**: Direct social claim verification against 30-day exchange disclosures with shareable card generator.
+- **Ask Dhyan Grounded Chat**: RAG-style query drawer strictly grounded in verified watchlist data with **Non-Predictive Refusal** on speculative questions.
+- **Chaos Engineering & Stale Resilience**: Heartbeat monitor that immediately flags broken feeds with Redwood borders.
+- **Bilingual & Dual Theme**: Full English & Hindi UI with high-contrast Dark & Light mode accessibility.
 
 ---
 
-## 🛠️ Step-by-Step Setup Instructions
+## 📂 Project Structure
+
+```text
+Dhyan-Smart-WatchList/
+├── backend/                  # Node.js + Express + Socket.io Monolith
+│   ├── prisma/               # Database schema & SQLite/PostgreSQL migrations
+│   │   └── schema.prisma
+│   ├── src/
+│   │   ├── engine/           # Causal change detector & watermark diff logic
+│   │   │   └── changeDetector.ts
+│   │   ├── feed/             # Market data polling, symbols & Regulation 30 filings
+│   │   │   ├── filingsStore.ts
+│   │   │   ├── priceFeed.ts
+│   │   │   └── symbols.ts
+│   │   ├── routes/           # REST endpoints (auth, watchlists, verify-tip, debug)
+│   │   │   ├── auth.ts
+│   │   │   ├── chat.ts
+│   │   │   ├── debug.ts
+│   │   │   ├── verifyTip.ts
+│   │   │   └── watchlists.ts
+│   │   ├── index.ts          # Server initialization & Socket.io handler
+│   │   └── seed.ts           # Demo database seeder (7 flagship stocks)
+│   └── package.json
+│
+├── frontend/                 # Next.js 14 App Router Responsive Client
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── globals.css   # Theme colors & Redwood palette
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx      # Core Watchlist Dashboard & Time-Away banner
+│   │   │   ├── login/        # 1-Tap Demo access & Authentication
+│   │   │   └── since-last-checked/ # Verified Diff Feed & Audio Briefing
+│   │   ├── components/       # Reusable UI suite (Sparklines, Radar, Cards, Logo)
+│   │   │   ├── AskDhyanChat.tsx
+│   │   │   ├── DhyanLogo.tsx
+│   │   │   ├── EvidenceTraceView.tsx
+│   │   │   ├── Header.tsx
+│   │   │   ├── SectorRiskRadar.tsx
+│   │   │   ├── VisualEvidenceCard.tsx
+│   │   │   ├── VoiceBriefingButton.tsx
+│   │   │   └── WatermarkSparkline.tsx
+│   │   └── lib/              # API clients, Socket.io listener, and i18n
+│   └── package.json
+│
+├── ai-service/               # FastAPI Python Verification Microservice
+│   ├── main.py               # Groq Llama 3.3 70B fact-checking & chat router
+│   └── requirements.txt
+│
+├── docker-compose.yml        # 1-Click local full-stack containerization
+└── README.md
+```
+
+---
+
+## 🛠️ Setup & Running Instructions
 
 ### Prerequisites
 - **Node.js**: v18.0+ or v20.0+
@@ -97,15 +142,15 @@ An LLM **never** decides whether a stock move is verified. The tiering engine fo
 
 ---
 
-### Method 1: Local Setup (Quickest)
+### Local Setup (Step-by-Step)
 
-#### Step 1: Clone Repository
+#### 1. Clone Repository
 ```bash
 git clone https://github.com/maanvi14/Dhyan-Smart-WatchList.git
 cd Dhyan-Smart-WatchList
 ```
 
-#### Step 2: Backend Setup
+#### 2. Backend Setup
 ```bash
 cd backend
 npm install
@@ -116,7 +161,7 @@ npm run dev
 ```
 *Backend runs on `http://localhost:5000` with live mock feed polling.*
 
-#### Step 3: AI Verification Service (Optional for Groq LLM, runs with heuristic fallback)
+#### 3. AI Verification Service (Optional for Groq LLM, runs with heuristic fallback)
 ```bash
 cd ../ai-service
 pip install -r requirements.txt
@@ -124,7 +169,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 *Verification service runs on `http://localhost:8000`.*
 
-#### Step 4: Frontend Setup
+#### 4. Frontend Setup
 ```bash
 cd ../frontend
 npm install
@@ -134,32 +179,27 @@ npm run dev
 
 ---
 
-### Method 2: Docker Compose (One-Click)
+### Docker Compose (One-Click)
 ```bash
 docker-compose up --build
 ```
 
 ---
 
-## 🎬 3-Minute Live Demo Script for Judges
+## 🛡️ Defense & FAQ (Groww Engineering Questions)
 
-| Time | Flow | What to Do & Say |
-|---|---|---|
-| **0:00 - 0:45** | **The Hook: "Verify a Tip"** | Open **"Ask Dhyan"** → click **"Verify a Tip"** tab.<br>Paste: `"TCS dividend 75 rupees announced buy before ex-date"`<br>Click **Verify Tip** → Show 🟢 **CONFIRMED** verdict with actual NSE filing evidence.<br>Click **Share Card** → show the downloadable 1080x1080 verified card. |
-| **0:45 - 1:30** | **The Return Visit: Watermark Diff** | Click **Continue as Demo User**.<br>Point out the **"Time Away"** banner (*"You last checked 14 hours ago..."*).<br>Show the **Watermark Delta Sparklines** (muted grey past vs. glowing delta).<br>Click **"Needs Attention First"** toggle to auto-prioritize critical moves. |
-| **1:30 - 2:15** | **Executive Story & 60s Voice Briefing** | Click the **"N changes since you last checked"** banner.<br>Show the **Executive Market Story** card.<br>Click **"▶ 60s Audio Briefing"** (listen to the audio synthesis in EN or toggle to HI). |
-| **2:15 - 2:45** | **Visual Evidence & Unexplained Anomaly** | Expand a 🟢 **Confirmed** event card: show **Sector Divergence Bar** and **Causal Dot Timeline**.<br>Expand a 🟡 **Unexplained** event card: emphasize that Dhyan **refuses to fabricate** reasons when volume moves without news. |
-| **2:45 - 3:00** | **Chaos Engineering (Resilience)** | Click the **Wrench** icon in the header → Click **"KILL FEED"**.<br>Watch the UI instantly degrade gracefully to 🔴 **Uncertain / STALE** with Redwood borders.<br>Click **"REVIVE FEED"** to restore live status. |
+### Q1: How would this scale to 10 million concurrent users and 5,000 instruments?
+**A:** Currently, quotes are maintained in an in-memory $O(1)$ state hash on the server. At 10M users:
+1. **Exchange Ingestion Cluster**: Dedicated Go or Rust microservices consume raw multicast exchange feeds (NSE NOW/NEAT) and publish clean ticks into an Apache Kafka topic partitioned by symbol.
+2. **Stream Processing (Flink / In-Memory Aggregator)**: Apache Flink evaluates sliding window metrics (20D volume multiples, RoC velocity) and publishes enriched quotes to a Redis Cluster.
+3. **WebSocket Fan-Out Layer**: Stateless Node.js / Go WebSocket gateway nodes subscribe to Redis Pub/Sub channels for active symbols. Because users share watchlists of the same ~5,000 liquid stocks, we fan out updates using symbol channel subscriptions rather than calculating deltas per user.
+4. **Session Catch-Up on Demand**: When an inactive user opens the app, the catch-up digest is computed on-demand by querying time-series snapshots (TimescaleDB / ClickHouse) for their ~20 watched stocks, requiring zero background CPU when the user is offline.
 
----
+### Q2: How do you handle network disconnections on mobile devices?
+**A:** The frontend includes an automatic exponential backoff reconnection loop. While disconnected, the UI displays a warning banner and freezes stale prices rather than showing outdated quotes as live. Upon reconnection, the client sends a session sync request to receive the catch-up delta for the disconnection window.
 
-## 🚀 Deployment Strategy: Where to Deploy?
-
-### Recommendation: **Render / Railway / Vercel**
-- **Frontend (Next.js 14)**: Deploy to **Vercel** with zero configuration (`npm run build`).
-- **Backend (Express + Socket.io)**: Deploy as a Web Service on **Render** or **Railway** (requires persistent WebSocket support; serverless lambdas drop persistent socket connections).
-- **AI Service (FastAPI)**: Deploy as a Python Web Service on **Render**.
-- **Database**: SQLite locally, PostgreSQL on Supabase or Neon in production (Prisma schema is 100% Postgres-ready).
+### Q3: Why not let the LLM decide if a move is confirmed?
+**A:** Financial applications require strict zero-tolerance for hallucinations. LLMs are non-deterministic and susceptible to prompt injection or plausible-sounding fabrications. Dhyan uses deterministic SQL joins and exchange filing category lookups to assign confidence tiers; the LLM is restricted exclusively to natural language narrative rendering.
 
 ---
 
