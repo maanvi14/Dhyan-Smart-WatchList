@@ -185,7 +185,7 @@ docker-compose up --build
 
 ---
 
-## 🛡️ Defense & FAQ (Groww Engineering Questions)
+## 🛡️ Defense & FAQ 
 
 ### Q: How would this scale to 10 million concurrent users and 5,000 instruments?
 
@@ -204,5 +204,3 @@ docker-compose up --build
 
 **A:** Financial applications require strict zero-tolerance for hallucinations. LLMs are non-deterministic and susceptible to prompt injection or plausible-sounding fabrications. Dhyan uses deterministic SQL joins and exchange filing category lookups to assign confidence tiers; the LLM is restricted exclusively to natural language narrative rendering.
 
----
-- **License**: MIT
