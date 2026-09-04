@@ -74,15 +74,26 @@ export default function WatchlistHomePage() {
         const watermarks = data.items
           .map((it: any) => it.lastViewedAt ? new Date(it.lastViewedAt).getTime() : new Date(it.addedAt).getTime())
           .filter(Boolean);
-        if (watermarks.length > 0) {
-          const latestWatermark = Math.max(...watermarks);
-          const diffHours = Math.max(1, Math.round((Date.now() - latestWatermark) / (1000 * 60 * 60)));
-          const timeStr = new Date(latestWatermark).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          if (language === "hi") {
-            setTimeAwayString(`आपने आखिरी बार ${diffHours} घंटे पहले (लगभग ${timeStr}) चेक किया था। आपकी अनुपस्थिति में यह हुआ:`);
-          } else {
-            setTimeAwayString(`You last checked ${diffHours} hours ago (~${timeStr}). Here is what happened in your absence:`);
-          }
+        
+        const latestWatermark = watermarks.length > 0 ? Math.max(...watermarks) : Date.now() - (14 * 60 * 60 * 1000);
+        const diffMs = Math.max(0, Date.now() - latestWatermark);
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+        const timeStr = new Date(latestWatermark).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        
+        const timeAgoStr = diffHours >= 1 ? `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago` : `${diffMins} min ago`;
+        const timeAgoStrHi = diffHours >= 1 ? `${diffHours} घंटे पहले` : `${diffMins} मिनट पहले`;
+
+        if (language === "hi") {
+          setTimeAwayString(`आपने आखिरी बार ${timeAgoStrHi} (लगभग ${timeStr}) चेक किया था — आपकी अनुपस्थिति में यह महत्वपूर्ण बदलाव हुए:`);
+        } else {
+          setTimeAwayString(`You last checked ${timeAgoStr} (~${timeStr}) — here is what meaningfully changed in your absence:`);
+        }
+      } else {
+        if (language === "hi") {
+          setTimeAwayString("वॉचलिस्ट में आपका स्वागत है — लाइव मार्केट गतिविधि और पुष्ट फाइलिंग यहाँ दिखेंगी:");
+        } else {
+          setTimeAwayString("Welcome to Dhyan — verified corporate filings and abnormal divergence updates will appear below:");
         }
       }
     } catch (err: any) {
@@ -227,9 +238,27 @@ export default function WatchlistHomePage() {
 
         {/* Contextual "Time Away" Personal Timeline Banner */}
         {timeAwayString && (
-          <div className="bg-surface border border-surfaceBorder rounded-2xl p-3.5 mb-4 flex items-center space-x-2.5 text-xs text-muted shadow-sm">
-            <Clock className="w-4 h-4 text-brand-500 shrink-0" />
-            <span className="leading-relaxed font-sans">{timeAwayString}</span>
+          <div className="bg-gradient-to-r from-brand-500/15 via-surface to-surfaceElevated border border-brand-500/40 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 shrink-0">
+                <Clock className="w-4 h-4 text-brand-500" />
+              </div>
+              <div>
+                <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-500">
+                  {language === "hi" ? "व्यक्तिगत समयरेखा" : "Personal Watermark Timeline"}
+                </div>
+                <div className="text-xs font-medium text-foreground leading-relaxed mt-0.5 font-sans">
+                  {timeAwayString}
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/since-last-checked"
+              className="shrink-0 text-[11px] font-mono font-bold text-brand-500 hover:text-brand-400 underline flex items-center space-x-1"
+            >
+              <span>{language === "hi" ? "अंतर देखें" : "View Diff"}</span>
+              <span>→</span>
+            </Link>
           </div>
         )}
 
