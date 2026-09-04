@@ -17,8 +17,6 @@ Dhyan defines *meaningful change* through causal divergence: abnormal volume, se
 
 ---
 #![Uploading Phone View - 2.jpeg…]()
-<img width="739" height="1600" alt="Phone View - 1" src="https://github.com/user-attachments/assets/1dfe1c51-55a2-400c-9f03-90ffa5ea2a02" />
-<img width="739" height="1600" alt="Phone View Login Page" src="https://github.com/user-attachments/assets/1c45f8e1-0aff-4ab4-b142-c3f43d469915" />
 Fully Deployed on Vercel - https://dhyan-smart-watch-list.vercel.app/login
 
 ## 🏛️ Core Engineering Decisions: Architecture
