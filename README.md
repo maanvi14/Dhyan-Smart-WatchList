@@ -16,7 +16,10 @@ I built **Dhyan (ध्यान)** - an end-to-end evidence-first smart watchli
 Dhyan defines *meaningful change* through causal divergence: abnormal volume, sector spreads, and official **NSE/BSE regulatory filings**. A cross-device **temporal watermark engine** (`lastViewedAt`) isolates what happened in your absence via **dual-zone delta sparklines**, **sector-risk radars**, and **60s audio briefings**. Movements are deterministically categorized into **Confirmed**, **Unexplained**, or **Uncertain** tiers with audit traces. Stale data degrades honestly, while **"Verify a Tip"** fact-checks social media rumors into shareable cards. Fully responsive on mobile. Never predicts.
 
 ---
-##Fully Deployed on Vercel - https://dhyan-smart-watch-list.vercel.app/login
+#![Uploading Phone View - 2.jpeg…]()
+<img width="739" height="1600" alt="Phone View - 1" src="https://github.com/user-attachments/assets/1dfe1c51-55a2-400c-9f03-90ffa5ea2a02" />
+<img width="739" height="1600" alt="Phone View Login Page" src="https://github.com/user-attachments/assets/1c45f8e1-0aff-4ab4-b142-c3f43d469915" />
+Fully Deployed on Vercel - https://dhyan-smart-watch-list.vercel.app/login
 
 ## 🏛️ Core Engineering Decisions: Architecture
 
