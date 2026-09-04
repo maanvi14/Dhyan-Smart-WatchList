@@ -205,10 +205,4 @@ docker-compose up --build
 **A:** Financial applications require strict zero-tolerance for hallucinations. LLMs are non-deterministic and susceptible to prompt injection or plausible-sounding fabrications. Dhyan uses deterministic SQL joins and exchange filing category lookups to assign confidence tiers; the LLM is restricted exclusively to natural language narrative rendering.
 
 ---
-
-## 👩‍💻 Author & Submission Details
-
-- **Submission**: Groww Code 2026 Hackathon
-- **Repository**: [github.com/maanvi14/Dhyan-Smart-WatchList](https://github.com/maanvi14/Dhyan-Smart-WatchList)
-- **Developer**: Maanvi Verma (`maanvi.verma14@gmail.com`)
 - **License**: MIT
