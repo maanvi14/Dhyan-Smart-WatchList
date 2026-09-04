@@ -188,17 +188,21 @@ docker-compose up --build
 
 ## 🛡️ Defense & FAQ (Groww Engineering Questions)
 
-### Q1: How would this scale to 10 million concurrent users and 5,000 instruments?
+### Q: How would this scale to 10 million concurrent users and 5,000 instruments?
+
 **A:** Currently, quotes are maintained in an in-memory $O(1)$ state hash on the server. At 10M users:
+
 1. **Exchange Ingestion Cluster**: Dedicated Go or Rust microservices consume raw multicast exchange feeds (NSE NOW/NEAT) and publish clean ticks into an Apache Kafka topic partitioned by symbol.
 2. **Stream Processing (Flink / In-Memory Aggregator)**: Apache Flink evaluates sliding window metrics (20D volume multiples, RoC velocity) and publishes enriched quotes to a Redis Cluster.
 3. **WebSocket Fan-Out Layer**: Stateless Node.js / Go WebSocket gateway nodes subscribe to Redis Pub/Sub channels for active symbols. Because users share watchlists of the same ~5,000 liquid stocks, we fan out updates using symbol channel subscriptions rather than calculating deltas per user.
 4. **Session Catch-Up on Demand**: When an inactive user opens the app, the catch-up digest is computed on-demand by querying time-series snapshots (TimescaleDB / ClickHouse) for their ~20 watched stocks, requiring zero background CPU when the user is offline.
 
-### Q2: How do you handle network disconnections on mobile devices?
+### Q: How do you handle network disconnections on mobile devices?
+
 **A:** The frontend includes an automatic exponential backoff reconnection loop. While disconnected, the UI displays a warning banner and freezes stale prices rather than showing outdated quotes as live. Upon reconnection, the client sends a session sync request to receive the catch-up delta for the disconnection window.
 
-### Q3: Why not let the LLM decide if a move is confirmed?
+### Q: Why not let the LLM decide if a move is confirmed?
+
 **A:** Financial applications require strict zero-tolerance for hallucinations. LLMs are non-deterministic and susceptible to prompt injection or plausible-sounding fabrications. Dhyan uses deterministic SQL joins and exchange filing category lookups to assign confidence tiers; the LLM is restricted exclusively to natural language narrative rendering.
 
 ---
