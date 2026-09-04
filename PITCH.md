@@ -1,0 +1,3 @@
+# Dhyan — 100-Word Pitch
+
+Most watchlists tell you a stock moved — none tell you whether you can trust why. Dhyan tags every meaningful change as Confirmed (backed by an exchange filing or verified anomaly), Unexplained (a real move, no known cause — stated honestly), or Uncertain (when the data itself is stale or conflicting). Every tag comes with a visible evidence trail. State persists per user per symbol, so returning users see exactly what changed since they last looked — and when nothing did, we say that too. Built as a lean modular monolith on purpose: working and honest beats distributed and unfinished.

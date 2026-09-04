@@ -1,0 +1,78 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String        @id @default(uuid())
+  email           String        @unique
+  passwordHash    String
+  name            String
+  investmentStyle String        @default("MEDIUM_TERM")
+  language        String        @default("en")
+  lowDataMode     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  watchlists      Watchlist[]
+  sessions        UserSession[]
+}
+
+model Watchlist {
+  id        String          @id @default(uuid())
+  userId    String
+  name      String
+  createdAt DateTime        @default(now())
+  items     WatchlistItem[]
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WatchlistItem {
+  id           String        @id @default(uuid())
+  watchlistId  String
+  symbol       String        // e.g. "NSE:TCS"
+  sector       String?
+  addedAt      DateTime      @default(now())
+  lastViewedAt DateTime?     // WATERMARK timestamp
+  notes        String?       // optional short user note
+  watchlist    Watchlist     @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  events       ChangeEvent[]
+}
+
+model PriceSnapshot {
+  id           String   @id @default(uuid())
+  symbol       String
+  timestamp    DateTime @default(now())
+  ltp          Float
+  changePct    Float
+  volume       Float
+  avgVolume20d Float
+  sourceTrust  Int      // 1-3, used for conflict resolution
+  isStale      Boolean  @default(false)
+
+  @@index([symbol, timestamp])
+}
+
+model ChangeEvent {
+  id               String        @id @default(uuid())
+  watchlistItemId  String
+  symbol           String
+  confidenceTier   String        // CONFIRMED | UNEXPLAINED | UNCERTAIN
+  magnitude        Float         // computed relevance score, 0-100
+  narrative        String        // short factual AI-written line
+  evidenceTrace    String        // JSON string in SQLite
+  sectorDivergence Boolean       @default(false)
+  volumeDivergence Boolean       @default(false)
+  detectedAt       DateTime      @default(now())
+  watchlistItem    WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  deviceInfo   String?
+  lastActiveAt DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
