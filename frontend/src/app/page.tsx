@@ -228,11 +228,28 @@ export default function WatchlistHomePage() {
     }
   };
 
+  // Portfolio P&L Impact since away calculation
+  const portfolioPnL = useMemo(() => {
+    if (!items || items.length === 0) return { rupees: 0, pct: 0, totalValue: 0 };
+    let totalVal = 0;
+    let totalBase = 0;
+    items.forEach(it => {
+      const shares = 15;
+      const ltp = it.ltp || 100;
+      const changePct = it.changePct || 0;
+      const base = ltp / (1 + changePct / 100);
+      totalVal += ltp * shares;
+      totalBase += base * shares;
+    });
+    const rupees = Math.round(totalVal - totalBase);
+    const pct = totalBase > 0 ? Number(((rupees / totalBase) * 100).toFixed(2)) : 0;
+    return { rupees, pct, totalValue: Math.round(totalVal) };
+  }, [items]);
+
   // Sorted items: either default or "Needs Attention First"
   const sortedItems = useMemo(() => {
     if (!sortByAttention) return items;
     return [...items].sort((a, b) => {
-      // Prioritize confirmed filings and high magnitude moves
       const magA = (a.latestEvent?.magnitude || 0) + (a.isStale ? 50 : 0) + (Math.abs(a.changePct) * 10);
       const magB = (b.latestEvent?.magnitude || 0) + (b.isStale ? 50 : 0) + (Math.abs(b.changePct) * 10);
       return magB - magA;
@@ -339,6 +356,15 @@ export default function WatchlistHomePage() {
                 <div className="text-xs font-medium text-foreground leading-relaxed mt-0.5 font-sans">
                   {timeAwayString}
                 </div>
+                {items.length > 0 && (
+                  <div className="mt-1.5 inline-flex items-center space-x-2 bg-surface border border-surfaceBorder px-2.5 py-1 rounded-lg text-[11px] font-mono shadow-sm">
+                    <span className="text-muted font-bold">💼 Portfolio Shift:</span>
+                    <span className={`font-bold ${portfolioPnL.rupees >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
+                      {portfolioPnL.rupees >= 0 ? "+" : ""}₹{portfolioPnL.rupees.toLocaleString("en-IN")} ({portfolioPnL.rupees >= 0 ? "+" : ""}{portfolioPnL.pct}%)
+                    </span>
+                    <span className="text-muted text-[10px]">since last check</span>
+                  </div>
+                )}
               </div>
             </div>
             <Link

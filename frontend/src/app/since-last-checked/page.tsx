@@ -120,6 +120,16 @@ export default function SinceLastCheckedPage() {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Judge Leave-Behind Executive PDF Export */}
+            <button
+              onClick={() => window.print()}
+              className="min-h-[44px] px-3 py-2 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-foreground font-semibold rounded-xl text-xs flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Print or Save clean 1-Page Executive Briefing PDF for Evaluators/Judges"
+            >
+              <FileText className="w-4 h-4 text-brand-500" />
+              <span className="hidden sm:inline">Export Judge PDF</span>
+            </button>
+
             {/* 60s Voice Briefing Button */}
             <VoiceBriefingButton story={story} />
 
