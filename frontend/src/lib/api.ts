@@ -25,6 +25,16 @@ export interface User {
   watchlistId: string;
 }
 
+export interface TrustRatioData {
+  total: number;
+  confirmedCount: number;
+  unexplainedCount: number;
+  uncertainCount: number;
+  confirmedPct: number;
+  uninformedPct: number;
+  stalePct: number;
+}
+
 export interface WatchlistItemPrice {
   id: string;
   symbol: string;
@@ -41,6 +51,7 @@ export interface WatchlistItemPrice {
   sourceType: "live" | "simulated";
   isStale: boolean;
   sparkline?: number[];
+  tierHistory?: ("CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN")[];
   latestEvent?: {
     id: string;
     confidenceTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN";
@@ -168,6 +179,10 @@ export const watchlistApi = {
     const res = await api.delete(`/watchlists/${watchlistId}/items/${itemId}`);
     return res.data;
   },
+  updateThesis: async (watchlistId: string, itemId: string, thesisText: string, invalidationPoint: string) => {
+    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/thesis`, { thesisText, invalidationPoint });
+    return res.data;
+  },
   getSymbolsUniverse: async () => {
     const res = await api.get("/watchlists/universe/symbols");
     return res.data;
@@ -213,6 +228,14 @@ export const debugApi = {
   },
   getFeedStatus: async () => {
     const res = await api.get("/debug/feed/status");
+    return res.data;
+  },
+  triggerCatalyst: async () => {
+    const res = await api.post("/debug/trigger-catalyst");
+    return res.data;
+  },
+  triggerUninformed: async () => {
+    const res = await api.post("/debug/trigger-uninformed");
     return res.data;
   }
 };

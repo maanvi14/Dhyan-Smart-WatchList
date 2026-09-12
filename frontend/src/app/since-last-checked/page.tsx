@@ -8,6 +8,7 @@ import { EvidenceTraceView } from "@/components/EvidenceTraceView";
 import { VisualEvidenceCard } from "@/components/VisualEvidenceCard";
 import { VoiceBriefingButton } from "@/components/VoiceBriefingButton";
 import { watchlistApi, ChangeEventData, User } from "@/lib/api";
+import { TIER_BADGES, TIER_LABELS, TierKey } from "@/lib/tiers";
 import { useI18n } from "@/lib/i18n";
 import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ShieldCheck, FileText, Sparkles } from "lucide-react";
 
@@ -77,25 +78,12 @@ export default function SinceLastCheckedPage() {
   }
 
   const getTierBadge = (tier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN") => {
-    if (tier === "CONFIRMED") {
-      return (
-        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
-          <span>{t("tier_confirmed_short") || "🟢 CONFIRMED"}</span>
-        </span>
-      );
-    } else if (tier === "UNEXPLAINED") {
-      return (
-        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30">
-          <span>{t("tier_unexplained_short") || "🟡 UNEXPLAINED"}</span>
-        </span>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-redwood-50 text-redwood-text border border-redwood-border dark:bg-redwood-bg dark:text-redwood-text dark:border-redwood-border">
-          <span>{t("tier_uncertain_short") || "🔴 UNCERTAIN"}</span>
-        </span>
-      );
-    }
+    const b = TIER_BADGES[tier as TierKey] || TIER_BADGES.CONFIRMED;
+    return (
+      <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${b.bg} ${b.textCol} ${b.border}`}>
+        <span>{b.icon} {b.text}</span>
+      </span>
+    );
   };
 
   return (
@@ -167,9 +155,9 @@ export default function SinceLastCheckedPage() {
             {t("confidence_tiers")}
           </span>
           <div className="flex items-center space-x-3 text-[11px]">
-            <span className="text-emerald-500 font-medium">{t("tier_confirmed")}</span>
-            <span className="text-amber-500 font-medium">{t("tier_unexplained")}</span>
-            <span className="text-redwood-text font-medium">{t("tier_uncertain")}</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold">{t("tier_confirmed")}</span>
+            <span className="text-amber-700 dark:text-amber-400 font-bold">{t("tier_unexplained")}</span>
+            <span className="text-rose-700 dark:text-rose-400 font-bold">{t("tier_uncertain")}</span>
           </div>
         </div>
 

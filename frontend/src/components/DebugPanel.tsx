@@ -38,39 +38,78 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
     }
   };
 
-  return (
-    <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-4 my-4 backdrop-blur">
-      <div className="flex items-center space-x-2 text-amber-400 font-semibold text-xs tracking-wider uppercase mb-2">
-        <AlertTriangle className="w-4 h-4 text-amber-400" />
-        <span>Demo & Resilience Debug Panel</span>
-      </div>
-      <p className="text-xs text-slate-300 mb-3 leading-relaxed">
-        Use these controls to test resilience end-to-end live. Killing the feed halts price updates, causing snapshots older than 30s to trigger 🔴 <span className="font-bold text-rose-400">Uncertain</span> stale data alerts across the application.
-      </p>
+  const handleTriggerCatalyst = async () => {
+    setLoading(true);
+    try {
+      await debugApi.triggerCatalyst();
+      setStatusMsg("⚡ Injected live Regulation 30 filing & volume surge for NSE:TCS. Watch for CATALYST CONFIRMED alert!");
+      if (onStatusChange) onStatusChange();
+    } catch (e) {
+      setStatusMsg("Error triggering catalyst event");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <div className="flex flex-wrap items-center gap-3">
+  const handleTriggerUninformed = async () => {
+    setLoading(true);
+    try {
+      await debugApi.triggerUninformed();
+      setStatusMsg("⚡ Injected -2.4% price move with 2.8x volume on NSE:HDFCBANK (zero filings). Watch for UNINFORMED FLOW alert!");
+      if (onStatusChange) onStatusChange();
+    } catch (e) {
+      setStatusMsg("Error triggering uninformed event");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-surfaceElevated border border-amber-500/40 rounded-2xl p-4 my-4 shadow-md transition-all">
+      <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-xs tracking-wider uppercase mb-3">
+        <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <span>Live Pitch Demo &amp; Resilience Controls</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <button
+          onClick={handleTriggerCatalyst}
+          disabled={loading}
+          className="min-h-[40px] px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 dark:text-emerald-300 border border-emerald-500/50 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+        >
+          <span>⚡ Trigger Catalyst Disclosure (TCS)</span>
+        </button>
+
+        <button
+          onClick={handleTriggerUninformed}
+          disabled={loading}
+          className="min-h-[40px] px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-950/60 dark:hover:bg-amber-900/80 dark:text-amber-300 border border-amber-500/50 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+        >
+          <span>⚡ Trigger Uninformed Dislocation (HDFC)</span>
+        </button>
+
         <button
           onClick={handleKill}
           disabled={loading}
-          className="min-h-[44px] px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-300 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50"
+          className="min-h-[40px] px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white dark:bg-rose-950/60 dark:hover:bg-rose-900/80 dark:text-rose-300 border border-rose-500/50 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
         >
-          <ZapOff className="w-4 h-4 text-rose-400" />
-          <span>KILL FEED (Demo Stale Data)</span>
+          <ZapOff className="w-3.5 h-3.5" />
+          <span>Kill Feed (Stale Quote)</span>
         </button>
 
         <button
           onClick={handleRevive}
           disabled={loading}
-          className="min-h-[44px] px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50"
+          className="min-h-[40px] px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white dark:bg-sky-950/60 dark:hover:bg-sky-900/80 dark:text-sky-300 border border-sky-500/50 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
         >
-          <Play className="w-4 h-4 text-emerald-400" />
-          <span>REVIVE FEED (Auto Recover)</span>
+          <Play className="w-3.5 h-3.5" />
+          <span>Revive Feed</span>
         </button>
       </div>
 
       {statusMsg && (
-        <div className="mt-3 text-xs font-mono text-amber-300 flex items-center space-x-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5" />
+        <div className="mt-3 text-xs font-mono text-amber-900 dark:text-amber-300 flex items-center space-x-1.5 bg-surface p-2.5 rounded-xl border border-amber-500/30 shadow-sm">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <span>{statusMsg}</span>
         </div>
       )}

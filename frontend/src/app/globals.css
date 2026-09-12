@@ -3,64 +3,66 @@
 @tailwind utilities;
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0F172A;
+  /* Light mode — Bloomberg-terminal-inspired clean white */
+  --background: #FAFBFC;
+  --foreground: #0C1222;
   --surface: #FFFFFF;
-  --surface-border: #E2E8F0;
-  --surface-elevated: #F1F5F9;
-  --muted: #334155;
-  --muted-hover: #0F172A;
+  --surface-border: #DEE2E6;
+  --surface-elevated: #F3F4F6;
+  --muted: #5C6370;
+  --muted-hover: #1E2330;
   --card-bg: #FFFFFF;
-  --card-hover: #F8FAFC;
+  --card-hover: #F7F8FA;
   --input-bg: #FFFFFF;
-  --input-border: #CBD5E1;
-  --badge-bg: #F1F5F9;
-  --badge-text: #1E293B;
-  --note-bg: #F0FDFA;
-  --note-border: #99F6E4;
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --header-border: #E2E8F0;
+  --input-border: #CED4DA;
+  --badge-bg: #ECEEF2;
+  --badge-text: #1E2330;
+  --note-bg: #F0F7F4;
+  --note-border: #A3D9C5;
+  --header-bg: rgba(255, 255, 255, 0.97);
+  --header-border: #DEE2E6;
 
-  /* Redwood Palette */
-  --redwood-50: #FEF2F2;
-  --redwood-100: #FEE2E2;
-  --redwood-200: #FECACA;
-  --redwood-500: #991B1B;
-  --redwood-600: #7F1D1D;
-  --redwood-700: #651515;
-  --redwood-bg: #FEF2F2;
-  --redwood-border: #FCA5A5;
-  --redwood-text: #991B1B;
+  /* Redwood / Danger Palette — Light */
+  --redwood-50: #FFF5F5;
+  --redwood-100: #FFE3E3;
+  --redwood-200: #FFC9C9;
+  --redwood-500: #C92A2A;
+  --redwood-600: #A61E1E;
+  --redwood-700: #862020;
+  --redwood-bg: #FFF5F5;
+  --redwood-border: #FFA8A8;
+  --redwood-text: #C92A2A;
 }
 
 .dark {
-  --background: #090D16;
-  --foreground: #F1F5F9;
-  --surface: #111726;
-  --surface-border: #1E293B;
-  --surface-elevated: #1A2236;
-  --muted: #94A3B8;
+  /* Dark mode — deep navy trading terminal */
+  --background: #0A0E17;
+  --foreground: #E8ECF1;
+  --surface: #111827;
+  --surface-border: #1F2937;
+  --surface-elevated: #1A2332;
+  --muted: #8B95A5;
   --muted-hover: #CBD5E1;
-  --card-bg: #0F1929;
-  --card-hover: #1A2236;
-  --input-bg: #030712;
-  --input-border: #1E293B;
-  --badge-bg: #1E293B;
-  --badge-text: #CBD5E1;
-  --note-bg: rgba(15, 23, 42, 0.8);
-  --note-border: #1E293B;
-  --header-bg: rgba(9, 13, 22, 0.95);
-  --header-border: #1E293B;
+  --card-bg: #111827;
+  --card-hover: #1A2332;
+  --input-bg: #0D1321;
+  --input-border: #1F2937;
+  --badge-bg: #1F2937;
+  --badge-text: #C8D1DC;
+  --note-bg: rgba(16, 25, 40, 0.85);
+  --note-border: #1F2937;
+  --header-bg: rgba(10, 14, 23, 0.97);
+  --header-border: #1F2937;
 
-  /* Redwood Palette in Dark Mode */
-  --redwood-50: rgba(127, 29, 29, 0.2);
-  --redwood-100: rgba(127, 29, 29, 0.3);
-  --redwood-200: rgba(239, 68, 68, 0.3);
+  /* Redwood / Danger Palette — Dark */
+  --redwood-50: rgba(153, 27, 27, 0.15);
+  --redwood-100: rgba(153, 27, 27, 0.25);
+  --redwood-200: rgba(239, 68, 68, 0.25);
   --redwood-500: #EF4444;
   --redwood-600: #DC2626;
   --redwood-700: #B91C1C;
-  --redwood-bg: rgba(90, 20, 20, 0.45);
-  --redwood-border: rgba(239, 68, 68, 0.4);
+  --redwood-bg: rgba(80, 15, 15, 0.4);
+  --redwood-border: rgba(239, 68, 68, 0.35);
   --redwood-text: #FCA5A5;
 }
 
@@ -69,7 +71,7 @@ body {
   background: var(--background);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Theme-adaptive utility classes */

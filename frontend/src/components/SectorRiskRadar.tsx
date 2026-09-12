@@ -42,7 +42,7 @@ export function SectorRiskRadar({
   const warnLabel = language === "hi" ? "उच्च संकेंद्रण" : "High Concentration";
 
   return (
-    <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 mb-4 shadow-md transition-all">
+    <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 shadow-md transition-all">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <PieChart className="w-4 h-4 text-brand-500" />
@@ -93,7 +93,7 @@ export function SectorRiskRadar({
                 style={{ backgroundColor: color }}
               />
               <span className="text-foreground font-semibold">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-              <span className="opacity-80 font-bold">{item.pct}%</span>
+              <span className="text-foreground font-bold">{item.pct}%</span>
             </div>
           );
         })}

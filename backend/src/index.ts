@@ -10,6 +10,7 @@ import chatRoutes from "./routes/chat";
 import verifyTipRoutes from "./routes/verifyTip";
 import { priceFeed, SnapshotData } from "./feed/priceFeed";
 import { processSnapshotForChange, generateRippleEvent, getSectorPeers } from "./engine/changeDetector";
+import { proactiveFilingScanner } from "./engine/proactiveScanner";
 import { prisma } from "./db";
 
 dotenv.config();
@@ -185,6 +186,10 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
 
 // Start price polling
 priceFeed.startPolling(15000);
+
+// Start proactive regulatory filing scanner
+proactiveFilingScanner.init(io);
+proactiveFilingScanner.start(30000);
 
 server.listen(PORT, () => {
   console.log(`=================================================`);

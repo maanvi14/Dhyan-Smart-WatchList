@@ -106,16 +106,46 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
 
     if (!watchlist) return res.status(404).json({ error: "Watchlist not found" });
 
+    // Compute 7-day Trust Ratio across all items in watchlist
+    const itemIds = watchlist.items.map(i => i.id);
+    const allRecentEvents = await prisma.changeEvent.findMany({
+      where: {
+        watchlistItemId: { in: itemIds },
+        detectedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      },
+      select: { confidenceTier: true }
+    });
+
+    const totalEvents = allRecentEvents.length;
+    const confirmedCount = allRecentEvents.filter(e => e.confidenceTier === "CONFIRMED").length;
+    const unexplainedCount = allRecentEvents.filter(e => e.confidenceTier === "UNEXPLAINED").length;
+    const uncertainCount = allRecentEvents.filter(e => e.confidenceTier === "UNCERTAIN").length;
+
+    const trustRatio = {
+      total: totalEvents,
+      confirmedCount,
+      unexplainedCount,
+      uncertainCount,
+      confirmedPct: totalEvents > 0 ? Math.round((confirmedCount / totalEvents) * 100) : 65,
+      uninformedPct: totalEvents > 0 ? Math.round((unexplainedCount / totalEvents) * 100) : 25,
+      stalePct: totalEvents > 0 ? Math.round((uncertainCount / totalEvents) * 100) : 10
+    };
+
     const itemsWithPrices = await Promise.all(
       watchlist.items.map(async item => {
         const snap = priceFeed.getLatestSnapshot(item.symbol);
         const info = getSymbolInfo(item.symbol);
 
-        // Fetch latest change event for this item if any
-        const latestEvent = await prisma.changeEvent.findFirst({
+        // Fetch recent change events for this item (for tier history strip)
+        const recentItemEvents = await prisma.changeEvent.findMany({
           where: { watchlistItemId: item.id },
-          orderBy: { detectedAt: "desc" }
+          orderBy: { detectedAt: "desc" },
+          take: 6,
+          select: { id: true, confidenceTier: true, magnitude: true, detectedAt: true, sectorDivergence: true }
         });
+
+        const latestEvent = recentItemEvents.length > 0 ? recentItemEvents[0] : null;
+        const tierHistory = recentItemEvents.map(e => e.confidenceTier);
 
         // Generate a 12-point synthetic intraday price path anchored around ltp and changePct
         const ltp = snap?.ltp || info?.basePrice || 100;
@@ -147,6 +177,7 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           sourceType: snap?.sourceType || "simulated",
           isStale: snap?.isStale ?? true,
           sparkline: sparklinePoints,
+          tierHistory,
           latestEvent: latestEvent ? {
             id: latestEvent.id,
             confidenceTier: latestEvent.confidenceTier,
@@ -162,8 +193,37 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
       id: watchlist.id,
       name: watchlist.name,
       items: itemsWithPrices,
+      trustRatio,
       feedStatus: priceFeed.getFeedStatus()
     });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// PATCH update research thesis & invalidation point
+router.patch("/:id/items/:itemId/thesis", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, itemId } = req.params;
+    const { thesisText, invalidationPoint } = req.body;
+
+    const item = await prisma.watchlistItem.findFirst({
+      where: { id: itemId, watchlistId: id }
+    });
+    if (!item) return res.status(404).json({ error: "Item not found" });
+
+    const notesPayload = JSON.stringify({
+      thesisText: thesisText || "",
+      invalidationPoint: invalidationPoint || "",
+      updatedAt: new Date().toISOString()
+    });
+
+    const updated = await prisma.watchlistItem.update({
+      where: { id: itemId },
+      data: { notes: notesPayload }
+    });
+
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
@@ -462,8 +522,14 @@ router.get("/:id/unread-summary", async (req: AuthRequest, res: Response) => {
     const uncertain = rawEvents.filter(e => e.confidenceTier === "UNCERTAIN").length;
     const rippleCount = rawEvents.filter(e => Boolean(e.isRippleEffect)).length;
 
-    // Top 3 high-priority events for the inbox preview
-    const topEvents = rawEvents.slice(0, 3).map(e => {
+    // Top 3 high-priority events for the inbox preview (deduped by symbol)
+    const seenSymbols = new Set<string>();
+    const dedupedEvents = rawEvents.filter(e => {
+      if (seenSymbols.has(e.symbol)) return false;
+      seenSymbols.add(e.symbol);
+      return true;
+    });
+    const topEvents = dedupedEvents.slice(0, 3).map(e => {
       const info = getSymbolInfo(e.symbol);
       return {
         symbol: e.symbol,

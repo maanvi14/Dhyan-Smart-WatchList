@@ -14,19 +14,22 @@ interface HeaderProps {
   onToggleDebug?: () => void;
   onToggleChat?: () => void;
   showDebug?: boolean;
+  feedStatus?: any;
 }
 
-export function Header({ watchlistId, onToggleDebug, onToggleChat, showDebug }: HeaderProps) {
+export function Header({ watchlistId, onToggleDebug, onToggleChat, showDebug, feedStatus: feedStatusProp }: HeaderProps) {
   const router = useRouter();
   const { language, setLanguage, t } = useI18n();
   const { theme, setTheme } = useTheme();
 
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [feedStatus, setFeedStatus] = useState<any>({
+  const [internalFeedStatus, setInternalFeedStatus] = useState<any>({
     status: "active",
     mode: "live",
     message: "Feed operating normally"
   });
+
+  const feedStatus = feedStatusProp || internalFeedStatus;
 
   const fetchUnread = async () => {
     if (!watchlistId) return;
@@ -41,7 +44,7 @@ export function Header({ watchlistId, onToggleDebug, onToggleChat, showDebug }: 
   const fetchStatus = async () => {
     try {
       const res = await debugApi.getFeedStatus();
-      setFeedStatus(res);
+      setInternalFeedStatus(res);
     } catch (e) {
       // ignore
     }
@@ -134,7 +137,7 @@ export function Header({ watchlistId, onToggleDebug, onToggleChat, showDebug }: 
               <span className="hidden xs:inline">{t("changes_badge")}</span>
               {unreadCount > 0 && (
                 <span className="bg-brand-500 text-slate-950 font-bold px-1.5 py-0.5 rounded-full text-[11px] font-mono">
-                  {unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Link>

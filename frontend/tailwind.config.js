@@ -21,9 +21,10 @@ module.exports = {
         badgeBg: "var(--badge-bg)",
         badgeText: "var(--badge-text)",
         brand: {
-          400: "#2DD4BF",
-          500: "#14B8A6",
-          600: "#0D9488",
+          400: "#34D399",
+          500: "#10B981",
+          600: "#059669",
+          700: "#047857",
         },
         redwood: {
           50: "var(--redwood-50)",

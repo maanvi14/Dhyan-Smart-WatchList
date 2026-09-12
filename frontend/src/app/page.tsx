@@ -9,10 +9,13 @@ import { AddSymbolModal } from "@/components/AddSymbolModal";
 import { AskDhyanChat } from "@/components/AskDhyanChat";
 import { SectorRiskRadar } from "@/components/SectorRiskRadar";
 import { WatermarkSparkline } from "@/components/WatermarkSparkline";
-import { watchlistApi, WatchlistItemPrice, User, UnreadSummary } from "@/lib/api";
+import { WatchlistTrustRatio } from "@/components/WatchlistTrustRatio";
+import { ResearchThesisModal } from "@/components/ResearchThesisModal";
+import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustRatioData } from "@/lib/api";
+import { TIER_BADGES, TIER_LABELS } from "@/lib/tiers";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { useI18n } from "@/lib/i18n";
-import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Anchor, Smartphone } from "lucide-react";
+import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Anchor, Smartphone, BookOpen, AlertOctagon } from "lucide-react";
 
 export default function WatchlistHomePage() {
   const router = useRouter();
@@ -21,13 +24,17 @@ export default function WatchlistHomePage() {
   const [watchlistData, setWatchlistData] = useState<any>(null);
   const [items, setItems] = useState<WatchlistItemPrice[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [feedStatus, setFeedStatus] = useState<any>(null);
   // 🆕 Rich Unread Inbox summary
   const [unreadSummary, setUnreadSummary] = useState<UnreadSummary | null>(null);
+  const [trustRatioData, setTrustRatioData] = useState<TrustRatioData | null>(null);
   const [concentrationWarning, setConcentrationWarning] = useState<string | null>(null);
   const [sectorBreakdown, setSectorBreakdown] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showThesisModal, setShowThesisModal] = useState(false);
+  const [selectedThesisItem, setSelectedThesisItem] = useState<WatchlistItemPrice | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 2026 UX: Attention Priority sorting toggle
@@ -39,7 +46,15 @@ export default function WatchlistHomePage() {
   // 🆕 Zero-Click Cross-Device Handoff toast state
   const [handoffToast, setHandoffToast] = useState<{ previousDevice: string; currentDevice: string } | null>(null);
 
+  const fetchFeedStatus = async () => {
+    try {
+      const status = await debugApi.getFeedStatus();
+      setFeedStatus(status);
+    } catch (_) {}
+  };
+
   const loadData = async () => {
+    fetchFeedStatus();
     const token = typeof window !== "undefined" ? localStorage.getItem("dhyan_token") : null;
     const storedUser = typeof window !== "undefined" ? localStorage.getItem("dhyan_user") : null;
 
@@ -61,6 +76,9 @@ export default function WatchlistHomePage() {
 
       const data = await watchlistApi.getWatchlist(u.watchlistId);
       setWatchlistData(data);
+      if (data.trustRatio) {
+        setTrustRatioData(data.trustRatio);
+      }
       const fetchedItems = data.items || [];
       setItems(fetchedItems);
 
@@ -75,12 +93,13 @@ export default function WatchlistHomePage() {
         
         const latestWatermark = watermarks.length > 0 ? Math.max(...watermarks) : Date.now() - (14 * 60 * 60 * 1000);
         const diffMs = Math.max(0, Date.now() - latestWatermark);
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffHours / 24);
         const timeStr = new Date(latestWatermark).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         
-        const timeAgoStr = diffHours >= 1 ? `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago` : `${diffMins} min ago`;
-        const timeAgoStrHi = diffHours >= 1 ? `${diffHours} घंटे पहले` : `${diffMins} मिनट पहले`;
+        const timeAgoStr = diffDays >= 1 ? `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago` : diffHours >= 1 ? `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago` : `${diffMins} min ago`;
+        const timeAgoStrHi = diffDays >= 1 ? `${diffDays} ${diffDays === 1 ? 'दिन' : 'दिन'} पहले` : diffHours >= 1 ? `${diffHours} घंटे पहले` : `${diffMins} मिनट पहले`;
 
         if (language === "hi") {
           setTimeAwayString(`आपने आखिरी बार ${timeAgoStrHi} (लगभग ${timeStr}) चेक किया था — आपकी अनुपस्थिति में यह महत्वपूर्ण बदलाव हुए:`);
@@ -138,6 +157,8 @@ export default function WatchlistHomePage() {
 
   useEffect(() => {
     loadData();
+    fetchFeedStatus();
+    const feedInterval = setInterval(fetchFeedStatus, 5000);
 
     // 🆕 Zero-Click Cross-Device Handoff: check if login page stored handoff info
     const handoffData = typeof window !== "undefined" ? localStorage.getItem("dhyan_handoff") : null;
@@ -155,6 +176,7 @@ export default function WatchlistHomePage() {
 
     const socket = getSocket();
     socket.on("price_tick", (snapshot: any) => {
+      fetchFeedStatus();
       setItems(prevItems =>
         prevItems.map(item => {
           if (item.symbol === snapshot.symbol) {
@@ -180,6 +202,7 @@ export default function WatchlistHomePage() {
     });
 
     return () => {
+      clearInterval(feedInterval);
       socket.off("price_tick");
       socket.off("new_change_event");
     };
@@ -224,8 +247,6 @@ export default function WatchlistHomePage() {
     );
   }
 
-  const feedStatus = watchlistData?.feedStatus;
-
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
       <Header
@@ -233,6 +254,7 @@ export default function WatchlistHomePage() {
         onToggleDebug={() => setShowDebug(!showDebug)}
         onToggleChat={() => setShowChat(!showChat)}
         showDebug={showDebug}
+        feedStatus={feedStatus}
       />
 
       <main className="max-w-4xl mx-auto px-4 pt-4">
@@ -261,42 +283,44 @@ export default function WatchlistHomePage() {
         )}
 
         {/* Market Feed Status Banner */}
-        <div className={`p-3 rounded-2xl mb-4 border flex items-center justify-between text-xs backdrop-blur shadow-sm ${
-          feedStatus?.status === "killed"
-            ? "bg-redwood-50 dark:bg-redwood-bg border-redwood-border text-redwood-text"
-            : feedStatus?.mode === "stale_partial"
-            ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50 text-amber-800 dark:text-amber-300"
-            : feedStatus?.mode === "simulated"
-            ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300"
-            : "bg-surfaceElevated border-surfaceBorder text-foreground"
-        }`}>
-          <div className="flex items-center space-x-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${
-              feedStatus?.status === "killed"
-                ? "bg-redwood-500 animate-pulse"
-                : feedStatus?.mode === "stale_partial"
-                ? "bg-amber-400 animate-pulse"
-                : feedStatus?.mode === "simulated"
-                ? "bg-amber-400"
-                : "bg-emerald-500"
-            }`} />
-            <span className="font-semibold font-mono">
-              {feedStatus?.status === "killed"
-                ? t("market_feed_killed")
-                : feedStatus?.mode === "stale_partial"
-                ? (t("market_feed_stale") || `Market Feed: Live (${feedStatus?.staleCount || 1} symbols delayed/stale)`).replace("{count}", String(feedStatus?.staleCount || 1))
-                : feedStatus?.mode === "simulated"
-                ? t("market_feed_simulated")
-                : t("market_feed_live")}
-            </span>
+        {feedStatus && (
+          <div className={`p-3 rounded-2xl mb-4 border flex items-center justify-between text-xs backdrop-blur shadow-sm transition-all ${
+            feedStatus?.status === "killed"
+              ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 font-semibold"
+              : feedStatus?.mode === "stale_partial"
+              ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50 text-amber-900 dark:text-amber-300 font-medium"
+              : feedStatus?.mode === "simulated"
+              ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-300"
+              : "bg-surfaceElevated border-surfaceBorder text-foreground"
+          }`}>
+            <div className="flex items-center space-x-2.5">
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                feedStatus?.status === "killed"
+                  ? "bg-rose-500 animate-pulse"
+                  : feedStatus?.mode === "stale_partial"
+                  ? "bg-amber-500 animate-pulse"
+                  : feedStatus?.mode === "simulated"
+                  ? "bg-amber-500"
+                  : "bg-emerald-500 animate-pulse"
+              }`} />
+              <span className="font-semibold font-mono text-xs">
+                {feedStatus?.status === "killed"
+                  ? t("market_feed_killed")
+                  : feedStatus?.mode === "stale_partial"
+                  ? (t("market_feed_stale") || `Market Feed: Live (${feedStatus?.staleCount} symbols delayed/stale)`).replace("{count}", String(feedStatus?.staleCount || 1))
+                  : feedStatus?.mode === "simulated"
+                  ? t("market_feed_simulated")
+                  : t("market_feed_live")}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-500 dark:text-brand-400 shrink-0"
+            >
+              {showDebug ? t("hide_controls") : t("debug_controls")}
+            </button>
           </div>
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="text-[11px] font-mono underline hover:opacity-80"
-          >
-            {showDebug ? t("hide_controls") : t("debug_controls")}
-          </button>
-        </div>
+        )}
 
         {/* Debug Panel Toggle */}
         {showDebug && <DebugPanel onStatusChange={loadData} />}
@@ -327,12 +351,15 @@ export default function WatchlistHomePage() {
           </div>
         )}
 
-        {/* Sector Risk Radar Donut/Progress Bar */}
-        <SectorRiskRadar
-          breakdown={sectorBreakdown}
-          concentrationWarning={concentrationWarning}
-          totalCount={items.length}
-        />
+        {/* Signal Quality + Sector Radar — collapsed into single row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <WatchlistTrustRatio data={trustRatioData} />
+          <SectorRiskRadar
+            breakdown={sectorBreakdown}
+            concentrationWarning={concentrationWarning}
+            totalCount={items.length}
+          />
+        </div>
 
         {/* 📬 Persistent Flagship Unread Inbox Banner (Unread Inbox Architecture) */}
         <Link
@@ -351,13 +378,13 @@ export default function WatchlistHomePage() {
                   </h2>
                   {unreadCount > 0 && (
                     <span className="bg-brand-500 text-slate-950 text-[11px] font-bold px-2 py-0.5 rounded-full font-mono">
-                      {unreadCount} {t("new_badge")}
+                      {unreadCount > 9 ? "9+" : unreadCount} {t("new_badge")}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-muted">
                   {unreadCount > 0
-                    ? `${unreadCount} ${t("events_logged")}`
+                    ? `${unreadCount > 9 ? "9+" : unreadCount} ${t("events_logged")}`
                     : t("no_new_events")}
                 </p>
               </div>
@@ -498,24 +525,82 @@ export default function WatchlistHomePage() {
                         {item.symbol}
                       </span>
                       {item.isStale && (
-                        <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[10px] font-mono font-bold px-2 py-0.5 rounded shadow-sm">
-                          🔴 {t("stale_badge")}
+                        <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">
+                          🔴 {TIER_LABELS.UNCERTAIN}
                         </span>
                       )}
                       {item.latestEvent?.confidenceTier === "CONFIRMED" && (
                         <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
-                          FILING
+                          🟢 {TIER_LABELS.CONFIRMED}
+                        </span>
+                      )}
+                      {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
+                        <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+                          🟡 {TIER_LABELS.UNEXPLAINED}
                         </span>
                       )}
                     </div>
+
                     <div className="text-xs text-muted truncate mt-0.5 font-medium">
                       {item.name} • <span className="opacity-80">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
                     </div>
-                    {item.notes && (
-                      <div className="text-[11px] text-muted italic mt-1 bg-badgeBg inline-block px-2 py-0.5 rounded border border-surfaceBorder">
-                        "{item.notes}"
+
+                    {/* Tier History Dot Strip */}
+                    {item.tierHistory && item.tierHistory.length > 0 && (
+                      <div className="flex items-center space-x-1.5 mt-1" title="Signal History: Green = Catalyst Confirmed, Yellow = Uninformed Flow, Red = Stale Quote">
+                        <span className="text-[9px] font-mono text-muted uppercase tracking-wider">Recent:</span>
+                        <div className="flex items-center space-x-1">
+                          {item.tierHistory.map((tier, idx) => (
+                            <span
+                              key={idx}
+                              className={`w-2 h-2 rounded-full inline-block ${
+                                tier === "CONFIRMED"
+                                  ? "bg-emerald-500"
+                                  : tier === "UNEXPLAINED"
+                                  ? "bg-amber-400"
+                                  : "bg-rose-500"
+                              }`}
+                              title={TIER_LABELS[tier] || tier}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
+
+                    {/* Research Thesis Preview */}
+                    {(() => {
+                      let parsedThesis = "";
+                      if (item.notes) {
+                        try {
+                          const parsed = JSON.parse(item.notes);
+                          if (parsed?.thesisText) parsedThesis = parsed.thesisText;
+                        } catch (_) {
+                          parsedThesis = item.notes;
+                        }
+                      }
+                      if (parsedThesis) {
+                        return (
+                          <button
+                            onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                            className="text-[11px] text-brand-500 hover:text-brand-400 font-mono mt-1.5 bg-brand-500/10 hover:bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-lg flex items-center space-x-1.5 transition-colors text-left"
+                            title="Click to edit research thesis & invalidation point"
+                          >
+                            <BookOpen className="w-3 h-3 shrink-0" />
+                            <span className="truncate max-w-[240px]">Thesis: "{parsedThesis}"</span>
+                          </button>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                          className="text-[10px] text-muted hover:text-brand-500 font-mono mt-1 flex items-center space-x-1 opacity-70 hover:opacity-100 transition-opacity"
+                          title="Record why you track this stock and when thesis breaks"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          <span>+ Add Thesis &amp; Invalidation</span>
+                        </button>
+                      );
+                    })()}
                   </div>
 
                   {/* Center: Watermark Delta Sparkline */}
@@ -543,8 +628,16 @@ export default function WatchlistHomePage() {
                       </div>
                     </div>
 
-                    {/* Quick Micro-Actions: Mark item seen or Remove */}
+                    {/* Quick Micro-Actions */}
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                        className="min-h-[44px] min-w-[36px] text-muted hover:text-brand-500 flex items-center justify-center"
+                        title="Edit Research Thesis"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                      </button>
+
                       <button
                         onClick={() => handleMarkItemSeen(item.id)}
                         className="min-h-[44px] min-w-[36px] text-muted hover:text-emerald-500 flex items-center justify-center"
@@ -586,6 +679,17 @@ export default function WatchlistHomePage() {
           watchlistId={user.watchlistId}
           isOpen={showChat}
           onClose={() => setShowChat(false)}
+        />
+      )}
+
+      {/* Research Thesis & Invalidation Modal */}
+      {user && (
+        <ResearchThesisModal
+          isOpen={showThesisModal}
+          onClose={() => { setShowThesisModal(false); setSelectedThesisItem(null); }}
+          watchlistId={user.watchlistId}
+          item={selectedThesisItem}
+          onSaved={loadData}
         />
       )}
     </div>

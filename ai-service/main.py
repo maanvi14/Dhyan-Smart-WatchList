@@ -58,17 +58,18 @@ def generate_templated_narrative(symbol: str, changePct: float, volumeRatio: flo
   sign = "+" if changePct >= 0 else ""
   if tier == "CONFIRMED":
     filing_clean = clean_filing_title(filingSummary)
-    return f"{symbol} moved {sign}{changePct:.2f}% following official disclosure: {filing_clean}."
+    return f"CATALYST CONFIRMED — {symbol} moved {sign}{changePct:.2f}% following official exchange disclosure: {filing_clean}."
   elif tier == "UNEXPLAINED":
-    return f"{symbol} moved {sign}{changePct:.2f}% with {volumeRatio:.1f}x volume vs sector {sectorChangePct:+.2f}%; no confirmed catalyst found."
+    return f"UNINFORMED FLOW — {symbol} moved {sign}{changePct:.2f}% with {volumeRatio:.1f}x volume vs sector {sectorChangePct:+.2f}%; real market move, but no official exchange filing corroborates it yet."
   else: # UNCERTAIN
-    return f"{symbol} snapshot marked stale or conflicting; current market price data cannot be verified."
+    return f"STALE QUOTE — {symbol} snapshot marked stale or conflicting; current market price data cannot be verified."
 
 async def call_groq_llm(symbol: str, changePct: float, volumeRatio: float, sectorChangePct: float, filingSummary: Optional[str], tier: str) -> str:
   if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY not set in environment")
 
   filing_clean = clean_filing_title(filingSummary)
+  tier_display = "CATALYST CONFIRMED" if tier == "CONFIRMED" else "UNINFORMED FLOW" if tier == "UNEXPLAINED" else "STALE QUOTE"
   prompt = f"""You are a factual market data assistant for Indian retail investors. You do not predict, recommend, or forecast anything.
 
 Symbol: {symbol}
@@ -76,12 +77,14 @@ Change: {changePct}%
 Volume vs avg: {volumeRatio}x
 Sector move: {sectorChangePct}%
 Filing found: {filing_clean if filingSummary else "None"}
-Confidence tier already determined as: {tier}
+Status tier: {tier_display}
 
-Write ONE factual sentence, max 25 words, appropriate to the tier:
-- CONFIRMED: state the move and cite the filing/catalyst plainly.
-- UNEXPLAINED: state the move and volume/sector context, and explicitly say no confirmed catalyst was found.
-- UNCERTAIN: do not describe the move at all — state that current data is stale/conflicting and should not be trusted yet.
+Always refer to the status tier using these exact institutional labels: Catalyst Confirmed, Uninformed Flow, Stale Quote. Never use 'unexplained' or 'uncertain' alone.
+
+Write ONE factual sentence, max 28 words, appropriate to the tier:
+- CATALYST CONFIRMED: state the move and plainly cite the verified exchange filing.
+- UNINFORMED FLOW: state the move and volume context, and clearly gloss that this is an uninformed flow move with no confirmed regulatory catalyst.
+- STALE QUOTE: do not describe the move at all — state that the price quote is stale or conflicting and data cannot be verified yet.
 
 Never use words like "likely," "expected to," "target," "buy," "sell," or any predictive/advisory language."""
 
@@ -200,10 +203,16 @@ async def ask_dhyan_chat(req: ChatRequest):
   ]
   is_predictive = any(kw in message.lower() for kw in predictive_keywords)
 
-  system_prompt = """You are Ask Dhyan, a factual assistant that explains market moves ALREADY DETECTED by this app.
+  system_prompt = """You are Ask Dhyan, a factual market assistant that explains market moves ALREADY DETECTED by this app.
 You may only use the data provided below. Do not use outside knowledge.
 You must NEVER predict future prices, give buy/sell advice, or suggest targets.
 If asked to predict or advise, respond: "Dhyan doesn't predict or advise — here's what's actually been confirmed:" and then share only verified facts relevant to the question, if any exist.
+
+Always refer to market moves using institutional terms:
+- Catalyst Confirmed (corroborated by official NSE/BSE Regulation 30 filings)
+- Uninformed Flow (price/volume anomaly with zero exchange disclosure)
+- Stale Quote (data feed heartbeat delayed)
+When mentioning Uninformed Flow, always gloss it in plain language (e.g. "currently flagged as Uninformed Flow — meaning the price moved on unusual volume, but no official exchange disclosure explains it yet").
 
 Available data for this user's watchlist:
 """ + str(payload_json) + """

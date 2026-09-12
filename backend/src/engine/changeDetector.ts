@@ -28,7 +28,35 @@ export interface ChangeDetectionResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 🌊 RIPPLE EFFECT: Returns a lightweight contagion alert for a peer symbol
+// Hidden Internal Quant Math (RSI & Z-Score anomaly tightening)
+// ─────────────────────────────────────────────────────────────────────────────
+export function computeInternalZScore(prices: number[]): number {
+  if (prices.length < 5) return 0;
+  const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const variance = prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
+  const stdDev = Math.sqrt(variance);
+  if (stdDev === 0) return 0;
+  const current = prices[prices.length - 1];
+  return Number(((current - mean) / stdDev).toFixed(2));
+}
+
+export function computeInternalRSI(prices: number[], period = 14): number {
+  if (prices.length < 4) return 50;
+  let gains = 0;
+  let losses = 0;
+  const count = Math.min(prices.length - 1, period);
+  for (let i = prices.length - count; i < prices.length; i++) {
+    const diff = prices[i] - prices[i - 1];
+    if (diff >= 0) gains += diff;
+    else losses += Math.abs(diff);
+  }
+  if (losses === 0) return 100;
+  const rs = gains / losses;
+  return Number((100 - (100 / (1 + rs))).toFixed(1));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚡ SECTOR CONTAGION: Returns a lightweight contagion alert for a peer symbol
 // Called by index.ts after a high-magnitude event on a "source" symbol.
 // ─────────────────────────────────────────────────────────────────────────────
 export function generateRippleEvent(
@@ -46,17 +74,17 @@ export function generateRippleEvent(
     symbol: peerSymbol,
     confidenceTier: "UNEXPLAINED",
     magnitude: Math.round(sourceMagnitude * 0.6), // contagion is typically attenuated
-    narrative: `⚡ Ripple Effect: ${sourceName} triggered a ${sourceMagnitude.toFixed(0)}-point event in the ${sector} sector. ${peerName} is a peer — monitor for contagion. No confirmed catalyst for ${peerSymbol} yet.`,
+    narrative: `⚡ Sector Contagion Alert: ${sourceName} triggered a ${sourceMagnitude.toFixed(0)}-point event in the ${sector} sector. Peer ${peerName} flagged for contagion spread; no verified catalyst confirmed yet.`,
     evidenceTrace: [
       {
-        step: "ripple_detection",
+        step: "sector_contagion_detection",
         timestamp: new Date().toISOString(),
-        detail: `Source event: ${sourceSymbol} (magnitude ${sourceMagnitude.toFixed(0)}) in sector ${sector}. Sector peer ${peerSymbol} flagged for contagion sweep.`
+        detail: `Source event: ${sourceSymbol} (signal strength ${sourceMagnitude.toFixed(0)}) in sector ${sector}. Sector peer ${peerSymbol} flagged for contagion sweep.`
       },
       {
         step: "classify_tier",
         timestamp: new Date().toISOString(),
-        detail: `Tier set to UNEXPLAINED — no independent filing found for ${peerSymbol}. Contagion is unverified.`
+        detail: `Status set to UNINFORMED FLOW — no independent regulatory filing found for ${peerSymbol}. Contagion is unverified.`
       }
     ],
     sectorDivergence: false,
@@ -85,9 +113,15 @@ export async function processSnapshotForChange(
       ? Number((snapshot.volume / snapshot.avgVolume20d).toFixed(2))
       : 1.0;
 
-  // Step A — Magnitude filter: only process if |changePct| >= 2.0% OR volumeRatio >= 1.5
+  // Internal Hidden Quant Math: statistical dislocation checks
+  const rollingPrices = priceFeed.getRollingPrices(snapshot.symbol);
+  const internalZScore = computeInternalZScore(rollingPrices);
+  const internalRSI = computeInternalRSI(rollingPrices);
+  const isStatisticalAnomaly = Math.abs(internalZScore) >= 2.2 || (internalRSI <= 28 && volumeRatio >= 1.3);
+
+  // Step A — Signal Dislocation filter: process if |changePct| >= 2.0% OR volumeRatio >= 1.5 OR statistical dislocation
   const passesThreshold =
-    absChangePct >= 2.0 || volumeRatio >= 1.5 || snapshot.isStale;
+    absChangePct >= 2.0 || volumeRatio >= 1.5 || snapshot.isStale || isStatisticalAnomaly;
   if (!passesThreshold) {
     return null; // Noise filtered out
   }
@@ -218,42 +252,55 @@ export async function processSnapshotForChange(
     let fallbackNarrative = `${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% with ${volumeRatio.toFixed(1)}x volume.`;
 
     if (fallbackTier === "UNCERTAIN") {
-      fallbackNarrative = `${snapshot.symbol} price snapshot marked stale or conflicting; data cannot be verified.`;
+      fallbackNarrative = `STALE QUOTE — ${snapshot.symbol} price snapshot marked stale or delayed; current market data cannot be verified.`;
     } else if (fallbackTier === "CONFIRMED") {
       if (filingSummary) {
-        fallbackNarrative = `${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% following filing: ${filingSummary}.`;
+        fallbackNarrative = `CATALYST CONFIRMED — ${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% following official exchange disclosure: ${filingSummary}.`;
       } else if (hasInsiderBuy) {
-        fallbackNarrative = `${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% — 🐋 Promoter/Insider buying detected. ${insiderNarrative}`;
+        fallbackNarrative = `CATALYST CONFIRMED — ${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% — 🐋 Informed Flow: Promoter/Insider buying corroborates market move. ${insiderNarrative}`;
       }
     } else {
-      fallbackNarrative = `${snapshot.symbol} moved ${sign}${changePct.toFixed(
+      fallbackNarrative = `UNINFORMED FLOW — ${snapshot.symbol} moved ${sign}${changePct.toFixed(
         2
       )}% with ${volumeRatio.toFixed(1)}x volume vs sector ${
         sectorChangePct >= 0 ? "+" : ""
-      }${sectorChangePct.toFixed(2)}%; no confirmed catalyst found.`;
+      }${sectorChangePct.toFixed(2)}%; real market move, but no official exchange filing corroborates it yet.`;
     }
 
     if (insiderNarrative) fallbackNarrative += ` 🐋 ${insiderNarrative}`;
     if (historicalResolutionNote) fallbackNarrative += ` 🕰️ ${historicalResolutionNote}`;
 
+    const baseSteps: any[] = [
+      {
+        step: "gather_evidence",
+        timestamp: new Date().toISOString(),
+        detail: `Collected move (${changePct >= 0 ? "+" : ""}${changePct.toFixed(2)}%), volume ratio (${volumeRatio.toFixed(2)}x), sector move (${sectorChangePct >= 0 ? "+" : ""}${sectorChangePct.toFixed(2)}%).`
+      }
+    ];
+
+    if (isStatisticalAnomaly) {
+      baseSteps.push({
+        step: "statistical_dislocation_check",
+        timestamp: new Date().toISOString(),
+        detail: `Statistical Anomaly verified: price moved ${internalZScore}σ from rolling mean (internal RSI: ${internalRSI}).`
+      });
+    }
+
+    baseSteps.push(
+      {
+        step: "classify_tier",
+        timestamp: new Date().toISOString(),
+        detail: `Status classified as ${fallbackTier === "CONFIRMED" ? "CATALYST CONFIRMED" : fallbackTier === "UNEXPLAINED" ? "UNINFORMED FLOW" : "STALE QUOTE"}.`
+      },
+      {
+        step: "fallback_node",
+        timestamp: new Date().toISOString(),
+        detail: "Verification flow executed via local engine deterministic rules."
+      }
+    );
+
     const fallbackTrace = buildEnrichedTrace(
-      [
-        {
-          step: "gather_evidence",
-          timestamp: new Date().toISOString(),
-          detail: `Collected move (${changePct >= 0 ? "+" : ""}${changePct.toFixed(2)}%), volume ratio (${volumeRatio.toFixed(2)}x), sector move (${sectorChangePct >= 0 ? "+" : ""}${sectorChangePct.toFixed(2)}%).`
-        },
-        {
-          step: "classify_tier",
-          timestamp: new Date().toISOString(),
-          detail: `Tier classified as ${fallbackTier}.`
-        },
-        {
-          step: "fallback_node",
-          timestamp: new Date().toISOString(),
-          detail: "Verification flow executed via local engine fallback."
-        }
-      ],
+      baseSteps,
       insiderTrades,
       historicalResolutionNote
     );
@@ -286,9 +333,9 @@ function buildEnrichedTrace(
     const buys = insiderTrades.filter(t => t.action === "BUY");
     const sells = insiderTrades.filter(t => t.action === "SELL");
     trace.push({
-      step: "insider_skin_in_game",
+      step: "informed_flow_check",
       timestamp: new Date().toISOString(),
-      detail: `🐋 Promoter/Institutional disclosure detected. ${buys.length} BUY order(s): ₹${buys.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr. ${sells.length} SELL order(s): ₹${sells.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr. Sources: ${[...new Set(insiderTrades.map(t => t.source))].join(", ")}.`
+      detail: `🐋 Informed Flow (Promoter/Institutional disclosure) detected: ${buys.length} BUY order(s) (₹${buys.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr), ${sells.length} SELL order(s) (₹${sells.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr). Sources: ${[...new Set(insiderTrades.map(t => t.source))].join(", ")}.`
     });
   }
 

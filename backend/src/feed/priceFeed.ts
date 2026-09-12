@@ -21,12 +21,14 @@ class PriceFeedManager {
   private currentSource: "live" | "simulated" = "live";
   private latestSnapshots: Map<string, SnapshotData> = new Map();
   private symbolPrices: Map<string, number> = new Map();
+  private priceHistory: Map<string, number[]> = new Map(); // 30-tick rolling price ring buffer
   private tickListeners: TickCallback[] = [];
   private pollingInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     SYMBOL_UNIVERSE.forEach(s => {
       this.symbolPrices.set(s.symbol, s.basePrice);
+      this.priceHistory.set(s.symbol, [s.basePrice]);
       const initialSnap: SnapshotData = {
         symbol: s.symbol,
         timestamp: new Date(),
@@ -255,7 +257,51 @@ class PriceFeedManager {
     this.notifyTick(snap);
   }
 
+  public getRollingPrices(symbol: string): number[] {
+    const hist = this.priceHistory.get(symbol);
+    if (!hist || hist.length === 0) {
+      const snap = this.latestSnapshots.get(symbol);
+      return snap ? [snap.ltp] : [100];
+    }
+    return [...hist];
+  }
+
+  public injectTick(symbol: string, ltpDeltaPct: number, volumeMultiplier: number) {
+    const snap = this.getLatestSnapshot(symbol);
+    const info = SYMBOL_UNIVERSE.find(s => s.symbol === symbol);
+    if (!snap || !info) return;
+
+    const newLtp = Number((snap.ltp * (1 + ltpDeltaPct / 100)).toFixed(2));
+    this.symbolPrices.set(symbol, newLtp);
+
+    const changePct = Number((((newLtp - info.basePrice) / info.basePrice) * 100).toFixed(2));
+    const volume = Math.floor(info.avgVolume20d * volumeMultiplier);
+
+    const updatedSnap: SnapshotData = {
+      symbol,
+      timestamp: new Date(),
+      ltp: newLtp,
+      changePct,
+      volume,
+      avgVolume20d: info.avgVolume20d,
+      sourceTrust: 3,
+      sourceType: "simulated",
+      isStale: false
+    };
+
+    this.latestSnapshots.set(symbol, updatedSnap);
+    this.notifyTick(updatedSnap);
+  }
+
   private notifyTick(snap: SnapshotData) {
+    // Maintain 30-tick rolling window
+    const hist = this.priceHistory.get(snap.symbol) || [];
+    hist.push(snap.ltp);
+    if (hist.length > 30) {
+      hist.shift();
+    }
+    this.priceHistory.set(snap.symbol, hist);
+
     this.tickListeners.forEach(cb => cb(snap));
   }
 }
