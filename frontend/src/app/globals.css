@@ -98,18 +98,3 @@ body {
   background: var(--header-bg);
   border-color: var(--header-border);
 }
-
-/* Executive Print / PDF Export Styles */
-@media print {
-  header, button, nav, .no-print {
-    display: none !important;
-  }
-  body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-  }
-  main {
-    max-width: 100% !important;
-    padding: 0 !important;
-  }
-}

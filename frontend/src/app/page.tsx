@@ -415,7 +415,7 @@ export default function WatchlistHomePage() {
                 </p>
               </div>
             </div>
-            <div className="text-xs font-semibold text-brand-500 flex items-center space-x-1 group-hover:translate-x-1 transition-transform font-mono">
+            <div className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center space-x-1 group-hover:translate-x-1 transition-transform font-mono">
               <span>{t("view_diff")}</span>
               <span>→</span>
             </div>
@@ -426,22 +426,22 @@ export default function WatchlistHomePage() {
             <div className="space-y-2.5 pt-2 border-t border-surfaceBorder/50">
               <div className="flex flex-wrap gap-2">
                 {unreadSummary.confirmed > 0 && (
-                  <span className="flex items-center space-x-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-900 dark:text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
                     <span>🟢</span><span>{unreadSummary.confirmed} Confirmed</span>
                   </span>
                 )}
                 {unreadSummary.unexplained > 0 && (
-                  <span className="flex items-center space-x-1 bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
                     <span>🟡</span><span>{unreadSummary.unexplained} Unexplained</span>
                   </span>
                 )}
                 {unreadSummary.uncertain > 0 && (
-                  <span className="flex items-center space-x-1 bg-redwood-bg border border-redwood-border text-redwood-text text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-rose-100 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/40 text-rose-900 dark:text-rose-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
                     <span>🔴</span><span>{unreadSummary.uncertain} Uncertain</span>
                   </span>
                 )}
                 {unreadSummary.rippleAlerts > 0 && (
-                  <span className="flex items-center space-x-1 bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[10px] font-mono font-bold px-2 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-purple-100 dark:bg-purple-500/20 border border-purple-300 dark:border-purple-500/40 text-purple-900 dark:text-purple-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
                     <Waves className="w-3 h-3" />
                     <span>{unreadSummary.rippleAlerts} Ripple</span>
                   </span>

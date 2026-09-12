@@ -10,7 +10,7 @@ import { VoiceBriefingButton } from "@/components/VoiceBriefingButton";
 import { watchlistApi, ChangeEventData, User } from "@/lib/api";
 import { TIER_BADGES, TIER_LABELS, TierKey } from "@/lib/tiers";
 import { useI18n } from "@/lib/i18n";
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ShieldCheck, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ShieldCheck, FileText, Sparkles, BookOpen } from "lucide-react";
 
 export default function SinceLastCheckedPage() {
   const router = useRouter();
@@ -22,6 +22,22 @@ export default function SinceLastCheckedPage() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [markingSeen, setMarkingSeen] = useState(false);
+
+  const parseNoteDetails = (rawNotes?: string | null) => {
+    if (!rawNotes) return null;
+    try {
+      const parsed = JSON.parse(rawNotes);
+      if (parsed && typeof parsed === "object") {
+        const parts: string[] = [];
+        if (parsed.thesisText) parts.push(`Thesis: "${parsed.thesisText}"`);
+        if (parsed.invalidationPoint) parts.push(`Invalidation: "${parsed.invalidationPoint}"`);
+        return parts.join(" • ") || null;
+      }
+    } catch (_) {
+      return `Note: "${rawNotes}"`;
+    }
+    return `Note: "${rawNotes}"`;
+  };
 
   const loadEvents = async () => {
     const storedUser = typeof window !== "undefined" ? localStorage.getItem("dhyan_user") : null;
@@ -120,16 +136,6 @@ export default function SinceLastCheckedPage() {
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Judge Leave-Behind Executive PDF Export */}
-            <button
-              onClick={() => window.print()}
-              className="min-h-[44px] px-3 py-2 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-foreground font-semibold rounded-xl text-xs flex items-center space-x-1.5 transition-all shadow-sm"
-              title="Print or Save clean 1-Page Executive Briefing PDF for Evaluators/Judges"
-            >
-              <FileText className="w-4 h-4 text-brand-500" />
-              <span className="hidden sm:inline">Export Judge PDF</span>
-            </button>
-
             {/* 60s Voice Briefing Button */}
             <VoiceBriefingButton story={story} />
 
@@ -233,13 +239,17 @@ export default function SinceLastCheckedPage() {
                         {event.narrative}
                       </p>
 
-                      {/* Optional User Note attached to watchlist item */}
-                      {event.notes && (
-                        <div className="text-[11px] text-muted italic bg-badgeBg inline-flex items-center space-x-1 px-2.5 py-1 rounded-md border border-surfaceBorder">
-                          <FileText className="w-3 h-3 text-muted" />
-                          <span>Note: "{event.notes}"</span>
-                        </div>
-                      )}
+                      {/* Parsed Research Thesis & Invalidation Note */}
+                      {(() => {
+                        const parsedNote = parseNoteDetails(event.notes);
+                        if (!parsedNote) return null;
+                        return (
+                          <div className="text-[11px] font-mono text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl border border-brand-300 dark:border-brand-500/40 shadow-sm mt-1">
+                            <BookOpen className="w-3.5 h-3.5 shrink-0 text-brand-500" />
+                            <span className="font-bold">{parsedNote}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Expand Chevron Toggle */}
