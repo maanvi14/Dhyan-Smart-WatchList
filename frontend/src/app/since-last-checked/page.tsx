@@ -103,10 +103,11 @@ export default function SinceLastCheckedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="min-h-screen bg-background text-foreground pb-16 bg-grid-fintech relative">
+      <div className="absolute inset-0 ambient-glow pointer-events-none" />
       <Header watchlistId={user?.watchlistId} />
 
-      <main className="max-w-4xl mx-auto px-4 pt-4">
+      <main className="max-w-4xl mx-auto px-4 pt-4 relative z-10">
 
         {/* Back Link */}
         <div className="mb-4">

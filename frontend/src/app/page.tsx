@@ -274,7 +274,8 @@ export default function WatchlistHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16">
+    <div className="min-h-screen bg-background text-foreground pb-16 bg-grid-fintech relative">
+      <div className="absolute inset-0 ambient-glow pointer-events-none" />
       <Header
         watchlistId={user?.watchlistId}
         onToggleDebug={() => setShowDebug(!showDebug)}

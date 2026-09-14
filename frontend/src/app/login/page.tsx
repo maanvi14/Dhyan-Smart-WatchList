@@ -71,8 +71,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-4 bg-grid-fintech relative overflow-hidden">
+      <div className="absolute inset-0 ambient-glow pointer-events-none" />
+      <div className="w-full max-w-md relative z-10">
         
         {/* Brand Header */}
         <div className="text-center mb-8">
