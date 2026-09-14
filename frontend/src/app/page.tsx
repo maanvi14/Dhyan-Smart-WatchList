@@ -358,7 +358,7 @@ export default function WatchlistHomePage() {
 
         {/* Contextual "Time Away" Personal Timeline Banner */}
         {timeAwayString && (
-          <div className="bg-gradient-to-r from-brand-500/15 via-surface to-surfaceElevated border border-brand-500/40 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3 shadow-md">
+          <div className="bg-gradient-to-br from-brand-500/8 to-surface border border-brand-500/20 rounded-2xl p-4 mb-4 flex items-start sm:items-center justify-between gap-3 shadow-sm">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 shrink-0">
                 <Clock className="w-4 h-4 text-brand-500" />
@@ -404,33 +404,33 @@ export default function WatchlistHomePage() {
         {/* 📬 Persistent Flagship Unread Inbox Banner (Unread Inbox Architecture) */}
         <Link
           href="/since-last-checked"
-          className="group block bg-gradient-to-r from-brand-500/10 via-teal-500/10 to-surfaceElevated border border-brand-500/30 hover:border-brand-500/60 rounded-2xl p-4 mb-6 transition-all shadow-md active:scale-[0.99]"
+          className="group block bg-gradient-to-r from-brand-500/8 via-surface to-surfaceElevated border border-brand-500/20 hover:border-brand-500/40 rounded-2xl p-4 mb-6 transition-all shadow-sm active:scale-[0.99]"
         >
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="flex items-start space-x-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 shrink-0 mt-0.5">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center text-brand-500 shrink-0">
+                <Bell className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-bold text-foreground text-sm group-hover:text-brand-500 transition-colors">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-bold text-foreground text-sm group-hover:text-brand-500 transition-colors whitespace-nowrap">
                     {t("since_last_checked")}
                   </h2>
                   {unreadCount > 0 && (
-                    <span className="bg-brand-500 text-slate-950 text-[11px] font-bold px-2 py-0.5 rounded-full font-mono shrink-0">
+                    <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full font-mono shrink-0 leading-4">
                       {unreadCount > 9 ? "9+" : unreadCount} {t("new_badge")}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted mt-0.5">
+                <p className="text-[11px] text-muted">
                   {unreadCount > 0
                     ? `${unreadCount > 9 ? "9+" : unreadCount} ${t("events_logged")}`
                     : t("no_new_events")}
                 </p>
               </div>
             </div>
-            <div className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-mono shrink-0">
-              <span>{t("view_diff")}</span>
+            <div className="text-[11px] font-bold text-brand-500 dark:text-brand-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
+              <span>View</span>
               <span>→</span>
             </div>
           </div>
@@ -495,37 +495,35 @@ export default function WatchlistHomePage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Attention Priority Sort Toggle */}
+          <div className="flex items-center gap-1.5">
+            {/* Attention Sort */}
             <button
               onClick={() => setSortByAttention(v => !v)}
-              className={`min-h-[44px] px-3 py-2 border rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+              className={`h-10 px-3 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 sortByAttention
-                  ? "bg-amber-500 text-slate-950 border-amber-600 font-bold"
+                  ? "bg-amber-500 text-white border-amber-600 font-bold"
                   : "bg-surface hover:bg-surfaceElevated border-surfaceBorder text-muted hover:text-foreground"
               }`}
-              title="Prioritize stocks with critical filings or severe anomalies"
             >
               <Filter className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">{sortByAttention
-                ? (language === "hi" ? "ध्यान क्रम" : "Sorted")
-                : (language === "hi" ? "ध्यान पहले" : "Attention First")
-              }</span>
+              <span className="hidden sm:inline text-[11px]">{sortByAttention ? "Sorted" : "Attention First"}</span>
             </button>
 
+            {/* Ask Dhyan */}
             <button
               onClick={() => setShowChat(true)}
-              className="min-h-[44px] min-w-[44px] px-2 sm:px-3.5 py-2 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+              className="h-10 px-3 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all"
             >
               <Bot className="w-4 h-4 text-brand-500 shrink-0" />
-              <span className="hidden sm:inline">{t("ask_dhyan")}</span>
+              <span className="hidden sm:inline text-[11px]">{t("ask_dhyan")}</span>
             </button>
 
+            {/* Add Stock */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="min-h-[44px] px-3 sm:px-4 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
+              className="h-10 px-3 sm:px-4 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-lg text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
             >
-              <Plus className="w-4 h-4 text-slate-950 shrink-0" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>{t("add_stock")}</span>
             </button>
           </div>
@@ -556,160 +554,165 @@ export default function WatchlistHomePage() {
               return (
                 <div
                   key={item.id}
-                  className={`p-4 flex items-center justify-between hover:bg-surfaceElevated transition-all group ${tierAccent}`}
+                  className={`p-3.5 sm:p-4 hover:bg-surfaceElevated transition-all group ${tierAccent}`}
                 >
-                  {/* Left: Symbol & Sector */}
-                  <div className="flex-1 min-w-0 pr-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-bold text-sm text-foreground font-mono tracking-tight shrink-0">
-                        {item.symbol}
-                      </span>
-                      {item.isStale && (
-                        <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0">
-                          🔴 {TIER_LABELS.UNCERTAIN}
+                  {/* Row 1: Symbol, Badges, & Company (Left) vs LTP & Change % (Right) */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-sm sm:text-base text-foreground font-mono tracking-tight shrink-0">
+                          {item.symbol}
                         </span>
-                      )}
-                      {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                        <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0">
-                          🟢 {TIER_LABELS.CONFIRMED}
-                        </span>
-                      )}
-                      {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                        <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0">
-                          🟡 {TIER_LABELS.UNEXPLAINED}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-muted truncate mt-0.5 font-medium">
-                      {item.name} • <span className="opacity-80">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-                    </div>
-
-                    {/* Tier History Dot Strip */}
-                    {item.tierHistory && item.tierHistory.length > 0 && (
-                      <div className="flex items-center space-x-1.5 mt-1" title="Signal History: Green = Catalyst Confirmed, Yellow = Uninformed Flow, Red = Stale Quote">
-                        <span className="text-[9px] font-mono text-muted uppercase tracking-wider">Recent:</span>
-                        <div className="flex items-center space-x-1">
-                          {item.tierHistory.map((tier, idx) => (
-                            <span
-                              key={idx}
-                              className={`w-2 h-2 rounded-full inline-block ${
-                                tier === "CONFIRMED"
-                                  ? "bg-emerald-500"
-                                  : tier === "UNEXPLAINED"
-                                  ? "bg-amber-400"
-                                  : "bg-rose-500"
-                              }`}
-                              title={TIER_LABELS[tier] || tier}
-                            />
-                          ))}
-                        </div>
+                        {item.isStale && (
+                          <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0 whitespace-nowrap">
+                            🔴 {TIER_LABELS.UNCERTAIN}
+                          </span>
+                        )}
+                        {item.latestEvent?.confidenceTier === "CONFIRMED" && (
+                          <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+                            🟢 {TIER_LABELS.CONFIRMED}
+                          </span>
+                        )}
+                        {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
+                          <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+                            🟡 {TIER_LABELS.UNEXPLAINED}
+                          </span>
+                        )}
                       </div>
-                    )}
 
-                    {/* Research Thesis Preview */}
-                    {(() => {
-                      let parsedThesis = "";
-                      if (item.notes) {
-                        try {
-                          const parsed = JSON.parse(item.notes);
-                          if (parsed?.thesisText) parsedThesis = parsed.thesisText;
-                        } catch (_) {
-                          parsedThesis = item.notes;
-                        }
-                      }
-                      if (parsedThesis) {
-                        return (
-                          <button
-                            onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                            className="text-[11px] text-brand-500 hover:text-brand-400 font-mono mt-1.5 bg-brand-500/10 hover:bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-lg flex items-center space-x-1.5 transition-colors text-left"
-                            title="Click to edit research thesis & invalidation point"
-                          >
-                            <BookOpen className="w-3 h-3 shrink-0" />
-                            <span className="truncate max-w-[240px]">Thesis: "{parsedThesis}"</span>
-                          </button>
-                        );
-                      }
-                      return (
-                        <button
-                          onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                          className="text-[10px] text-muted hover:text-brand-500 font-mono mt-1 flex items-center space-x-1 opacity-70 hover:opacity-100 transition-opacity"
-                          title="Record why you track this stock and when thesis breaks"
-                        >
-                          <BookOpen className="w-3 h-3" />
-                          <span>+ Add Thesis &amp; Invalidation</span>
-                        </button>
-                      );
-                    })()}
-                  </div>
+                      <div className="text-xs text-muted truncate mt-0.5 font-medium">
+                        {item.name} • <span className="opacity-80">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
+                      </div>
+                    </div>
 
-                  {/* Center: Watermark Delta Sparkline */}
-                  <div
-                    onClick={() => {
-                      setSelectedVisualizerItem(item);
-                      setShowVisualizerModal(true);
-                    }}
-                    className="hidden sm:block px-3 cursor-pointer hover:scale-105 transition-transform"
-                    title="Click to open Evidence-Pinned Stock Visualizer"
-                  >
-                    <WatermarkSparkline
-                      points={item.sparkline}
-                      changePct={item.changePct}
-                      hasWatermarkDelta={Boolean(item.lastViewedAt)}
-                    />
-                  </div>
-
-                  {/* Right: LTP & Change % */}
-                  <div className="text-right flex items-center space-x-2.5 shrink-0">
-                    <div className="min-w-[70px]">
-                      <div className="font-bold font-mono text-sm text-foreground tabular-nums">
+                    {/* Right: LTP & Change % */}
+                    <div className="text-right shrink-0">
+                      <div className="font-bold font-mono text-sm sm:text-base text-foreground tabular-nums">
                         ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </div>
                       <div
-                        className={`text-xs font-mono font-semibold flex items-center justify-end space-x-0.5 ${
-                          isPositive ? "text-emerald-500" : "text-rose-500"
+                        className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
+                          isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                         }`}
                       >
                         {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         <span>{sign}{item.changePct.toFixed(2)}%</span>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Quick Micro-Actions */}
-                    <div className="flex items-center space-x-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Row 2: Recent Signal Dots, Research Thesis & Actions */}
+                  <div className="mt-2 pt-2 border-t border-surfaceBorder/40 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                      {/* Tier History Dot Strip */}
+                      {item.tierHistory && item.tierHistory.length > 0 && (
+                        <div className="flex items-center gap-1 shrink-0" title="Signal History">
+                          <span className="text-[9px] font-mono text-muted uppercase">Recent:</span>
+                          <div className="flex items-center gap-1">
+                            {item.tierHistory.map((tier, idx) => (
+                              <span
+                                key={idx}
+                                className={`w-2 h-2 rounded-full inline-block ${
+                                  tier === "CONFIRMED"
+                                    ? "bg-emerald-500"
+                                    : tier === "UNEXPLAINED"
+                                    ? "bg-amber-400"
+                                    : "bg-rose-500"
+                                }`}
+                                title={TIER_LABELS[tier] || tier}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Research Thesis Preview */}
+                      {(() => {
+                        let parsedThesis = "";
+                        if (item.notes) {
+                          try {
+                            const parsed = JSON.parse(item.notes);
+                            if (parsed?.thesisText) parsedThesis = parsed.thesisText;
+                          } catch (_) {
+                            parsedThesis = item.notes;
+                          }
+                        }
+                        if (parsedThesis) {
+                          return (
+                            <button
+                              onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                              className="text-[11px] text-brand-500 hover:text-brand-400 font-mono bg-brand-500/10 hover:bg-brand-500/15 border border-brand-500/25 px-2 py-0.5 rounded-lg flex items-center gap-1.5 transition-colors text-left max-w-full"
+                              title="Click to edit research thesis & invalidation point"
+                            >
+                              <BookOpen className="w-3 h-3 shrink-0" />
+                              <span className="truncate max-w-[180px] sm:max-w-[280px]">Thesis: "{parsedThesis}"</span>
+                            </button>
+                          );
+                        }
+                        return (
+                          <button
+                            onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                            className="text-[10px] text-muted hover:text-brand-500 font-mono flex items-center gap-1 opacity-75 hover:opacity-100 transition-opacity"
+                            title="Record why you track this stock and when thesis breaks"
+                          >
+                            <BookOpen className="w-3 h-3" />
+                            <span>+ Thesis</span>
+                          </button>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Sparkline & Micro-Actions */}
+                    <div className="flex items-center gap-1 shrink-0 ml-auto">
+                      {/* Watermark Delta Sparkline on larger screens */}
+                      <div
+                        onClick={() => {
+                          setSelectedVisualizerItem(item);
+                          setShowVisualizerModal(true);
+                        }}
+                        className="hidden md:block pr-2 cursor-pointer hover:scale-105 transition-transform"
+                        title="Click to open Evidence-Pinned Stock Visualizer"
+                      >
+                        <WatermarkSparkline
+                          points={item.sparkline}
+                          changePct={item.changePct}
+                          hasWatermarkDelta={Boolean(item.lastViewedAt)}
+                        />
+                      </div>
+
                       <button
                         onClick={() => {
                           setSelectedVisualizerItem(item);
                           setShowVisualizerModal(true);
                         }}
-                        className="min-h-[44px] min-w-[36px] text-muted hover:text-brand-500 flex items-center justify-center"
+                        className="h-7 w-7 text-muted hover:text-brand-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
                         title="Open Catalyst-Pinned Visualizer"
                       >
-                        <BarChart2 className="w-4 h-4" />
+                        <BarChart2 className="w-3.5 h-3.5" />
                       </button>
 
                       <button
                         onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                        className="min-h-[44px] min-w-[36px] text-muted hover:text-brand-500 flex items-center justify-center"
+                        className="h-7 w-7 text-muted hover:text-brand-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
                         title="Edit Research Thesis"
                       >
-                        <BookOpen className="w-4 h-4" />
+                        <BookOpen className="w-3.5 h-3.5" />
                       </button>
 
                       <button
                         onClick={() => handleMarkItemSeen(item.id)}
-                        className="min-h-[44px] min-w-[36px] text-muted hover:text-emerald-500 flex items-center justify-center"
+                        className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
                         title="Mark seen (update watermark for this item)"
                       >
-                        <CheckCheck className="w-4 h-4" />
+                        <CheckCheck className="w-3.5 h-3.5" />
                       </button>
 
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className="min-h-[44px] min-w-[36px] text-muted hover:text-rose-500 flex items-center justify-center"
+                        className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
                         title="Remove from Watchlist"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

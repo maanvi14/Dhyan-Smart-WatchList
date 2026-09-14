@@ -82,8 +82,8 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-surface border border-surfaceBorder rounded-3xl w-full max-w-lg p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-surface border border-surfaceBorder rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg p-5 sm:p-6 shadow-2xl relative animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-surfaceBorder mb-4">
@@ -146,7 +146,7 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   activeCategory === cat
-                    ? "bg-brand-500 text-slate-950 font-bold shadow-sm"
+                    ? "bg-brand-500 text-white font-bold shadow-sm"
                     : "bg-surfaceElevated hover:bg-surface text-muted hover:text-foreground border border-surfaceBorder"
                 }`}
               >
@@ -178,7 +178,7 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-[10px] ${
                         isSelected
-                          ? "bg-brand-500 text-slate-950"
+                          ? "bg-brand-500 text-white"
                           : "bg-surface border border-surfaceBorder text-muted"
                       }`}>
                         {item.symbol.replace("NSE:", "").slice(0, 2)}
@@ -236,7 +236,7 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
             <button
               type="submit"
               disabled={!selectedSymbol || loading}
-              className="min-h-[40px] px-6 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-full text-xs transition-all shadow-md shadow-brand-500/20 active:scale-95 disabled:opacity-40 flex items-center space-x-1.5"
+              className="min-h-[40px] px-6 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-full text-xs transition-all shadow-md shadow-brand-500/20 active:scale-95 disabled:opacity-40 flex items-center space-x-1.5"
             >
               {loading ? (
                 <span>Adding...</span>

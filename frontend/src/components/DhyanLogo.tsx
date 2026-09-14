@@ -16,7 +16,7 @@ export function DhyanLogo({ size = "md", className = "", useFullBanner = false }
 
   return (
     <div
-      className={`relative flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-emerald-500/30 dark:border-emerald-500/40 shadow-md shadow-brand-500/15 transition-all duration-300 group-hover:scale-105 group-hover:shadow-brand-500/30 group-hover:border-brand-500/60 overflow-hidden shrink-0 ${dimensions[size]} ${className}`}
+      className={`relative flex items-center justify-center rounded-full bg-white dark:bg-slate-900 border border-brand-500/30 dark:border-brand-500/40 shadow-md shadow-brand-500/15 transition-all duration-300 group-hover:scale-105 group-hover:shadow-brand-500/30 group-hover:border-brand-500/60 overflow-hidden shrink-0 ${dimensions[size]} ${className}`}
     >
       <img
         src={useFullBanner ? "/dhyan-logo.png" : "/dhyan-icon.png"}

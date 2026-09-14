@@ -23,7 +23,7 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
         <div className="flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-brand-500" />
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-            Watchlist Signal Quality (7-Day Mark)
+            Signal Quality · 7 Day
           </span>
         </div>
         <span className="text-[11px] font-mono text-muted">

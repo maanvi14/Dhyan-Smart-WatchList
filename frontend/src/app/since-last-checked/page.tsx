@@ -130,7 +130,7 @@ export default function SinceLastCheckedPage() {
         </div>
 
         {/* Header Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-surfaceBorder">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-surfaceBorder">
           <div>
             <h1 className="text-xl font-extrabold text-foreground flex items-center space-x-2">
               <ShieldCheck className="w-6 h-6 text-brand-500" />
@@ -153,9 +153,9 @@ export default function SinceLastCheckedPage() {
               <button
                 onClick={handleMarkSeen}
                 disabled={markingSeen}
-                className="min-h-[40px] px-5 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-full text-xs flex items-center space-x-2 transition-all active:scale-95 shadow-md shadow-brand-500/20 disabled:opacity-50"
+                className="min-h-[40px] px-5 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-full text-xs flex items-center space-x-2 transition-all active:scale-95 shadow-md shadow-brand-500/20 disabled:opacity-50"
               >
-                <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                <CheckCircle2 className="w-4 h-4 text-white" />
                 <span>{markingSeen ? (language === "hi" ? "अपडेट हो रहा..." : "Updating...") : t("mark_all_seen")}</span>
               </button>
             )}
@@ -176,7 +176,7 @@ export default function SinceLastCheckedPage() {
         )}
 
         {/* Confidence Tier Legend */}
-        <div className="bg-surface border border-surfaceBorder rounded-2xl p-3.5 mb-6 flex flex-wrap items-center justify-between gap-2 text-xs shadow-sm">
+        <div className="bg-surface border border-surfaceBorder rounded-2xl p-3 mb-4 flex flex-wrap items-center gap-2 text-xs shadow-sm">
           <span className="text-muted font-bold text-xs uppercase tracking-wider">
             {t("confidence_tiers")}
           </span>

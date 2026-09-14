@@ -96,11 +96,11 @@ export default function LoginPage() {
             <button
               onClick={handleDemoLogin}
               disabled={loading}
-              className="w-full min-h-[48px] bg-gradient-to-r from-brand-500 to-teal-500 hover:from-brand-600 hover:to-teal-600 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all shadow-lg shadow-brand-500/20 active:scale-95 disabled:opacity-50"
+              className="w-full min-h-[48px] bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all shadow-lg shadow-brand-500/25 active:scale-95 disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4 text-slate-950" />
+              <Sparkles className="w-4 h-4 text-white" />
               <span>{t("demo_login_title")}</span>
-              <ArrowRight className="w-4 h-4 text-slate-950" />
+              <ArrowRight className="w-4 h-4 text-white" />
             </button>
             <p className="text-[11px] text-center text-muted mt-2">
               Pre-loaded with {seedStockCount} stocks & change events across all 3 tiers.

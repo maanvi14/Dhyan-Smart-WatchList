@@ -59,8 +59,8 @@ export function ResearchThesisModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-surface border border-surfaceBorder rounded-2xl w-full max-w-lg p-5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-surface border border-surfaceBorder rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg p-5 shadow-2xl relative animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder mb-4">
@@ -119,10 +119,10 @@ export function ResearchThesisModal({
 
           {/* Action Footer */}
           <div className="pt-3 border-t border-surfaceBorder flex items-center justify-between">
-            <span className="text-[11px] font-mono text-muted">
+            <span className="text-[11px] font-mono text-muted hidden sm:inline">
               Document reason before price reacts.
             </span>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 ml-auto">
               <button
                 type="button"
                 onClick={onClose}
@@ -134,7 +134,7 @@ export function ResearchThesisModal({
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-slate-950 font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-brand-500/20 transition-all active:scale-95"
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-brand-500/20 transition-all active:scale-95"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{saving ? "Saving..." : "Save Thesis"}</span>

@@ -405,18 +405,18 @@ export function AskDhyanChat({ watchlistId, isOpen, onClose }: AskDhyanChatProps
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex justify-end">
-      <div className="bg-surface border-l border-surfaceBorder w-full max-w-md h-full flex flex-col shadow-2xl relative">
+      <div className="bg-surface border-l border-surfaceBorder w-full sm:max-w-md h-full flex flex-col shadow-2xl relative">
 
         {/* ── Header ── */}
         <div className="p-4 border-b border-surfaceBorder flex items-center justify-between bg-surfaceElevated shrink-0">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center shadow-md">
-              <Bot className="w-5 h-5 text-slate-950" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-md">
+              <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-bold text-foreground text-sm flex items-center space-x-1.5">
                 <span>{t("ask_dhyan")}</span>
-                <span className="bg-brand-500/15 text-brand-500 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-brand-500/30">
+                <span className="bg-brand-500/15 text-brand-600 dark:text-brand-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-brand-500/30">
                   {t("grounded_badge")}
                 </span>
               </h3>
@@ -477,7 +477,7 @@ export function AskDhyanChat({ watchlistId, isOpen, onClose }: AskDhyanChatProps
                   <div
                     className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-sm ${
                       msg.sender === "user"
-                        ? "bg-brand-500 text-slate-950 font-medium rounded-tr-none"
+                        ? "bg-brand-500 text-white font-medium rounded-tr-none"
                         : msg.isRefusal
                         ? "bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 rounded-tl-none"
                         : "bg-surfaceElevated border border-surfaceBorder text-foreground rounded-tl-none"
@@ -524,9 +524,9 @@ export function AskDhyanChat({ watchlistId, isOpen, onClose }: AskDhyanChatProps
                 <button
                   type="submit"
                   disabled={!chatInput.trim() || chatLoading}
-                  className="min-h-[44px] min-w-[44px] bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+                  className="min-h-[44px] min-w-[44px] bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 shadow-sm"
                 >
-                  <Send className="w-4 h-4 text-slate-950" />
+                  <Send className="w-4 h-4 text-white" />
                 </button>
               </div>
             </form>
@@ -554,7 +554,7 @@ export function AskDhyanChat({ watchlistId, isOpen, onClose }: AskDhyanChatProps
                 <button
                   type="submit"
                   disabled={!tipText.trim() || tipLoading}
-                  className="w-full min-h-[46px] bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 text-sm shadow-md shadow-brand-500/20"
+                  className="w-full min-h-[46px] bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 text-sm shadow-md shadow-brand-500/20"
                 >
                   {tipLoading ? (
                     <>

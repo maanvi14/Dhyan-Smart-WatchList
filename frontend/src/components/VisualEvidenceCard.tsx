@@ -326,7 +326,7 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
                 </span>
                 <button
                   onClick={() => alert("Downloaded verified PDF extract for " + event.symbol)}
-                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-full text-xs flex items-center space-x-1.5 shadow-sm active:scale-95 transition-all"
+                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full text-xs flex items-center space-x-1.5 shadow-sm active:scale-95 transition-all"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download PDF</span>

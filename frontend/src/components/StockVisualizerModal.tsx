@@ -132,8 +132,8 @@ export function StockVisualizerModal({
   const watermarkX = (width - 40) * 0.55 + 20;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto font-sans">
-      <div className="bg-surface border border-surfaceBorder rounded-3xl w-full max-w-2xl p-6 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto font-sans">
+      <div className="bg-surface border border-surfaceBorder rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl p-4 sm:p-6 shadow-2xl relative sm:my-8 animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
         
         {/* Modal Top Header */}
         <div className="flex items-start justify-between pb-4 border-b border-surfaceBorder mb-5">
@@ -198,7 +198,7 @@ export function StockVisualizerModal({
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                   timeframe === tf
-                    ? "bg-brand-500 text-slate-950 font-bold shadow-sm"
+                    ? "bg-brand-500 text-white font-bold shadow-sm"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 }`}
               >
@@ -426,7 +426,7 @@ export function StockVisualizerModal({
           <div className="flex items-center space-x-2 ml-auto">
             <button
               onClick={onClose}
-              className="min-h-[38px] px-6 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-slate-950 text-xs font-bold transition-all shadow-md shadow-brand-500/20 active:scale-95"
+              className="min-h-[38px] px-6 py-2 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md shadow-brand-500/20 active:scale-95"
             >
               Done
             </button>
