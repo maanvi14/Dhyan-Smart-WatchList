@@ -35,35 +35,35 @@
 }
 
 .dark {
-  /* Dark mode — deep navy trading terminal */
-  --background: #0A0E17;
-  --foreground: #E8ECF1;
-  --surface: #111827;
-  --surface-border: #1F2937;
-  --surface-elevated: #1A2332;
-  --muted: #8B95A5;
-  --muted-hover: #CBD5E1;
-  --card-bg: #111827;
-  --card-hover: #1A2332;
-  --input-bg: #0D1321;
-  --input-border: #1F2937;
-  --badge-bg: #1F2937;
-  --badge-text: #C8D1DC;
-  --note-bg: rgba(99, 102, 241, 0.08);
-  --note-border: rgba(99, 102, 241, 0.25);
-  --header-bg: rgba(10, 14, 23, 0.97);
-  --header-border: #1F2937;
+  /* Dark mode — obsidian & slate institutional trading palette */
+  --background: #0B0F19;
+  --foreground: #F8FAFC;
+  --surface: #121826;
+  --surface-border: #1E293B;
+  --surface-elevated: #182234;
+  --muted: #94A3B8;
+  --muted-hover: #E2E8F0;
+  --card-bg: #121826;
+  --card-hover: #182234;
+  --input-bg: #0E1422;
+  --input-border: #1E293B;
+  --badge-bg: #182234;
+  --badge-text: #E2E8F0;
+  --note-bg: rgba(99, 102, 241, 0.05);
+  --note-border: #1E293B;
+  --header-bg: rgba(11, 15, 25, 0.95);
+  --header-border: #1E293B;
 
   /* Redwood / Danger Palette — Dark */
-  --redwood-50:     rgba(153, 27, 27, 0.15);
-  --redwood-100:    rgba(153, 27, 27, 0.25);
-  --redwood-200:    rgba(239, 68, 68, 0.25);
-  --redwood-500:    #EF4444;
-  --redwood-600:    #DC2626;
-  --redwood-700:    #B91C1C;
-  --redwood-bg:     rgba(80, 15, 15, 0.4);
-  --redwood-border: rgba(239, 68, 68, 0.35);
-  --redwood-text:   #FCA5A5;
+  --redwood-50:     rgba(244, 63, 94, 0.08);
+  --redwood-100:    rgba(244, 63, 94, 0.15);
+  --redwood-200:    rgba(244, 63, 94, 0.25);
+  --redwood-500:    #F43F5E;
+  --redwood-600:    #E11D48;
+  --redwood-700:    #BE123C;
+  --redwood-bg:     rgba(244, 63, 94, 0.12);
+  --redwood-border: rgba(244, 63, 94, 0.25);
+  --redwood-text:   #FB7185;
 }
 
 body {

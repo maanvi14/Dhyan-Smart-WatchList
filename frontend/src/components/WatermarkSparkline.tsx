@@ -40,7 +40,7 @@ export function WatermarkSparkline({
   };
 
   const isPositive = changePct >= 0;
-  const activeColor = isPositive ? "#00D09C" : "#EF4444"; // Groww emerald mint or coral red
+  const activeColor = isPositive ? "#10B981" : "#F43F5E";
   const gradientId = `sparkline-grad-${Math.random().toString(36).substr(2, 9)}`;
 
   // Area under curve coords for afterPts
