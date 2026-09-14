@@ -201,8 +201,17 @@ export default function WatchlistHomePage() {
       }
     });
 
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setShowAddModal(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+
     return () => {
       clearInterval(feedInterval);
+      window.removeEventListener("keydown", handleGlobalKeyDown);
       socket.off("price_tick");
       socket.off("new_change_event");
     };
@@ -270,6 +279,7 @@ export default function WatchlistHomePage() {
         watchlistId={user?.watchlistId}
         onToggleDebug={() => setShowDebug(!showDebug)}
         onToggleChat={() => setShowChat(!showChat)}
+        onOpenSearch={() => setShowAddModal(true)}
         showDebug={showDebug}
         feedStatus={feedStatus}
       />

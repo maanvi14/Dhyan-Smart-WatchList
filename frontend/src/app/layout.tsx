@@ -5,6 +5,10 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "Dhyan — Smart Market Watchlist",
   description: "Smart stock watchlist for Indian retail investors with verified confidence tiers.",
+  icons: {
+    icon: "/dhyan-logo.png",
+    apple: "/dhyan-logo.png",
+  },
 };
 
 export default function RootLayout({

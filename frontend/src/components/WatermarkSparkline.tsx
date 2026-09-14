@@ -40,11 +40,33 @@ export function WatermarkSparkline({
   };
 
   const isPositive = changePct >= 0;
-  const activeColor = isPositive ? "#10B981" : "#EF4444"; // emerald or rose/redwood
+  const activeColor = isPositive ? "#00D09C" : "#EF4444"; // Groww emerald mint or coral red
+  const gradientId = `sparkline-grad-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Area under curve coords for afterPts
+  const activeCoords = hasWatermarkDelta ? afterPts : svgCoords;
+  const areaPath = activeCoords.length > 1
+    ? `${toPath(activeCoords)} L ${activeCoords[activeCoords.length - 1][0]},${height} L ${activeCoords[0][0]},${height} Z`
+    : "";
 
   return (
     <div className="flex flex-col items-end shrink-0" title="Left: Pre-visit | Right: Since last checked">
       <svg width={width} height={height} className="overflow-visible">
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={activeColor} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={activeColor} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Soft subtle area fill */}
+        {areaPath && (
+          <path
+            d={areaPath}
+            fill={`url(#${gradientId})`}
+          />
+        )}
+
         {/* Pre-watermark line (Muted grey) */}
         {hasWatermarkDelta && (
           <path
@@ -53,7 +75,7 @@ export function WatermarkSparkline({
             stroke="#64748B"
             strokeWidth="1.5"
             strokeDasharray="2 2"
-            opacity="0.5"
+            opacity="0.4"
           />
         )}
 

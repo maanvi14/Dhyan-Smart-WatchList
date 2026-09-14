@@ -21,10 +21,13 @@ module.exports = {
         badgeBg: "var(--badge-bg)",
         badgeText: "var(--badge-text)",
         brand: {
+          50: "#ECFDF5",
+          100: "#D1FAE5",
           400: "#34D399",
-          500: "#10B981",
-          600: "#059669",
-          700: "#047857",
+          500: "#00D09C", // Groww signature emerald mint
+          600: "#00B386",
+          700: "#059669",
+          800: "#047857",
         },
         redwood: {
           50: "var(--redwood-50)",
