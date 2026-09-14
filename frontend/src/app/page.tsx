@@ -16,7 +16,14 @@ import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustR
 import { TIER_BADGES, TIER_LABELS } from "@/lib/tiers";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { useI18n } from "@/lib/i18n";
-import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen, AlertOctagon, BarChart2 } from "lucide-react";
+import {
+  Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock,
+  Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen,
+  AlertOctagon, BarChart2, Search, SlidersHorizontal, ShieldCheck, ChevronRight,
+  PieChart, LayoutGrid, ListFilter
+} from "lucide-react";
+
+type ActiveTab = "watchlist" | "attention" | "intel" | "radar";
 
 export default function WatchlistHomePage() {
   const router = useRouter();
@@ -26,7 +33,6 @@ export default function WatchlistHomePage() {
   const [items, setItems] = useState<WatchlistItemPrice[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [feedStatus, setFeedStatus] = useState<any>(null);
-  // 🆕 Rich Unread Inbox summary
   const [unreadSummary, setUnreadSummary] = useState<UnreadSummary | null>(null);
   const [trustRatioData, setTrustRatioData] = useState<TrustRatioData | null>(null);
   const [concentrationWarning, setConcentrationWarning] = useState<string | null>(null);
@@ -40,13 +46,12 @@ export default function WatchlistHomePage() {
   const [selectedVisualizerItem, setSelectedVisualizerItem] = useState<WatchlistItemPrice | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 2026 UX: Attention Priority sorting toggle
-  const [sortByAttention, setSortByAttention] = useState(false);
+  // Modern Trading App Tabs: 'watchlist' | 'attention' | 'intel' | 'radar'
+  const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Time-away contextual state
+  // Contextual time-away string
   const [timeAwayString, setTimeAwayString] = useState<string>("");
-
-  // 🆕 Zero-Click Cross-Device Handoff toast state
   const [handoffToast, setHandoffToast] = useState<{ previousDevice: string; currentDevice: string } | null>(null);
 
   const fetchFeedStatus = async () => {
@@ -88,7 +93,6 @@ export default function WatchlistHomePage() {
       const symbols = fetchedItems.map((i: WatchlistItemPrice) => i.symbol);
       subscribeToSymbols(symbols);
 
-      // Compute contextual "Time Away" IMMEDIATELY from items
       if (fetchedItems.length > 0) {
         const watermarks = fetchedItems
           .map((it: any) => it.lastViewedAt ? new Date(it.lastViewedAt).getTime() : new Date(it.addedAt).getTime())
@@ -101,23 +105,10 @@ export default function WatchlistHomePage() {
         const diffDays = Math.floor(diffHours / 24);
         const timeStr = new Date(latestWatermark).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         
-        const timeAgoStr = diffDays >= 1 ? `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago` : diffHours >= 1 ? `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago` : `${diffMins} min ago`;
-        const timeAgoStrHi = diffDays >= 1 ? `${diffDays} ${diffDays === 1 ? 'दिन' : 'दिन'} पहले` : diffHours >= 1 ? `${diffHours} घंटे पहले` : `${diffMins} मिनट पहले`;
-
-        if (language === "hi") {
-          setTimeAwayString(`आपने आखिरी बार ${timeAgoStrHi} (लगभग ${timeStr}) चेक किया था — आपकी अनुपस्थिति में यह महत्वपूर्ण बदलाव हुए:`);
-        } else {
-          setTimeAwayString(`You last checked ${timeAgoStr} (~${timeStr}) — here is what meaningfully changed in your absence:`);
-        }
-      } else {
-        if (language === "hi") {
-          setTimeAwayString("वॉचलिस्ट में आपका स्वागत है — लाइव मार्केट गतिविधि और पुष्ट फाइलिंग यहाँ दिखेंगी:");
-        } else {
-          setTimeAwayString("Welcome to Dhyan — verified corporate filings and abnormal divergence updates will appear below:");
-        }
+        const timeAgoStr = diffDays >= 1 ? `${diffDays}d ago` : diffHours >= 1 ? `${diffHours}h ago` : `${diffMins}m ago`;
+        setTimeAwayString(`Last checked ${timeAgoStr} (~${timeStr})`);
       }
 
-      // Safe secondary fetches for badge and radar
       try {
         const [unreadRes, unreadSummaryRes, concRes] = await Promise.all([
           watchlistApi.getUnreadCount(u.watchlistId).catch(() => ({ unreadCount: 0 })),
@@ -130,7 +121,6 @@ export default function WatchlistHomePage() {
         if (concRes?.breakdown && concRes.breakdown.length > 0) {
           setSectorBreakdown(concRes.breakdown);
         } else {
-          // Fallback client-side sector breakdown calculation from fetched items
           const secCounts: Record<string, number> = {};
           fetchedItems.forEach((it: any) => {
             const sec = it.sector || "General";
@@ -144,7 +134,7 @@ export default function WatchlistHomePage() {
           setSectorBreakdown(localBreakdown);
         }
       } catch (secErr) {
-        console.warn("Secondary data fetch failed, using fallbacks", secErr);
+        console.warn("Secondary data fetch failed", secErr);
       }
     } catch (err: any) {
       console.error("Failed to load watchlist", err);
@@ -163,15 +153,13 @@ export default function WatchlistHomePage() {
     fetchFeedStatus();
     const feedInterval = setInterval(fetchFeedStatus, 5000);
 
-    // 🆕 Zero-Click Cross-Device Handoff: check if login page stored handoff info
     const handoffData = typeof window !== "undefined" ? localStorage.getItem("dhyan_handoff") : null;
     if (handoffData) {
       try {
         const parsed = JSON.parse(handoffData);
         if (parsed?.previousDevice && parsed?.currentDevice) {
           setHandoffToast(parsed);
-          localStorage.removeItem("dhyan_handoff"); // consume once
-          // Auto-dismiss after 6 seconds
+          localStorage.removeItem("dhyan_handoff");
           setTimeout(() => setHandoffToast(null), 6000);
         }
       } catch (_) {}
@@ -220,27 +208,25 @@ export default function WatchlistHomePage() {
     };
   }, [language]);
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!user) return;
     try {
       await watchlistApi.removeItem(user.watchlistId, itemId);
       loadData();
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   };
 
-  const handleMarkItemSeen = async (itemId: string) => {
+  const handleMarkItemSeen = async (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!user) return;
     try {
       await watchlistApi.markItemSeen(user.watchlistId, itemId);
       loadData();
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   };
 
-  // Portfolio P&L Impact since away calculation
+  // Portfolio P&L Shift calculation
   const portfolioPnL = useMemo(() => {
     if (!items || items.length === 0) return { rupees: 0, pct: 0, totalValue: 0 };
     let totalVal = 0;
@@ -258,27 +244,41 @@ export default function WatchlistHomePage() {
     return { rupees, pct, totalValue: Math.round(totalVal) };
   }, [items]);
 
-  // Sorted items: either default or "Needs Attention First"
-  const sortedItems = useMemo(() => {
-    if (!sortByAttention) return items;
-    return [...items].sort((a, b) => {
-      const magA = (a.latestEvent?.magnitude || 0) + (a.isStale ? 50 : 0) + (Math.abs(a.changePct) * 10);
-      const magB = (b.latestEvent?.magnitude || 0) + (b.isStale ? 50 : 0) + (Math.abs(b.changePct) * 10);
-      return magB - magA;
-    });
-  }, [items, sortByAttention]);
+  // Filter and sort items based on tab and search
+  const displayedItems = useMemo(() => {
+    let list = [...items];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(i => i.symbol.toLowerCase().includes(q) || i.name.toLowerCase().includes(q) || i.sector.toLowerCase().includes(q));
+    }
+    if (activeTab === "attention") {
+      list.sort((a, b) => {
+        const magA = (a.latestEvent?.magnitude || 0) + (a.isStale ? 50 : 0) + (Math.abs(a.changePct) * 10);
+        const magB = (b.latestEvent?.magnitude || 0) + (b.isStale ? 50 : 0) + (Math.abs(b.changePct) * 10);
+        return magB - magA;
+      });
+    }
+    return list;
+  }, [items, activeTab, searchQuery]);
+
+  // Count items needing attention
+  const attentionCount = useMemo(() => {
+    return items.filter(i => i.latestEvent || i.isStale).length;
+  }, [items]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted text-xs font-mono">
-        Loading Dhyan Watchlist...
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted text-xs font-mono gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
+        <span>Loading Institutional Watchlist...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-16 bg-grid-fintech relative">
+    <div className="min-h-screen bg-background text-foreground pb-20 sm:pb-12 bg-grid-fintech relative font-sans">
       <div className="absolute inset-0 ambient-glow pointer-events-none" />
+      
       <Header
         watchlistId={user?.watchlistId}
         onToggleDebug={() => setShowDebug(!showDebug)}
@@ -288,391 +288,244 @@ export default function WatchlistHomePage() {
         feedStatus={feedStatus}
       />
 
-      <main className="max-w-4xl mx-auto px-4 pt-4">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4">
 
-        {/* 📱 Zero-Click Cross-Device Handoff Toast (fixed bottom, auto-dismiss) */}
+        {/* 📱 Zero-Click Cross-Device Handoff Toast */}
         {handoffToast && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
-            <div className="bg-surface border border-brand-500/50 rounded-2xl p-4 shadow-2xl shadow-brand-500/10 flex items-start space-x-3">
-              <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center shrink-0">
+          <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="bg-surface border border-brand-500/40 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 backdrop-blur-md">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/15 border border-brand-500/30 flex items-center justify-center shrink-0">
                 <Smartphone className="w-4 h-4 text-brand-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-mono font-bold text-brand-500 uppercase tracking-wider">
-                  Continuing from {handoffToast.previousDevice}
+                <div className="text-[10px] font-mono font-bold text-brand-500 uppercase">
+                  Synced from {handoffToast.previousDevice}
                 </div>
-                <div className="text-xs text-foreground mt-0.5 leading-relaxed">
-                  Now on <span className="font-bold">{handoffToast.currentDevice}</span>. Your watermarks and unread counts have been seamlessly synced across devices.
+                <div className="text-xs text-foreground mt-0.5">
+                  Watermarks and read receipts synced to <span className="font-bold">{handoffToast.currentDevice}</span>.
                 </div>
               </div>
-              <button
-                onClick={() => setHandoffToast(null)}
-                className="text-muted hover:text-foreground shrink-0 text-lg leading-none"
-              >×</button>
+              <button onClick={() => setHandoffToast(null)} className="text-muted hover:text-foreground text-sm">×</button>
             </div>
-          </div>
-        )}
-
-        {/* Market Feed Status Banner */}
-        {feedStatus && (
-          <div className={`p-3 rounded-2xl mb-4 border flex flex-wrap items-center justify-between gap-2 text-xs backdrop-blur shadow-sm transition-all ${
-            feedStatus?.status === "killed"
-              ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 font-semibold"
-              : feedStatus?.mode === "stale_partial"
-              ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50 text-amber-900 dark:text-amber-300 font-medium"
-              : feedStatus?.mode === "simulated"
-              ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-300"
-              : "bg-surfaceElevated border-surfaceBorder text-foreground"
-          }`}>
-            <div className="flex items-center space-x-2.5 min-w-0">
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                feedStatus?.status === "killed"
-                  ? "bg-rose-500 animate-pulse"
-                  : feedStatus?.mode === "stale_partial"
-                  ? "bg-amber-500 animate-pulse"
-                  : feedStatus?.mode === "simulated"
-                  ? "bg-amber-500"
-                  : "bg-emerald-500 animate-pulse"
-              }`} />
-              <span className="font-semibold font-mono text-xs">
-                {feedStatus?.status === "killed"
-                  ? t("market_feed_killed")
-                  : feedStatus?.mode === "stale_partial"
-                  ? (t("market_feed_stale") || `Market Feed: Live (${feedStatus?.staleCount} symbols delayed/stale)`).replace("{count}", String(feedStatus?.staleCount || 1))
-                  : feedStatus?.mode === "simulated"
-                  ? t("market_feed_simulated")
-                  : t("market_feed_live")}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowDebug(!showDebug)}
-              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-500 dark:text-brand-400 shrink-0 ml-auto"
-            >
-              {showDebug ? t("hide_controls") : t("debug_controls")}
-            </button>
           </div>
         )}
 
         {/* Debug Panel Toggle */}
         {showDebug && <DebugPanel onStatusChange={loadData} />}
 
-        {/* Contextual "Time Away" Personal Timeline Banner */}
-        {timeAwayString && (
-          <div className="bg-gradient-to-br from-brand-500/8 to-surface border border-brand-500/20 rounded-2xl p-4 mb-4 flex items-start sm:items-center justify-between gap-3 shadow-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 shrink-0">
-                <Clock className="w-4 h-4 text-brand-500" />
-              </div>
+        {/* 🏛️ Modern Trading App Portfolio & Intel Summary Bar */}
+        <div className="bg-surface border border-surfaceBorder rounded-2xl p-3.5 sm:p-4 mb-3 sm:mb-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Portfolio / Watchlist Stat */}
+            <div className="flex items-center gap-4 sm:gap-6">
               <div>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-500">
-                  {language === "hi" ? "व्यक्तिगत समयरेखा" : "Personal Watermark Timeline"}
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted font-bold block">
+                  Watchlist Value
+                </span>
+                <div className="text-lg sm:text-xl font-mono font-extrabold text-foreground tabular-nums">
+                  ₹{portfolioPnL.totalValue.toLocaleString("en-IN")}
                 </div>
-                <div className="text-xs font-medium text-foreground leading-relaxed mt-0.5 font-sans">
-                  {timeAwayString}
+              </div>
+
+              <div className="h-8 w-px bg-surfaceBorder hidden xs:block" />
+
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted font-bold block">
+                  Watermark Delta
+                </span>
+                <div className={`text-xs sm:text-sm font-mono font-bold flex items-center gap-1 tabular-nums ${
+                  portfolioPnL.rupees >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                }`}>
+                  {portfolioPnL.rupees >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  <span>{portfolioPnL.rupees >= 0 ? "+" : ""}₹{portfolioPnL.rupees.toLocaleString("en-IN")} ({portfolioPnL.rupees >= 0 ? "+" : ""}{portfolioPnL.pct}%)</span>
                 </div>
-                {items.length > 0 && (
-                  <div className="mt-1.5 inline-flex items-center space-x-2 bg-surface border border-surfaceBorder px-2.5 py-1 rounded-lg text-[11px] font-mono shadow-sm">
-                    <span className="text-muted font-bold">💼 Portfolio Shift:</span>
-                    <span className={`font-bold ${portfolioPnL.rupees >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
-                      {portfolioPnL.rupees >= 0 ? "+" : ""}₹{portfolioPnL.rupees.toLocaleString("en-IN")} ({portfolioPnL.rupees >= 0 ? "+" : ""}{portfolioPnL.pct}%)
-                    </span>
-                    <span className="text-muted text-[10px]">since last check</span>
-                  </div>
-                )}
               </div>
             </div>
-            <Link
-              href="/since-last-checked"
-              className="shrink-0 text-[11px] font-mono font-bold text-brand-500 hover:text-brand-400 underline flex items-center space-x-1"
-            >
-              <span>{language === "hi" ? "अंतर देखें" : "View Diff"}</span>
-              <span>→</span>
-            </Link>
-          </div>
-        )}
 
-        {/* Signal Quality + Sector Radar — collapsed into single row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          <WatchlistTrustRatio data={trustRatioData} />
-          <SectorRiskRadar
-            breakdown={sectorBreakdown}
-            concentrationWarning={concentrationWarning}
-            totalCount={items.length}
-          />
-        </div>
+            {/* Quick Unread Intel Capsule & Add Stock Button */}
+            <div className="flex items-center gap-2 ml-auto">
+              <Link
+                href="/since-last-checked"
+                className="h-9 px-3 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/25 rounded-xl flex items-center gap-2 text-xs font-semibold text-brand-600 dark:text-brand-400 transition-all active:scale-95"
+                title="View Since Last Checked change diff"
+              >
+                <Bell className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                <span className="hidden xs:inline">Intel:</span>
+                <span className="font-bold font-mono">
+                  {unreadCount > 0 ? `${unreadCount} New` : "Synced"}
+                </span>
+                <ChevronRight className="w-3 h-3 opacity-60" />
+              </Link>
 
-        {/* 📬 Persistent Flagship Unread Inbox Banner (Unread Inbox Architecture) */}
-        <Link
-          href="/since-last-checked"
-          className="group block bg-gradient-to-r from-brand-500/8 via-surface to-surfaceElevated border border-brand-500/20 hover:border-brand-500/40 rounded-2xl p-4 mb-6 transition-all shadow-sm active:scale-[0.99]"
-        >
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center text-brand-500 shrink-0">
-                <Bell className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-bold text-foreground text-sm group-hover:text-brand-500 transition-colors whitespace-nowrap">
-                    {t("since_last_checked")}
-                  </h2>
-                  {unreadCount > 0 && (
-                    <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full font-mono shrink-0 leading-4">
-                      {unreadCount > 9 ? "9+" : unreadCount} {t("new_badge")}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted">
-                  {unreadCount > 0
-                    ? `${unreadCount > 9 ? "9+" : unreadCount} ${t("events_logged")}`
-                    : t("no_new_events")}
-                </p>
-              </div>
-            </div>
-            <div className="text-[11px] font-bold text-brand-500 dark:text-brand-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
-              <span>View</span>
-              <span>→</span>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="h-9 px-3 sm:px-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline">Add Stock</span>
+                <span className="xs:hidden">Add</span>
+              </button>
             </div>
           </div>
 
-          {/* Rich Inbox Summary — breakdown pills */}
-          {unreadSummary && unreadSummary.total > 0 && (
-            <div className="space-y-2.5 pt-2 border-t border-surfaceBorder/50">
-              <div className="flex flex-wrap gap-2">
-                {unreadSummary.confirmed > 0 && (
-                  <span className="flex items-center space-x-1 bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-900 dark:text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                    <span>🟢</span><span>{unreadSummary.confirmed} Confirmed</span>
-                  </span>
-                )}
-                {unreadSummary.unexplained > 0 && (
-                  <span className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                    <span>🟡</span><span>{unreadSummary.unexplained} Unexplained</span>
-                  </span>
-                )}
-                {unreadSummary.uncertain > 0 && (
-                  <span className="flex items-center space-x-1 bg-rose-100 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/40 text-rose-900 dark:text-rose-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                    <span>🔴</span><span>{unreadSummary.uncertain} Uncertain</span>
-                  </span>
-                )}
-                {unreadSummary.rippleAlerts > 0 && (
-                  <span className="flex items-center space-x-1 bg-purple-100 dark:bg-purple-500/20 border border-purple-300 dark:border-purple-500/40 text-purple-900 dark:text-purple-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                    <Waves className="w-3 h-3" />
-                    <span>{unreadSummary.rippleAlerts} Ripple</span>
-                  </span>
-                )}
-              </div>
-              {/* Top event preview list */}
-              {unreadSummary.topEvents.length > 0 && (
-                <div className="space-y-1">
-                  {unreadSummary.topEvents.map((ev, i) => (
-                    <div key={i} className="flex items-center justify-between text-[11px] font-mono">
-                      <div className="flex items-center space-x-1.5">
-                        <span className={ev.tier === "CONFIRMED" ? "text-emerald-400" : ev.tier === "UNEXPLAINED" ? "text-amber-400" : "text-redwood-text"}>
-                          {ev.tier === "CONFIRMED" ? "🟢" : ev.tier === "UNEXPLAINED" ? "🟡" : "🔴"}
-                        </span>
-                        <span className="font-bold text-foreground">{ev.name}</span>
-                        {ev.isRipple && (
-                          <span className="text-purple-400 text-[9px]">⚡ via {ev.rippleSource}</span>
-                        )}
-                      </div>
-                      <span className="text-muted text-[10px]">mag {ev.magnitude.toFixed(0)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {timeAwayString && (
+            <div className="text-[11px] font-mono text-muted mt-2 pt-2 border-t border-surfaceBorder/50 flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-brand-500 shrink-0" />
+              <span>{timeAwayString}</span>
             </div>
           )}
-        </Link>
-
-        {/* Watchlist Header & Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div>
-            <h1 className="font-bold text-lg text-foreground">
-              {watchlistData?.name ? (watchlistData.name.toLowerCase().includes("core") ? t("core_watchlist") : watchlistData.name) : t("core_watchlist")}
-            </h1>
-            <span className="text-xs text-muted font-mono">
-              {items.length} {t("stocks_tracked")}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {/* Attention Sort */}
-            <button
-              onClick={() => setSortByAttention(v => !v)}
-              className={`h-10 px-3 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                sortByAttention
-                  ? "bg-amber-500 text-white border-amber-600 font-bold"
-                  : "bg-surface hover:bg-surfaceElevated border-surfaceBorder text-muted hover:text-foreground"
-              }`}
-            >
-              <Filter className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline text-[11px]">{sortByAttention ? "Sorted" : "Attention First"}</span>
-            </button>
-
-            {/* Ask Dhyan */}
-            <button
-              onClick={() => setShowChat(true)}
-              className="h-10 px-3 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all"
-            >
-              <Bot className="w-4 h-4 text-brand-500 shrink-0" />
-              <span className="hidden sm:inline text-[11px]">{t("ask_dhyan")}</span>
-            </button>
-
-            {/* Add Stock */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="h-10 px-3 sm:px-4 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-lg text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>{t("add_stock")}</span>
-            </button>
-          </div>
         </div>
 
-        {/* Stock Universe Ticker List with Sparklines & Accent Borders */}
-        <div className="bg-surface border border-surfaceBorder rounded-2xl divide-y divide-surfaceBorder overflow-hidden shadow-xl">
-          {sortedItems.length === 0 ? (
-            <div className="p-8 text-center text-muted text-xs font-mono">
-              {language === "hi"
-                ? "आपकी वॉचलिस्ट खाली है। पहला स्टॉक ट्रैक करने के लिए \"स्टॉक जोड़ें\" पर टैप करें!"
-                : "Your watchlist is empty. Tap \"Add Stock\" to track your first symbol!"}
+        {/* 🧭 Professional Trading App Segmented Control Tabs */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-surfaceElevated p-1 rounded-xl border border-surfaceBorder overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setActiveTab("watchlist")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === "watchlist"
+                  ? "bg-surface text-foreground font-bold shadow-sm border border-surfaceBorder/80"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              Watchlist ({items.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab("attention")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "attention"
+                  ? "bg-amber-500 text-white font-bold shadow-sm"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              <span>🔥 Attention</span>
+              {attentionCount > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${activeTab === "attention" ? "bg-white/20 text-white" : "bg-amber-500/20 text-amber-500"}`}>
+                  {attentionCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("intel")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "intel"
+                  ? "bg-brand-500 text-white font-bold shadow-sm"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              <span>⚡ Intel Feed</span>
+              {unreadCount > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${activeTab === "intel" ? "bg-white/20 text-white" : "bg-brand-500/20 text-brand-500"}`}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("radar")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "radar"
+                  ? "bg-surface text-foreground font-bold shadow-sm border border-surfaceBorder/80"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              <PieChart className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Health &amp; Risk</span>
+              <span className="sm:hidden">Radar</span>
+            </button>
+          </div>
+
+          {/* Inline Filter Search Input */}
+          {(activeTab === "watchlist" || activeTab === "attention") && (
+            <div className="relative max-w-[160px] sm:max-w-[200px] hidden xs:block">
+              <Search className="w-3.5 h-3.5 text-muted absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                placeholder="Filter symbol..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-8 pl-8 pr-2.5 text-xs bg-surface border border-surfaceBorder rounded-lg placeholder-muted focus:outline-none focus:border-brand-500 transition-colors font-mono"
+              />
             </div>
-          ) : (
-            sortedItems.map(item => {
-              const isPositive = item.changePct >= 0;
-              const sign = isPositive ? "+" : "";
+          )}
+        </div>
 
-              // Accent border based on confidence tier of latest event
-              const tierAccent = item.latestEvent?.confidenceTier === "CONFIRMED"
-                ? "border-l-4 border-l-emerald-500"
-                : item.latestEvent?.confidenceTier === "UNEXPLAINED"
-                ? "border-l-4 border-l-amber-500"
-                : item.isStale
-                ? "border-l-4 border-l-redwood-500"
-                : "border-l-4 border-l-transparent";
-
-              return (
-                <div
-                  key={item.id}
-                  className={`p-3.5 sm:p-4 hover:bg-surfaceElevated transition-all group ${tierAccent}`}
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* TAB 1 & 2: Institutional Watchlist Table */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        {(activeTab === "watchlist" || activeTab === "attention") && (
+          <div className="bg-surface border border-surfaceBorder rounded-2xl divide-y divide-surfaceBorder overflow-hidden shadow-sm">
+            {displayedItems.length === 0 ? (
+              <div className="p-8 text-center text-muted text-xs font-mono space-y-2">
+                <p>No symbols found matching filter.</p>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="text-brand-500 font-bold hover:underline inline-flex items-center gap-1"
                 >
-                  {/* Row 1: Symbol, Badges, & Company (Left) vs LTP & Change % (Right) */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm sm:text-base text-foreground font-mono tracking-tight shrink-0">
-                          {item.symbol}
-                        </span>
-                        {item.isStale && (
-                          <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0 whitespace-nowrap">
-                            🔴 {TIER_LABELS.UNCERTAIN}
-                          </span>
-                        )}
-                        {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                          <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
-                            🟢 {TIER_LABELS.CONFIRMED}
-                          </span>
-                        )}
-                        {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                          <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
-                            🟡 {TIER_LABELS.UNEXPLAINED}
-                          </span>
-                        )}
-                      </div>
+                  <Plus className="w-3.5 h-3.5" /> Add a new stock
+                </button>
+              </div>
+            ) : (
+              displayedItems.map(item => {
+                const isPositive = item.changePct >= 0;
+                const sign = isPositive ? "+" : "";
 
-                      <div className="text-xs text-muted truncate mt-0.5 font-medium">
-                        {item.name} • <span className="opacity-80">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-                      </div>
-                    </div>
+                const tierAccent = item.latestEvent?.confidenceTier === "CONFIRMED"
+                  ? "border-l-[3px] border-l-emerald-500"
+                  : item.latestEvent?.confidenceTier === "UNEXPLAINED"
+                  ? "border-l-[3px] border-l-amber-500"
+                  : item.isStale
+                  ? "border-l-[3px] border-l-redwood-500"
+                  : "border-l-[3px] border-l-transparent";
 
-                    {/* Right: LTP & Change % */}
-                    <div className="text-right shrink-0">
-                      <div className="font-bold font-mono text-sm sm:text-base text-foreground tabular-nums">
-                        ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </div>
-                      <div
-                        className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
-                          isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                        }`}
-                      >
-                        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        <span>{sign}{item.changePct.toFixed(2)}%</span>
-                      </div>
-                    </div>
-                  </div>
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setSelectedVisualizerItem(item);
+                      setShowVisualizerModal(true);
+                    }}
+                    className={`p-3 sm:p-3.5 hover:bg-surfaceElevated cursor-pointer transition-all group ${tierAccent}`}
+                  >
+                    {/* Main Row: Symbol & Name on left | Sparkline | Price & Change on right */}
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left: Symbol, Exchange & Sector */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-sm sm:text-base text-foreground font-mono tracking-tight">
+                            {item.symbol.replace("NSE:", "")}
+                          </span>
+                          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-surfaceElevated border border-surfaceBorder text-muted">
+                            NSE
+                          </span>
 
-                  {/* Row 2: Recent Signal Dots, Research Thesis & Actions */}
-                  <div className="mt-2 pt-2 border-t border-surfaceBorder/40 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-                      {/* Tier History Dot Strip */}
-                      {item.tierHistory && item.tierHistory.length > 0 && (
-                        <div className="flex items-center gap-1 shrink-0" title="Signal History">
-                          <span className="text-[9px] font-mono text-muted uppercase">Recent:</span>
-                          <div className="flex items-center gap-1">
-                            {item.tierHistory.map((tier, idx) => (
-                              <span
-                                key={idx}
-                                className={`w-2 h-2 rounded-full inline-block ${
-                                  tier === "CONFIRMED"
-                                    ? "bg-emerald-500"
-                                    : tier === "UNEXPLAINED"
-                                    ? "bg-amber-400"
-                                    : "bg-rose-500"
-                                }`}
-                                title={TIER_LABELS[tier] || tier}
-                              />
-                            ))}
-                          </div>
+                          {/* Catalyst Status Pill */}
+                          {item.isStale && (
+                            <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0">
+                              🔴 STALE
+                            </span>
+                          )}
+                          {item.latestEvent?.confidenceTier === "CONFIRMED" && (
+                            <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0">
+                              🟢 FILING
+                            </span>
+                          )}
+                          {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
+                            <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0">
+                              🟡 FLOW
+                            </span>
+                          )}
                         </div>
-                      )}
 
-                      {/* Research Thesis Preview */}
-                      {(() => {
-                        let parsedThesis = "";
-                        if (item.notes) {
-                          try {
-                            const parsed = JSON.parse(item.notes);
-                            if (parsed?.thesisText) parsedThesis = parsed.thesisText;
-                          } catch (_) {
-                            parsedThesis = item.notes;
-                          }
-                        }
-                        if (parsedThesis) {
-                          return (
-                            <button
-                              onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                              className="text-[11px] text-brand-500 hover:text-brand-400 font-mono bg-brand-500/10 hover:bg-brand-500/15 border border-brand-500/25 px-2 py-0.5 rounded-lg flex items-center gap-1.5 transition-colors text-left max-w-full"
-                              title="Click to edit research thesis & invalidation point"
-                            >
-                              <BookOpen className="w-3 h-3 shrink-0" />
-                              <span className="truncate max-w-[180px] sm:max-w-[280px]">Thesis: "{parsedThesis}"</span>
-                            </button>
-                          );
-                        }
-                        return (
-                          <button
-                            onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                            className="text-[10px] text-muted hover:text-brand-500 font-mono flex items-center gap-1 opacity-75 hover:opacity-100 transition-opacity"
-                            title="Record why you track this stock and when thesis breaks"
-                          >
-                            <BookOpen className="w-3 h-3" />
-                            <span>+ Thesis</span>
-                          </button>
-                        );
-                      })()}
-                    </div>
+                        <div className="text-[11px] text-muted truncate mt-0.5 font-medium">
+                          {item.name} • <span className="opacity-80">{item.sector}</span>
+                        </div>
+                      </div>
 
-                    {/* Sparkline & Micro-Actions */}
-                    <div className="flex items-center gap-1 shrink-0 ml-auto">
-                      {/* Watermark Delta Sparkline on larger screens */}
-                      <div
-                        onClick={() => {
-                          setSelectedVisualizerItem(item);
-                          setShowVisualizerModal(true);
-                        }}
-                        className="hidden md:block pr-2 cursor-pointer hover:scale-105 transition-transform"
-                        title="Click to open Evidence-Pinned Stock Visualizer"
-                      >
+                      {/* Center: Sparkline (desktop & tablet) */}
+                      <div className="hidden sm:block px-2">
                         <WatermarkSparkline
                           points={item.sparkline}
                           changePct={item.changePct}
@@ -680,49 +533,225 @@ export default function WatchlistHomePage() {
                         />
                       </div>
 
-                      <button
-                        onClick={() => {
-                          setSelectedVisualizerItem(item);
-                          setShowVisualizerModal(true);
-                        }}
-                        className="h-7 w-7 text-muted hover:text-brand-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Open Catalyst-Pinned Visualizer"
-                      >
-                        <BarChart2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Right: LTP Price & % Change Badge */}
+                      <div className="text-right shrink-0 flex items-center gap-3">
+                        <div>
+                          <div className="font-bold font-mono text-sm sm:text-base text-foreground tabular-nums">
+                            ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </div>
+                          <div
+                            className={`text-[11px] font-mono font-bold inline-flex items-center justify-end gap-0.5 tabular-nums px-1.5 py-0.2 rounded ${
+                              isPositive
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            }`}
+                          >
+                            {isPositive ? "▲" : "▼"}{sign}{item.changePct.toFixed(2)}%
+                          </div>
+                        </div>
 
-                      <button
-                        onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                        className="h-7 w-7 text-muted hover:text-brand-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Edit Research Thesis"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                      </button>
+                        {/* Quick Action Icons */}
+                        <div className="flex items-center gap-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedThesisItem(item);
+                              setShowThesisModal(true);
+                            }}
+                            className="h-7 w-7 text-muted hover:text-brand-500 flex items-center justify-center rounded-lg hover:bg-surface border border-transparent hover:border-surfaceBorder transition-colors"
+                            title="Edit Research Thesis"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                          </button>
 
-                      <button
-                        onClick={() => handleMarkItemSeen(item.id)}
-                        className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Mark seen (update watermark for this item)"
-                      >
-                        <CheckCheck className="w-3.5 h-3.5" />
-                      </button>
+                          <button
+                            onClick={(e) => handleMarkItemSeen(item.id, e)}
+                            className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surface border border-transparent hover:border-surfaceBorder transition-colors"
+                            title="Mark seen"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" />
+                          </button>
 
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Remove from Watchlist"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                          <button
+                            onClick={(e) => handleRemoveItem(item.id, e)}
+                            className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surface border border-transparent hover:border-surfaceBorder transition-colors"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Optional Compact Thesis Tag if exists */}
+                    {(() => {
+                      let parsedThesis = "";
+                      if (item.notes) {
+                        try {
+                          const p = JSON.parse(item.notes);
+                          if (p?.thesisText) parsedThesis = p.thesisText;
+                        } catch (_) {
+                          parsedThesis = item.notes;
+                        }
+                      }
+                      if (parsedThesis) {
+                        return (
+                          <div className="mt-1.5 text-[10px] font-mono text-brand-600 dark:text-brand-400 flex items-center gap-1 truncate max-w-lg">
+                            <BookOpen className="w-3 h-3 shrink-0 opacity-70" />
+                            <span className="truncate">Thesis: "{parsedThesis}"</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* TAB 3: Intel Feed / Since Last Checked View */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        {activeTab === "intel" && (
+          <div className="space-y-4">
+            <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-surfaceBorder">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-brand-500" />
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">Verified Event Audit Trace</h3>
+                    <p className="text-[11px] text-muted">{unreadCount} change events logged since your watermark timestamp</p>
                   </div>
                 </div>
-              );
-            })
-          )}
-        </div>
+                <Link
+                  href="/since-last-checked"
+                  className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-sm transition-all active:scale-95"
+                >
+                  <span>Full Diff View</span>
+                  <span>→</span>
+                </Link>
+              </div>
+
+              {unreadSummary && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {unreadSummary.confirmed > 0 && (
+                      <span className="flex items-center space-x-1 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                        <span>🟢</span><span>{unreadSummary.confirmed} Confirmed Filings</span>
+                      </span>
+                    )}
+                    {unreadSummary.unexplained > 0 && (
+                      <span className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                        <span>🟡</span><span>{unreadSummary.unexplained} Uninformed Flow</span>
+                      </span>
+                    )}
+                    {unreadSummary.uncertain > 0 && (
+                      <span className="flex items-center space-x-1 bg-rose-50 dark:bg-rose-500/15 border border-rose-300 dark:border-rose-500/30 text-rose-800 dark:text-rose-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                        <span>🔴</span><span>{unreadSummary.uncertain} Stale Quotes</span>
+                      </span>
+                    )}
+                    {unreadSummary.rippleAlerts > 0 && (
+                      <span className="flex items-center space-x-1 bg-purple-50 dark:bg-purple-500/15 border border-purple-300 dark:border-purple-500/30 text-purple-800 dark:text-purple-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                        <Waves className="w-3 h-3" />
+                        <span>{unreadSummary.rippleAlerts} Sector Ripples</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {unreadSummary.topEvents.length > 0 && (
+                    <div className="divide-y divide-surfaceBorder border border-surfaceBorder rounded-xl bg-surfaceElevated/40 overflow-hidden">
+                      {unreadSummary.topEvents.map((ev, i) => (
+                        <div key={i} className="p-2.5 flex items-center justify-between text-xs font-mono">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span>{ev.tier === "CONFIRMED" ? "🟢" : ev.tier === "UNEXPLAINED" ? "🟡" : "🔴"}</span>
+                            <span className="font-bold text-foreground">{ev.name}</span>
+                            {ev.isRipple && <span className="text-purple-500 text-[10px]">⚡ Ripple</span>}
+                          </div>
+                          <span className="text-muted text-[10px] shrink-0">Signal {ev.magnitude.toFixed(0)}/100</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* TAB 4: Health & Sector Risk Radar */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        {activeTab === "radar" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <WatchlistTrustRatio data={trustRatioData} />
+            <SectorRiskRadar
+              breakdown={sectorBreakdown}
+              concentrationWarning={concentrationWarning}
+              totalCount={items.length}
+            />
+          </div>
+        )}
 
       </main>
+
+      {/* 📱 Mobile Fixed Bottom Navigation Bar (like Zerodha Kite / Groww) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-surfaceBorder sm:hidden flex items-center justify-around h-14 px-2">
+        <button
+          onClick={() => setActiveTab("watchlist")}
+          className={`flex flex-col items-center justify-center flex-1 py-1 ${
+            activeTab === "watchlist" ? "text-brand-500 font-bold" : "text-muted"
+          }`}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Watchlist</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("attention")}
+          className={`flex flex-col items-center justify-center flex-1 py-1 relative ${
+            activeTab === "attention" ? "text-amber-500 font-bold" : "text-muted"
+          }`}
+        >
+          <Filter className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Attention</span>
+          {attentionCount > 0 && (
+            <span className="absolute top-0.5 right-6 w-2 h-2 rounded-full bg-amber-500" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("intel")}
+          className={`flex flex-col items-center justify-center flex-1 py-1 relative ${
+            activeTab === "intel" ? "text-brand-500 font-bold" : "text-muted"
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Intel</span>
+          {unreadCount > 0 && (
+            <span className="absolute top-0.5 right-6 w-2 h-2 rounded-full bg-brand-500" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setShowChat(true)}
+          className="flex flex-col items-center justify-center flex-1 py-1 text-muted hover:text-brand-500"
+        >
+          <Bot className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Ask AI</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("radar")}
+          className={`flex flex-col items-center justify-center flex-1 py-1 ${
+            activeTab === "radar" ? "text-brand-500 font-bold" : "text-muted"
+          }`}
+        >
+          <PieChart className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5">Radar</span>
+        </button>
+      </nav>
 
       {/* Add Symbol Modal */}
       {user && (
@@ -754,7 +783,7 @@ export default function WatchlistHomePage() {
         />
       )}
 
-      {/* 📊 Evidence-Pinned Stock Visualizer Modal */}
+      {/* Evidence-Pinned Stock Visualizer Modal */}
       {selectedVisualizerItem && (
         <StockVisualizerModal
           isOpen={showVisualizerModal}
