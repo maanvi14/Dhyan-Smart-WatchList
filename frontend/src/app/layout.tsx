@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-background text-foreground antialiased selection:bg-brand-500 selection:text-white">
+      <body className="bg-background text-foreground antialiased selection:bg-brand-500 selection:text-white bg-grid-fintech min-h-screen">
         <Providers>
           {children}
         </Providers>

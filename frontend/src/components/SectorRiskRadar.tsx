@@ -51,7 +51,7 @@ export function SectorRiskRadar({
           </span>
         </div>
         {concentrationWarning && (
-          <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">
+          <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30">
             <AlertTriangle className="w-3 h-3" />
             <span>{warnLabel}</span>
           </span>
@@ -59,7 +59,7 @@ export function SectorRiskRadar({
       </div>
 
       {/* Multi-segment distribution progress bar */}
-      <div className="w-full h-2 bg-surfaceElevated rounded-full overflow-hidden flex mb-3 border border-surfaceBorder/60">
+      <div className="w-full h-2 bg-slate-100 dark:bg-surfaceElevated rounded-full overflow-hidden flex mb-3 border border-slate-200 dark:border-surfaceBorder/60">
         {breakdown.map((item, idx) => (
           <div
             key={idx}
@@ -84,8 +84,8 @@ export function SectorRiskRadar({
               key={idx}
               className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
                 isHigh
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold"
-                  : "bg-surfaceElevated/70 border-surfaceBorder text-slate-300"
+                  ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-400 font-bold"
+                  : "bg-slate-50 dark:bg-surfaceElevated/70 border-slate-200 dark:border-surfaceBorder text-slate-700 dark:text-slate-300"
               }`}
             >
               <span
@@ -93,14 +93,14 @@ export function SectorRiskRadar({
                 style={{ backgroundColor: color }}
               />
               <span className="text-foreground font-medium">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-              <span className="text-muted font-bold ml-0.5">{item.pct}%</span>
+              <span className="text-slate-500 dark:text-slate-400 font-bold ml-0.5">{item.pct}%</span>
             </div>
           );
         })}
       </div>
 
       {concentrationWarning && (
-        <p className="text-[11px] text-amber-400/90 leading-relaxed mt-2.5 pt-2 border-t border-surfaceBorder/80 font-sans">
+        <p className="text-[11px] text-amber-800 dark:text-amber-400/90 leading-relaxed mt-2.5 pt-2 border-t border-slate-200 dark:border-surfaceBorder/80 font-sans">
           ⚠️ {concentrationWarning}
         </p>
       )}

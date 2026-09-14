@@ -104,7 +104,7 @@ export function ResearchThesisModal({
 
           {/* Field 2: Invalidation Point */}
           <div>
-            <label className="block text-rose-400 font-semibold mb-1 flex items-center space-x-1.5">
+            <label className="block text-rose-600 dark:text-rose-400 font-semibold mb-1 flex items-center space-x-1.5">
               <AlertOctagon className="w-3.5 h-3.5" />
               <span>When does this thesis break? (Invalidation Point)</span>
             </label>

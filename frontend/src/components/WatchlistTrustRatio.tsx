@@ -32,7 +32,7 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
       </div>
 
       {/* 3-Color Segmented Progress Bar */}
-      <div className="w-full h-2 bg-surfaceElevated rounded-full overflow-hidden flex border border-surfaceBorder/60 mb-3">
+      <div className="w-full h-2 bg-slate-100 dark:bg-surfaceElevated rounded-full overflow-hidden flex border border-slate-200 dark:border-surfaceBorder/60 mb-3">
         {confirmedPct > 0 && (
           <div
             style={{ width: `${confirmedPct}%` }}
@@ -50,7 +50,7 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
         {stalePct > 0 && (
           <div
             style={{ width: `${stalePct}%` }}
-            className="h-full bg-rose-500 transition-all duration-500"
+            className="h-full bg-rose-500 dark:bg-rose-500 transition-all duration-500"
             title={`Stale Quote: ${stalePct}%`}
           />
         )}
@@ -60,20 +60,20 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center space-x-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="text-slate-300 font-medium">Confirmed:</span>
-          <span className="text-emerald-400 font-bold font-mono">{confirmedPct}%</span>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">Confirmed:</span>
+          <span className="text-emerald-700 dark:text-emerald-400 font-bold font-mono">{confirmedPct}%</span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-          <span className="text-slate-300 font-medium">Uninformed:</span>
-          <span className="text-amber-400 font-bold font-mono">{uninformedPct}%</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+          <span className="text-slate-600 dark:text-slate-300 font-medium">Uninformed:</span>
+          <span className="text-amber-700 dark:text-amber-400 font-bold font-mono">{uninformedPct}%</span>
         </div>
 
         <div className="flex items-center space-x-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span className="text-slate-300 font-medium">Stale:</span>
-          <span className="text-rose-400 font-bold font-mono">{stalePct}%</span>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">Stale:</span>
+          <span className="text-rose-700 dark:text-rose-400 font-bold font-mono">{stalePct}%</span>
         </div>
       </div>
     </div>

@@ -227,8 +227,8 @@ export function StockVisualizerModal({
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible select-none">
               <defs>
                 <linearGradient id="visualizer-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isPositive ? "#00D09C" : "#EF4444"} stopOpacity="0.28" />
-                  <stop offset="100%" stopColor={isPositive ? "#00D09C" : "#EF4444"} stopOpacity="0.0" />
+                  <stop offset="0%" stopColor={isPositive ? "#10B981" : "#F43F5E"} stopOpacity="0.25" />
+                  <stop offset="100%" stopColor={isPositive ? "#10B981" : "#F43F5E"} stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
@@ -266,7 +266,7 @@ export function StockVisualizerModal({
               <path
                 d={pathString}
                 fill="none"
-                stroke={isPositive ? "#00D09C" : "#EF4444"}
+                stroke={isPositive ? "#10B981" : "#F43F5E"}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -278,7 +278,7 @@ export function StockVisualizerModal({
                   cx={svgCoords[svgCoords.length - 1][0]}
                   cy={svgCoords[svgCoords.length - 1][1]}
                   r="4.5"
-                  fill={isPositive ? "#00D09C" : "#EF4444"}
+                  fill={isPositive ? "#10B981" : "#F43F5E"}
                   className="animate-pulse"
                 />
               )}
@@ -301,7 +301,7 @@ export function StockVisualizerModal({
                       y1={cy}
                       x2={cx}
                       y2={height - 20}
-                      stroke={isSelected ? "#00D09C" : "#64748B"}
+                      stroke={isSelected ? "#6366F1" : "#64748B"}
                       strokeWidth="1"
                       strokeDasharray="2 2"
                       strokeOpacity={isSelected ? "0.8" : "0.3"}
@@ -334,15 +334,15 @@ export function StockVisualizerModal({
                       width="60"
                       height="16"
                       rx="8"
-                      fill={isSelected ? "#00D09C" : "#1E293B"}
-                      stroke={isSelected ? "#00D09C" : "#334155"}
+                      fill={isSelected ? "#6366F1" : "#1E293B"}
+                      stroke={isSelected ? "#4F46E5" : "#334155"}
                       strokeWidth="1"
                     />
                     <text
                       x={cx}
                       y={cy - 13}
                       textAnchor="middle"
-                      fill={isSelected ? "#020617" : "#F8FAFC"}
+                      fill="#FFFFFF"
                       fontSize="8"
                       fontWeight="bold"
                       fontFamily="monospace"

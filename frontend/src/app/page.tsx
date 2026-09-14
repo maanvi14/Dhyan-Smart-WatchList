@@ -310,12 +310,12 @@ export default function WatchlistHomePage() {
         {feedStatus && (
           <div className={`p-3 rounded-2xl mb-4 border flex flex-wrap items-center justify-between gap-2 text-xs backdrop-blur shadow-sm transition-all ${
             feedStatus?.status === "killed"
-              ? "bg-rose-500/10 border-rose-500/20 text-rose-400 font-semibold"
+              ? "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-400 font-semibold"
               : feedStatus?.mode === "stale_partial"
-              ? "bg-amber-500/10 border-amber-500/20 text-amber-300 font-medium"
+              ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 font-medium"
               : feedStatus?.mode === "simulated"
-              ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-              : "bg-surface border-surfaceBorder text-slate-200"
+              ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300"
+              : "bg-surface border-surfaceBorder text-foreground"
           }`}>
             <div className="flex items-center space-x-2.5 min-w-0">
               <span className={`w-2 h-2 rounded-full shrink-0 ${
@@ -339,7 +339,7 @@ export default function WatchlistHomePage() {
             </div>
             <button
               onClick={() => setShowDebug(!showDebug)}
-              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-400 shrink-0 ml-auto"
+              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-600 dark:text-brand-400 shrink-0 ml-auto"
             >
               {showDebug ? t("hide_controls") : t("debug_controls")}
             </button>
@@ -365,9 +365,9 @@ export default function WatchlistHomePage() {
                     {timeAwayString}
                   </div>
                   {items.length > 0 && (
-                    <div className="mt-2 inline-flex items-center gap-2 bg-surfaceElevated border border-surfaceBorder px-2.5 py-1 rounded-lg text-[11px] font-mono shadow-sm flex-wrap">
+                    <div className="mt-2 inline-flex items-center gap-2 bg-slate-50 dark:bg-surfaceElevated border border-slate-200 dark:border-surfaceBorder px-2.5 py-1 rounded-lg text-[11px] font-mono shadow-sm flex-wrap">
                       <span className="text-muted font-bold">💼 Portfolio Shift:</span>
-                      <span className={`font-bold ${portfolioPnL.rupees >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <span className={`font-bold ${portfolioPnL.rupees >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                         {portfolioPnL.rupees >= 0 ? "+" : ""}₹{portfolioPnL.rupees.toLocaleString("en-IN")} ({portfolioPnL.rupees >= 0 ? "+" : ""}{portfolioPnL.pct}%)
                       </span>
                       <span className="text-muted text-[10px]">since last check</span>
@@ -377,7 +377,7 @@ export default function WatchlistHomePage() {
               </div>
               <Link
                 href="/since-last-checked"
-                className="shrink-0 text-xs font-mono font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1 self-end sm:self-center bg-brand-500/10 px-3 py-1.5 rounded-lg border border-brand-500/20 transition-all active:scale-95"
+                className="shrink-0 text-xs font-mono font-bold text-brand-600 dark:text-brand-400 hover:text-brand-500 flex items-center gap-1 self-end sm:self-center bg-brand-500/10 px-3 py-1.5 rounded-lg border border-brand-500/20 transition-all active:scale-95"
               >
                 <span>{language === "hi" ? "अंतर देखें" : "View Diff"}</span>
                 <span>→</span>
@@ -408,7 +408,7 @@ export default function WatchlistHomePage() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-bold text-foreground text-sm group-hover:text-brand-400 transition-colors whitespace-nowrap">
+                  <h2 className="font-bold text-foreground text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors whitespace-nowrap">
                     {t("since_last_checked")}
                   </h2>
                   {unreadCount > 0 && (
@@ -424,7 +424,7 @@ export default function WatchlistHomePage() {
                 </p>
               </div>
             </div>
-            <div className="text-[11px] font-bold text-brand-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
+            <div className="text-[11px] font-bold text-brand-600 dark:text-brand-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
               <span>View Diff</span>
               <span>→</span>
             </div>
@@ -435,22 +435,22 @@ export default function WatchlistHomePage() {
             <div className="space-y-2.5 pt-2.5 border-t border-surfaceBorder/50">
               <div className="flex flex-wrap gap-1.5">
                 {unreadSummary.confirmed > 0 && (
-                  <span className="flex items-center space-x-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                     <span>🟢</span><span>{unreadSummary.confirmed} Confirmed</span>
                   </span>
                 )}
                 {unreadSummary.unexplained > 0 && (
-                  <span className="flex items-center space-x-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                     <span>🟡</span><span>{unreadSummary.unexplained} Unexplained</span>
                   </span>
                 )}
                 {unreadSummary.uncertain > 0 && (
-                  <span className="flex items-center space-x-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                     <span>🔴</span><span>{unreadSummary.uncertain} Uncertain</span>
                   </span>
                 )}
                 {unreadSummary.rippleAlerts > 0 && (
-                  <span className="flex items-center space-x-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
+                  <span className="flex items-center space-x-1 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-800 dark:text-indigo-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
                     <Waves className="w-3 h-3" />
                     <span>{unreadSummary.rippleAlerts} Ripple</span>
                   </span>
@@ -462,12 +462,12 @@ export default function WatchlistHomePage() {
                   {unreadSummary.topEvents.map((ev, i) => (
                     <div key={i} className="flex items-center justify-between text-[11px] font-mono">
                       <div className="flex items-center space-x-1.5">
-                        <span className={ev.tier === "CONFIRMED" ? "text-emerald-400" : ev.tier === "UNEXPLAINED" ? "text-amber-400" : "text-rose-400"}>
+                        <span className={ev.tier === "CONFIRMED" ? "text-emerald-600 dark:text-emerald-400" : ev.tier === "UNEXPLAINED" ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}>
                           {ev.tier === "CONFIRMED" ? "🟢" : ev.tier === "UNEXPLAINED" ? "🟡" : "🔴"}
                         </span>
-                        <span className="font-semibold text-slate-200">{ev.name}</span>
+                        <span className="font-semibold text-foreground">{ev.name}</span>
                         {ev.isRipple && (
-                          <span className="text-indigo-400 text-[9px]">⚡ via {ev.rippleSource}</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 text-[9px]">⚡ via {ev.rippleSource}</span>
                         )}
                       </div>
                       <span className="text-muted text-[10px]">mag {ev.magnitude.toFixed(0)}</span>
@@ -551,7 +551,7 @@ export default function WatchlistHomePage() {
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 sm:p-4 hover:bg-surfaceElevated transition-all group ${tierAccent}`}
+                  className={`p-3.5 sm:p-4 hover:bg-slate-50/70 dark:hover:bg-surfaceElevated transition-all group ${tierAccent}`}
                 >
                   {/* Row 1: Symbol, Badges, & Company (Left) vs LTP & Change % (Right) */}
                   <div className="flex items-start justify-between gap-3">
@@ -561,17 +561,17 @@ export default function WatchlistHomePage() {
                           {item.symbol}
                         </span>
                         {item.isStale && (
-                          <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0 whitespace-nowrap">
+                          <span className="bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0 whitespace-nowrap">
                             🔴 {TIER_LABELS.UNCERTAIN}
                           </span>
                         )}
                         {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+                          <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
                             🟢 {TIER_LABELS.CONFIRMED}
                           </span>
                         )}
                         {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+                          <span className="bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
                             🟡 {TIER_LABELS.UNEXPLAINED}
                           </span>
                         )}
@@ -589,7 +589,7 @@ export default function WatchlistHomePage() {
                       </div>
                       <div
                         className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
-                          isPositive ? "text-emerald-400" : "text-rose-400"
+                          isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                         }`}
                       >
                         {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -613,7 +613,7 @@ export default function WatchlistHomePage() {
                                   tier === "CONFIRMED"
                                     ? "bg-emerald-500"
                                     : tier === "UNEXPLAINED"
-                                    ? "bg-amber-400"
+                                    ? "bg-amber-500"
                                     : "bg-rose-500"
                                 }`}
                                 title={TIER_LABELS[tier] || tier}
@@ -638,10 +638,10 @@ export default function WatchlistHomePage() {
                           return (
                             <button
                               onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                              className="text-[11px] text-slate-300 hover:text-white font-mono bg-surfaceElevated/70 hover:bg-surfaceElevated border border-surfaceBorder px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition-colors text-left max-w-full"
+                              className="text-[11px] text-slate-700 dark:text-slate-300 hover:text-foreground font-mono bg-slate-50 dark:bg-surfaceElevated/70 hover:bg-slate-100 dark:hover:bg-surfaceElevated border border-slate-200 dark:border-surfaceBorder px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition-colors text-left max-w-full"
                               title="Click to edit research thesis & invalidation point"
                             >
-                              <BookOpen className="w-3 h-3 shrink-0 text-brand-400" />
+                              <BookOpen className="w-3 h-3 shrink-0 text-brand-600 dark:text-brand-400" />
                               <span className="truncate max-w-[180px] sm:max-w-[280px]">Thesis: "{parsedThesis}"</span>
                             </button>
                           );
@@ -649,7 +649,7 @@ export default function WatchlistHomePage() {
                         return (
                           <button
                             onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                            className="text-[10px] text-muted hover:text-slate-300 font-mono flex items-center gap-1 opacity-75 hover:opacity-100 transition-opacity"
+                            className="text-[10px] text-muted hover:text-foreground font-mono flex items-center gap-1 opacity-75 hover:opacity-100 transition-opacity"
                             title="Record why you track this stock and when thesis breaks"
                           >
                             <BookOpen className="w-3 h-3" />
@@ -682,7 +682,7 @@ export default function WatchlistHomePage() {
                           setSelectedVisualizerItem(item);
                           setShowVisualizerModal(true);
                         }}
-                        className="h-7 w-7 text-muted hover:text-brand-400 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-brand-600 dark:hover:text-brand-400 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-surfaceElevated transition-colors"
                         title="Open Catalyst-Pinned Visualizer"
                       >
                         <BarChart2 className="w-3.5 h-3.5" />
@@ -690,7 +690,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                        className="h-7 w-7 text-muted hover:text-brand-400 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-brand-600 dark:hover:text-brand-400 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-surfaceElevated transition-colors"
                         title="Edit Research Thesis"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
@@ -698,7 +698,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => handleMarkItemSeen(item.id)}
-                        className="h-7 w-7 text-muted hover:text-emerald-400 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-surfaceElevated transition-colors"
                         title="Mark seen (update watermark for this item)"
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
@@ -706,7 +706,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className="h-7 w-7 text-muted hover:text-rose-400 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-rose-600 dark:hover:text-rose-400 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-surfaceElevated transition-colors"
                         title="Remove from Watchlist"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
