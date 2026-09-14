@@ -84,16 +84,16 @@ export function SectorRiskRadar({
               key={idx}
               className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
                 isHigh
-                  ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-400 font-bold"
-                  : "bg-slate-50 dark:bg-surfaceElevated/70 border-slate-200 dark:border-surfaceBorder text-slate-700 dark:text-slate-300"
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold"
+                  : "bg-surfaceElevated border-surfaceBorder text-foreground"
               }`}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-foreground font-medium">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-              <span className="text-slate-500 dark:text-slate-400 font-bold ml-0.5">{item.pct}%</span>
+              <span className="text-foreground font-semibold">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
+              <span className="text-muted font-bold ml-0.5">{item.pct}%</span>
             </div>
           );
         })}

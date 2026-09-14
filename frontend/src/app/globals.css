@@ -4,20 +4,19 @@
 
 :root {
   /* Light mode — crisp white & redwood institutional fintech */
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --surface: #FFFFFF;
-  --surface-border: #E2E8F0;
-  --surface-elevated: #F1F5F9;
-  --muted: #64748B;
-  --muted-hover: #0F172A;
-  --card-bg: #FFFFFF;
-  --card-hover: #F8FAFC;
-  --input-bg: #FFFFFF;
-  --input-border: #CBD5E1;
-  --badge-bg: #F1F5F9;
-  --badge-text: #0F172A;
-  --note-bg: #EEF2FF;
+  --background: 248 250 252;       /* #F8FAFC */
+  --foreground: 15 23 42;          /* #0F172A */
+  --surface: 255 255 255;          /* #FFFFFF */
+  --surface-border: 226 232 240;   /* #E2E8F0 */
+  --surface-elevated: 241 245 249; /* #F1F5F9 */
+  --muted: 100 116 139;            /* #64748B */
+  --card-bg: 255 255 255;
+  --card-hover: 248 250 252;
+  --input-bg: 255 255 255;
+  --input-border: 203 213 225;
+  --badge-bg: 241 245 249;
+  --badge-text: 15 23 42;
+  --note-bg: rgba(99, 102, 241, 0.06);
   --note-border: #C7D2FE;
   --header-bg: rgba(255, 255, 255, 0.95);
   --header-border: #E2E8F0;
@@ -36,20 +35,19 @@
 
 .dark {
   /* Dark mode — obsidian & slate institutional trading palette */
-  --background: #0B0F19;
-  --foreground: #F8FAFC;
-  --surface: #121826;
-  --surface-border: #1E293B;
-  --surface-elevated: #182234;
-  --muted: #94A3B8;
-  --muted-hover: #E2E8F0;
-  --card-bg: #121826;
-  --card-hover: #182234;
-  --input-bg: #0E1422;
-  --input-border: #1E293B;
-  --badge-bg: #182234;
-  --badge-text: #E2E8F0;
-  --note-bg: rgba(99, 102, 241, 0.05);
+  --background: 11 15 25;          /* #0B0F19 */
+  --foreground: 248 250 252;       /* #F8FAFC */
+  --surface: 18 24 38;             /* #121826 */
+  --surface-border: 30 41 59;      /* #1E293B */
+  --surface-elevated: 24 34 52;    /* #182234 */
+  --muted: 148 163 184;            /* #94A3B8 */
+  --card-bg: 18 24 38;
+  --card-hover: 24 34 52;
+  --input-bg: 14 20 34;
+  --input-border: 30 41 59;
+  --badge-bg: 24 34 52;
+  --badge-text: 226 232 240;
+  --note-bg: rgba(99, 102, 241, 0.08);
   --note-border: #1E293B;
   --header-bg: rgba(11, 15, 25, 0.95);
   --header-border: #1E293B;
