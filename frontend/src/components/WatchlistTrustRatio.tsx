@@ -57,23 +57,23 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
       </div>
 
       {/* Legend & Percentages */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[11px] font-mono">
         <div className="flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-foreground font-semibold">{TIER_LABELS.CONFIRMED}:</span>
-          <span className="text-emerald-700 dark:text-emerald-400 font-bold">{confirmedPct}%</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="text-foreground font-semibold truncate">{TIER_LABELS.CONFIRMED}:</span>
+          <span className="text-emerald-700 dark:text-emerald-400 font-bold shrink-0">{confirmedPct}%</span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-foreground font-semibold">{TIER_LABELS.UNEXPLAINED}:</span>
-          <span className="text-amber-700 dark:text-amber-400 font-bold">{uninformedPct}%</span>
+          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+          <span className="text-foreground font-semibold truncate">{TIER_LABELS.UNEXPLAINED}:</span>
+          <span className="text-amber-700 dark:text-amber-400 font-bold shrink-0">{uninformedPct}%</span>
         </div>
 
         <div className="flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500" />
-          <span className="text-foreground font-semibold">{TIER_LABELS.UNCERTAIN}:</span>
-          <span className="text-rose-700 dark:text-rose-400 font-bold">{stalePct}%</span>
+          <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+          <span className="text-foreground font-semibold truncate">{TIER_LABELS.UNCERTAIN}:</span>
+          <span className="text-rose-700 dark:text-rose-400 font-bold shrink-0">{stalePct}%</span>
         </div>
       </div>
     </div>

@@ -8,6 +8,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "375px",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
@@ -24,8 +27,8 @@ module.exports = {
           50: "#ECFDF5",
           100: "#D1FAE5",
           400: "#34D399",
-          500: "#00D09C", // Groww signature emerald mint
-          600: "#00B386",
+          500: "#00B386", // Groww exact signature green
+          600: "#00956F",
           700: "#059669",
           800: "#047857",
         },

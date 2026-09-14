@@ -315,7 +315,7 @@ export default function WatchlistHomePage() {
 
         {/* Market Feed Status Banner */}
         {feedStatus && (
-          <div className={`p-3 rounded-2xl mb-4 border flex items-center justify-between text-xs backdrop-blur shadow-sm transition-all ${
+          <div className={`p-3 rounded-2xl mb-4 border flex flex-wrap items-center justify-between gap-2 text-xs backdrop-blur shadow-sm transition-all ${
             feedStatus?.status === "killed"
               ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 font-semibold"
               : feedStatus?.mode === "stale_partial"
@@ -324,7 +324,7 @@ export default function WatchlistHomePage() {
               ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-300"
               : "bg-surfaceElevated border-surfaceBorder text-foreground"
           }`}>
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center space-x-2.5 min-w-0">
               <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
                 feedStatus?.status === "killed"
                   ? "bg-rose-500 animate-pulse"
@@ -346,7 +346,7 @@ export default function WatchlistHomePage() {
             </div>
             <button
               onClick={() => setShowDebug(!showDebug)}
-              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-500 dark:text-brand-400 shrink-0"
+              className="text-[11px] font-mono font-bold underline hover:opacity-80 text-brand-500 dark:text-brand-400 shrink-0 ml-auto"
             >
               {showDebug ? t("hide_controls") : t("debug_controls")}
             </button>
@@ -406,30 +406,30 @@ export default function WatchlistHomePage() {
           href="/since-last-checked"
           className="group block bg-gradient-to-r from-brand-500/10 via-teal-500/10 to-surfaceElevated border border-brand-500/30 hover:border-brand-500/60 rounded-2xl p-4 mb-6 transition-all shadow-md active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500">
-                <Bell className="w-5 h-5" />
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-start space-x-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 shrink-0 mt-0.5">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <h2 className="font-bold text-foreground text-sm group-hover:text-brand-500 transition-colors">
                     {t("since_last_checked")}
                   </h2>
                   {unreadCount > 0 && (
-                    <span className="bg-brand-500 text-slate-950 text-[11px] font-bold px-2 py-0.5 rounded-full font-mono">
+                    <span className="bg-brand-500 text-slate-950 text-[11px] font-bold px-2 py-0.5 rounded-full font-mono shrink-0">
                       {unreadCount > 9 ? "9+" : unreadCount} {t("new_badge")}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-muted mt-0.5">
                   {unreadCount > 0
                     ? `${unreadCount > 9 ? "9+" : unreadCount} ${t("events_logged")}`
                     : t("no_new_events")}
                 </p>
               </div>
             </div>
-            <div className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center space-x-1 group-hover:translate-x-1 transition-transform font-mono">
+            <div className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-mono shrink-0">
               <span>{t("view_diff")}</span>
               <span>→</span>
             </div>
@@ -485,7 +485,7 @@ export default function WatchlistHomePage() {
         </Link>
 
         {/* Watchlist Header & Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h1 className="font-bold text-lg text-foreground">
               {watchlistData?.name ? (watchlistData.name.toLowerCase().includes("core") ? t("core_watchlist") : watchlistData.name) : t("core_watchlist")}
@@ -495,37 +495,37 @@ export default function WatchlistHomePage() {
             </span>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             {/* Attention Priority Sort Toggle */}
             <button
               onClick={() => setSortByAttention(v => !v)}
-              className={`min-h-[44px] px-3 py-2 border rounded-xl text-xs font-mono font-semibold flex items-center space-x-1.5 transition-all shadow-sm ${
+              className={`min-h-[44px] px-3 py-2 border rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
                 sortByAttention
                   ? "bg-amber-500 text-slate-950 border-amber-600 font-bold"
                   : "bg-surface hover:bg-surfaceElevated border-surfaceBorder text-muted hover:text-foreground"
               }`}
               title="Prioritize stocks with critical filings or severe anomalies"
             >
-              <Filter className="w-3.5 h-3.5" />
-              <span>{sortByAttention
-                ? (language === "hi" ? "ध्यान क्रम 🔥" : "Attention Sorted 🔥")
-                : (language === "hi" ? "ध्यान पहले" : "Needs Attention First")
+              <Filter className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden xs:inline sm:inline">{sortByAttention
+                ? (language === "hi" ? "ध्यान क्रम" : "Sorted")
+                : (language === "hi" ? "ध्यान पहले" : "Attention First")
               }</span>
             </button>
 
             <button
               onClick={() => setShowChat(true)}
-              className="min-h-[44px] px-3.5 py-2 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center space-x-1.5 transition-all shadow-sm"
+              className="min-h-[44px] min-w-[44px] px-2 sm:px-3.5 py-2 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
             >
-              <Bot className="w-4 h-4 text-brand-500" />
-              <span>{t("ask_dhyan")}</span>
+              <Bot className="w-4 h-4 text-brand-500 shrink-0" />
+              <span className="hidden sm:inline">{t("ask_dhyan")}</span>
             </button>
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="min-h-[44px] px-4 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 shadow-md shadow-brand-500/20"
+              className="min-h-[44px] px-3 sm:px-4 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-slate-950 rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
             >
-              <Plus className="w-4 h-4 text-slate-950" />
+              <Plus className="w-4 h-4 text-slate-950 shrink-0" />
               <span>{t("add_stock")}</span>
             </button>
           </div>
@@ -559,23 +559,23 @@ export default function WatchlistHomePage() {
                   className={`p-4 flex items-center justify-between hover:bg-surfaceElevated transition-all group ${tierAccent}`}
                 >
                   {/* Left: Symbol & Sector */}
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-sm text-foreground font-mono tracking-tight">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold text-sm text-foreground font-mono tracking-tight shrink-0">
                         {item.symbol}
                       </span>
                       {item.isStale && (
-                        <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">
+                        <span className="bg-redwood-bg text-redwood-text border border-redwood-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm shrink-0">
                           🔴 {TIER_LABELS.UNCERTAIN}
                         </span>
                       )}
                       {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                        <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+                        <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0">
                           🟢 {TIER_LABELS.CONFIRMED}
                         </span>
                       )}
                       {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                        <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+                        <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0">
                           🟡 {TIER_LABELS.UNEXPLAINED}
                         </span>
                       )}
@@ -660,8 +660,8 @@ export default function WatchlistHomePage() {
                   </div>
 
                   {/* Right: LTP & Change % */}
-                  <div className="text-right flex items-center space-x-3">
-                    <div>
+                  <div className="text-right flex items-center space-x-2.5 shrink-0">
+                    <div className="min-w-[70px]">
                       <div className="font-bold font-mono text-sm text-foreground tabular-nums">
                         ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </div>
@@ -676,7 +676,7 @@ export default function WatchlistHomePage() {
                     </div>
 
                     {/* Quick Micro-Actions */}
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => {
                           setSelectedVisualizerItem(item);
