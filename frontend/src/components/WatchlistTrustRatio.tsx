@@ -18,7 +18,7 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
   const stalePct = data.stalePct;
 
   return (
-    <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 shadow-sm">
+    <div className="bg-surface border border-surfaceBorder rounded-md p-3.5 shadow-sm">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-brand-500" />
@@ -32,7 +32,7 @@ export function WatchlistTrustRatio({ data }: WatchlistTrustRatioProps) {
       </div>
 
       {/* 3-Color Segmented Progress Bar */}
-      <div className="w-full h-2 bg-slate-100 dark:bg-surfaceElevated rounded-full overflow-hidden flex border border-slate-200 dark:border-surfaceBorder/60 mb-3">
+      <div className="w-full h-1.5 bg-slate-100 dark:bg-surfaceElevated rounded-sm overflow-hidden flex border border-slate-200 dark:border-surfaceBorder/60 mb-3">
         {confirmedPct > 0 && (
           <div
             style={{ width: `${confirmedPct}%` }}

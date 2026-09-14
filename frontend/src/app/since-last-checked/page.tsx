@@ -96,14 +96,14 @@ export default function SinceLastCheckedPage() {
   const getTierBadge = (tier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN") => {
     const b = TIER_BADGES[tier as TierKey] || TIER_BADGES.CONFIRMED;
     return (
-      <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-sm ${b.bg} ${b.textCol} ${b.border}`}>
+      <span className={`inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-xs font-bold border ${b.bg} ${b.textCol} ${b.border}`}>
         <span
-          className={`w-2 h-2 rounded-full ${
+          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
             tier === "CONFIRMED"
-              ? "bg-emerald-500 animate-pulse"
+              ? "bg-emerald-500"
               : tier === "UNEXPLAINED"
-              ? "bg-amber-500 animate-pulse"
-              : "bg-rose-500 animate-pulse"
+              ? "bg-amber-500"
+              : "bg-rose-500"
           }`}
         />
         <span>{b.text}</span>
@@ -113,7 +113,6 @@ export default function SinceLastCheckedPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 bg-grid-fintech relative">
-      <div className="absolute inset-0 ambient-glow pointer-events-none" />
       <Header watchlistId={user?.watchlistId} />
 
       <main className="max-w-4xl mx-auto px-4 pt-4 relative z-10">
@@ -130,13 +129,13 @@ export default function SinceLastCheckedPage() {
         </div>
 
         {/* Header Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-surfaceBorder">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-surfaceBorder">
           <div>
-            <h1 className="text-xl font-extrabold text-foreground flex items-center space-x-2">
-              <ShieldCheck className="w-6 h-6 text-brand-500" />
+            <h1 className="text-lg font-bold text-foreground flex items-center space-x-2">
+              <ShieldCheck className="w-5 h-5 text-brand-500" />
               <span>{t("since_last_checked")}</span>
             </h1>
-            <p className="text-xs text-muted mt-1 font-sans font-medium">
+            <p className="text-xs text-muted mt-0.5 font-sans font-medium">
               {events.length === 0
                 ? (language === "hi" ? "आपकी पिछली विजिट के बाद से कोई नया बदलाव नहीं मिला।" : "No unread changes detected since your last visit.")
                 : (language === "hi"
@@ -153,9 +152,9 @@ export default function SinceLastCheckedPage() {
               <button
                 onClick={handleMarkSeen}
                 disabled={markingSeen}
-                className="min-h-[40px] px-5 py-2 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-full text-xs flex items-center space-x-2 transition-all active:scale-95 shadow-md shadow-brand-500/20 disabled:opacity-50"
+                className="h-8 px-3.5 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-md text-xs flex items-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50"
               >
-                <CheckCircle2 className="w-4 h-4 text-white" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                 <span>{markingSeen ? (language === "hi" ? "अपडेट हो रहा..." : "Updating...") : t("mark_all_seen")}</span>
               </button>
             )}
@@ -164,9 +163,9 @@ export default function SinceLastCheckedPage() {
 
         {/* Watchlist Executive Story Card (Data Storytelling) */}
         {story && (
-          <div className="bg-gradient-to-r from-brand-500/10 via-surface to-surface border border-brand-500/30 rounded-3xl p-5 mb-5 shadow-sm">
-            <div className="flex items-center space-x-2 mb-1.5 text-xs font-bold text-brand-500 uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-brand-500" />
+          <div className="bg-surface border border-surfaceBorder rounded-md p-3.5 mb-3 shadow-sm">
+            <div className="flex items-center space-x-1.5 mb-1 text-xs font-bold text-brand-500 uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-brand-500" />
               <span>{language === "hi" ? "मार्केट सारांश" : "Executive Market Story"}</span>
             </div>
             <p className="text-xs text-foreground/90 font-medium leading-relaxed font-sans">
@@ -176,8 +175,8 @@ export default function SinceLastCheckedPage() {
         )}
 
         {/* Confidence Tier Legend */}
-        <div className="bg-surface border border-surfaceBorder rounded-2xl p-3 mb-4 flex flex-wrap items-center gap-2 text-xs shadow-sm">
-          <span className="text-muted font-bold text-xs uppercase tracking-wider">
+        <div className="bg-surface border border-surfaceBorder rounded-md p-2.5 mb-3 flex flex-wrap items-center gap-2 text-xs shadow-sm">
+          <span className="text-muted font-bold text-[11px] uppercase tracking-wider">
             {t("confidence_tiers")}
           </span>
           <div className="flex items-center space-x-3 text-xs">
@@ -189,11 +188,11 @@ export default function SinceLastCheckedPage() {
 
         {/* Events Feed or Empty / Confirmed Silence State */}
         {events.length === 0 ? (
-          <div className="bg-surface border border-surfaceBorder rounded-3xl p-10 text-center shadow-sm">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 mx-auto flex items-center justify-center mb-3">
-              <CheckCircle2 className="w-7 h-7" />
+          <div className="bg-surface border border-surfaceBorder rounded-md p-8 text-center shadow-sm">
+            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 mx-auto flex items-center justify-center mb-2.5">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
-            <h3 className="font-extrabold text-foreground text-lg mb-1">
+            <h3 className="font-bold text-foreground text-base mb-1">
               {t("confirmed_silence_title")}
             </h3>
             <p className="text-xs text-muted max-w-md mx-auto leading-relaxed mb-5">
@@ -201,13 +200,13 @@ export default function SinceLastCheckedPage() {
             </p>
             <Link
               href="/"
-              className="inline-block min-h-[40px] px-6 py-2.5 bg-surfaceElevated hover:bg-surface font-bold text-foreground text-xs rounded-full transition-colors border border-surfaceBorder shadow-sm"
+              className="inline-block px-4 py-1.5 bg-surfaceElevated hover:bg-surface font-bold text-foreground text-xs rounded-md transition-colors border border-surfaceBorder shadow-sm"
             >
               {t("return_to_watchlist")}
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {events.map(event => {
               const isExpanded = expandedIds.has(event.id);
               const tierBorderColor = event.confidenceTier === "CONFIRMED"
@@ -219,27 +218,27 @@ export default function SinceLastCheckedPage() {
               return (
                 <div
                   key={event.id}
-                  className={`bg-surface border border-surfaceBorder hover:border-surfaceBorder/80 rounded-3xl p-5 transition-all shadow-sm hover:shadow-md ${tierBorderColor}`}
+                  className={`bg-surface border border-surfaceBorder hover:border-surfaceBorder/80 rounded-md p-3.5 transition-all shadow-sm ${tierBorderColor}`}
                 >
                   {/* Card Main Row */}
                   <div
                     onClick={() => toggleExpand(event.id)}
-                    className="cursor-pointer min-h-[44px] flex items-start justify-between gap-3"
+                    className="cursor-pointer min-h-[40px] flex items-start justify-between gap-3"
                   >
-                    <div className="space-y-2.5 flex-1">
+                    <div className="space-y-2 flex-1">
                       {/* Top Badges */}
                       <div className="flex flex-wrap items-center gap-2">
                         {getTierBadge(event.confidenceTier)}
 
-                        <span className="font-extrabold text-foreground font-mono text-sm">
+                        <span className="font-bold text-foreground font-mono text-sm">
                           {event.symbol}
                         </span>
 
-                        <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-surfaceElevated text-foreground border border-surfaceBorder">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-surfaceElevated text-foreground border border-surfaceBorder">
                           Signal {event.magnitude}/100
                         </span>
 
-                        <span className="text-[11px] text-muted font-mono ml-auto">
+                        <span className="text-[10px] text-muted font-mono ml-auto">
                           {event.detectedAt ? new Date(event.detectedAt).toLocaleTimeString() : ""}
                         </span>
                       </div>
@@ -254,20 +253,20 @@ export default function SinceLastCheckedPage() {
                         const parsedNote = parseNoteDetails(event.notes);
                         if (!parsedNote) return null;
                         return (
-                          <div className="text-xs text-brand-700 dark:text-brand-300 bg-brand-500/10 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-brand-500/30 shadow-sm mt-1">
+                          <div className="text-xs text-brand-700 dark:text-brand-300 bg-brand-500/10 inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded border border-brand-500/30 mt-1">
                             <BookOpen className="w-3.5 h-3.5 shrink-0 text-brand-500" />
-                            <span className="font-bold">{parsedNote}</span>
+                            <span className="font-semibold">{parsedNote}</span>
                           </div>
                         );
                       })()}
                     </div>
 
                     {/* Expand Chevron Toggle */}
-                    <button className="w-8 h-8 rounded-full bg-surfaceElevated hover:bg-surface border border-surfaceBorder text-muted hover:text-foreground flex items-center justify-center shrink-0 transition-colors">
+                    <button className="w-7 h-7 rounded bg-surfaceElevated hover:bg-surface border border-surfaceBorder text-muted hover:text-foreground flex items-center justify-center shrink-0 transition-colors">
                       {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-brand-500" />
+                        <ChevronUp className="w-3.5 h-3.5 text-brand-500" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>

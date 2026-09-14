@@ -42,7 +42,7 @@ export function SectorRiskRadar({
   const warnLabel = language === "hi" ? "उच्च संकेंद्रण" : "High Concentration";
 
   return (
-    <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 shadow-sm transition-all">
+    <div className="bg-surface border border-surfaceBorder rounded-md p-3.5 shadow-sm transition-all">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center space-x-2">
           <PieChart className="w-4 h-4 text-brand-500" />
@@ -59,7 +59,7 @@ export function SectorRiskRadar({
       </div>
 
       {/* Multi-segment distribution progress bar */}
-      <div className="w-full h-2 bg-slate-100 dark:bg-surfaceElevated rounded-full overflow-hidden flex mb-3 border border-slate-200 dark:border-surfaceBorder/60">
+      <div className="w-full h-1.5 bg-slate-100 dark:bg-surfaceElevated rounded-sm overflow-hidden flex mb-3 border border-slate-200 dark:border-surfaceBorder/60">
         {breakdown.map((item, idx) => (
           <div
             key={idx}
@@ -82,7 +82,7 @@ export function SectorRiskRadar({
           return (
             <div
               key={idx}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded text-[11px] font-mono border transition-all ${
                 isHigh
                   ? "bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold"
                   : "bg-surfaceElevated border-surfaceBorder text-foreground"

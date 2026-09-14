@@ -308,7 +308,7 @@ export default function WatchlistHomePage() {
 
         {/* 1️⃣ Market Feed Status Banner */}
         {feedStatus && (
-          <div className={`p-3 rounded-2xl mb-4 border flex flex-wrap items-center justify-between gap-2 text-xs backdrop-blur shadow-sm transition-all ${
+          <div className={`p-2.5 rounded-md mb-3 border flex flex-wrap items-center justify-between gap-2 text-xs transition-all ${
             feedStatus?.status === "killed"
               ? "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-400 font-semibold"
               : feedStatus?.mode === "stale_partial"
@@ -351,12 +351,10 @@ export default function WatchlistHomePage() {
 
         {/* 2️⃣ Flagship: Personal Watermark Timeline Banner */}
         {timeAwayString && (
-          <div className="bg-surface border border-surfaceBorder rounded-2xl p-4 mb-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start space-x-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 shrink-0 mt-0.5">
-                  <Clock className="w-4 h-4 text-brand-500" />
-                </div>
+          <div className="bg-surface border border-surfaceBorder rounded-md p-3 mb-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                <Clock className="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] font-mono font-bold tracking-wider text-muted uppercase">
                     {language === "hi" ? "व्यक्तिगत समयरेखा" : "PERSONAL WATERMARK TIMELINE"}
@@ -365,8 +363,8 @@ export default function WatchlistHomePage() {
                     {timeAwayString}
                   </div>
                   {items.length > 0 && (
-                    <div className="mt-2 inline-flex items-center gap-2 bg-surfaceElevated border border-surfaceBorder px-2.5 py-1 rounded-lg text-[11px] font-mono shadow-sm flex-wrap">
-                      <span className="text-muted font-bold">💼 Portfolio Shift:</span>
+                    <div className="mt-1.5 inline-flex items-center gap-2 bg-surfaceElevated border border-surfaceBorder px-2 py-0.5 rounded text-[11px] font-mono flex-wrap">
+                      <span className="text-muted font-bold">Portfolio Shift:</span>
                       <span className={`font-bold ${portfolioPnL.rupees >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                         {portfolioPnL.rupees >= 0 ? "+" : ""}₹{portfolioPnL.rupees.toLocaleString("en-IN")} ({portfolioPnL.rupees >= 0 ? "+" : ""}{portfolioPnL.pct}%)
                       </span>
@@ -377,7 +375,7 @@ export default function WatchlistHomePage() {
               </div>
               <Link
                 href="/since-last-checked"
-                className="shrink-0 text-xs font-mono font-bold text-brand-600 dark:text-brand-400 hover:text-brand-500 flex items-center gap-1 self-end sm:self-center bg-brand-500/10 px-3 py-1.5 rounded-lg border border-brand-500/20 transition-all active:scale-95"
+                className="shrink-0 text-xs font-mono font-bold text-brand-600 dark:text-brand-400 hover:text-brand-500 flex items-center gap-1 self-end sm:self-center bg-brand-500/10 px-2.5 py-1 rounded border border-brand-500/20 transition-all active:scale-95"
               >
                 <span>{language === "hi" ? "अंतर देखें" : "View Diff"}</span>
                 <span>→</span>
@@ -399,20 +397,18 @@ export default function WatchlistHomePage() {
         {/* 4️⃣ Flagship: Persistent Flagship Unread Inbox Banner */}
         <Link
           href="/since-last-checked"
-          className="group block bg-surface border border-surfaceBorder hover:border-brand-500/40 rounded-2xl p-4 mb-6 transition-all shadow-sm active:scale-[0.99]"
+          className="group block bg-surface border border-surfaceBorder hover:border-brand-500/40 rounded-md p-3 mb-4 transition-all shadow-sm active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 shrink-0">
-                <Bell className="w-4 h-4" />
-              </div>
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Bell className="w-3.5 h-3.5 text-brand-500 shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="font-bold text-foreground text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors whitespace-nowrap">
                     {t("since_last_checked")}
                   </h2>
                   {unreadCount > 0 && (
-                    <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full font-mono shrink-0 leading-4">
+                    <span className="bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shrink-0 leading-4">
                       {unreadCount > 9 ? "9+" : unreadCount} {t("new_badge")}
                     </span>
                   )}
@@ -432,27 +428,27 @@ export default function WatchlistHomePage() {
 
           {/* Rich Inbox Summary — breakdown pills */}
           {unreadSummary && unreadSummary.total > 0 && (
-            <div className="space-y-2.5 pt-2.5 border-t border-surfaceBorder/50">
+            <div className="space-y-2 pt-2 border-t border-surfaceBorder/50">
               <div className="flex flex-wrap gap-1.5">
                 {unreadSummary.confirmed > 0 && (
-                  <span className="flex items-center space-x-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
-                    <span>🟢</span><span>{unreadSummary.confirmed} Confirmed</span>
+                  <span className="flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" />{unreadSummary.confirmed} Confirmed
                   </span>
                 )}
                 {unreadSummary.unexplained > 0 && (
-                  <span className="flex items-center space-x-1 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
-                    <span>🟡</span><span>{unreadSummary.unexplained} Unexplained</span>
+                  <span className="flex items-center gap-1 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 inline-block" />{unreadSummary.unexplained} Unexplained
                   </span>
                 )}
                 {unreadSummary.uncertain > 0 && (
-                  <span className="flex items-center space-x-1 bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
-                    <span>🔴</span><span>{unreadSummary.uncertain} Uncertain</span>
+                  <span className="flex items-center gap-1 bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 inline-block" />{unreadSummary.uncertain} Uncertain
                   </span>
                 )}
                 {unreadSummary.rippleAlerts > 0 && (
-                  <span className="flex items-center space-x-1 bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-400 text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg">
-                    <Waves className="w-3 h-3" />
-                    <span>{unreadSummary.rippleAlerts} Ripple</span>
+                  <span className="flex items-center gap-1 bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    <Waves className="w-3 h-3 shrink-0" />
+                    {unreadSummary.rippleAlerts} Ripple
                   </span>
                 )}
               </div>
@@ -462,12 +458,10 @@ export default function WatchlistHomePage() {
                   {unreadSummary.topEvents.map((ev, i) => (
                     <div key={i} className="flex items-center justify-between text-[11px] font-mono">
                       <div className="flex items-center space-x-1.5">
-                        <span className={ev.tier === "CONFIRMED" ? "text-emerald-600 dark:text-emerald-400" : ev.tier === "UNEXPLAINED" ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}>
-                          {ev.tier === "CONFIRMED" ? "🟢" : ev.tier === "UNEXPLAINED" ? "🟡" : "🔴"}
-                        </span>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 inline-block ${ev.tier === "CONFIRMED" ? "bg-emerald-500" : ev.tier === "UNEXPLAINED" ? "bg-amber-500" : "bg-rose-500"}`} />
                         <span className="font-semibold text-foreground">{ev.name}</span>
                         {ev.isRipple && (
-                          <span className="text-indigo-600 dark:text-indigo-400 text-[9px]">⚡ via {ev.rippleSource}</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 text-[9px]">via {ev.rippleSource}</span>
                         )}
                       </div>
                       <span className="text-muted text-[10px]">mag {ev.magnitude.toFixed(0)}</span>
@@ -494,7 +488,7 @@ export default function WatchlistHomePage() {
             {/* Attention Priority Sort Toggle */}
             <button
               onClick={() => setSortByAttention(v => !v)}
-              className={`h-10 px-3 border rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+              className={`h-8 px-2.5 border rounded-md text-xs font-mono font-semibold flex items-center gap-1.5 transition-all ${
                 sortByAttention
                   ? "bg-amber-500 text-white border-amber-600 font-bold"
                   : "bg-surface hover:bg-surfaceElevated border-surfaceBorder text-muted hover:text-foreground"
@@ -503,31 +497,31 @@ export default function WatchlistHomePage() {
             >
               <Filter className="w-3.5 h-3.5 shrink-0" />
               <span>{sortByAttention
-                ? (language === "hi" ? "ध्यान क्रम 🔥" : "Attention Sorted 🔥")
-                : (language === "hi" ? "ध्यान पहले" : "Needs Attention First")
+                ? (language === "hi" ? "ध्यान क्रम" : "Attention Sorted")
+                : (language === "hi" ? "ध्यान पहले" : "Needs Attention")
               }</span>
             </button>
 
             <button
               onClick={() => setShowChat(true)}
-              className="h-10 px-3.5 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+              className="h-8 px-2.5 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-md text-xs flex items-center justify-center gap-1.5 transition-all"
             >
-              <Bot className="w-4 h-4 text-brand-500 shrink-0" />
+              <Bot className="w-3.5 h-3.5 text-brand-500 shrink-0" />
               <span>{t("ask_dhyan")}</span>
             </button>
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="h-10 px-3.5 sm:px-4 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-brand-500/20"
+              className="h-8 px-3 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-md text-xs flex items-center gap-1.5 transition-all active:scale-95"
             >
-              <Plus className="w-4 h-4 text-white shrink-0" />
+              <Plus className="w-3.5 h-3.5 text-white shrink-0" />
               <span>{t("add_stock")}</span>
             </button>
           </div>
         </div>
 
         {/* Stock Universe Ticker List with Sparklines & Accent Borders */}
-        <div className="bg-surface border border-surfaceBorder rounded-2xl divide-y divide-surfaceBorder overflow-hidden shadow-sm mb-8">
+        <div className="bg-surface border border-surfaceBorder rounded-md divide-y divide-surfaceBorder overflow-hidden shadow-sm mb-8">
           {sortedItems.length === 0 ? (
             <div className="p-8 text-center text-muted text-xs font-mono">
               {language === "hi"
@@ -551,7 +545,7 @@ export default function WatchlistHomePage() {
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 sm:p-4 hover:bg-surfaceElevated/50 transition-all group ${tierAccent}`}
+                  className={`p-2.5 sm:p-3 hover:bg-surfaceElevated/50 transition-all group ${tierAccent}`}
                 >
                   {/* Row 1: Symbol, Badges, & Company (Left) vs LTP & Change % (Right) */}
                   <div className="flex items-start justify-between gap-3">
@@ -561,18 +555,18 @@ export default function WatchlistHomePage() {
                           {item.symbol}
                         </span>
                         {item.isStale && (
-                          <span className="bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full shadow-sm shrink-0 whitespace-nowrap">
-                            🔴 {TIER_LABELS.UNCERTAIN}
+                          <span className="bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap flex items-center gap-0.5">
+                            <span className="w-1 h-1 rounded-full bg-rose-500 inline-block" />{TIER_LABELS.UNCERTAIN}
                           </span>
                         )}
                         {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                          <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                            🟢 {TIER_LABELS.CONFIRMED}
+                          <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap flex items-center gap-0.5">
+                            <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />{TIER_LABELS.CONFIRMED}
                           </span>
                         )}
                         {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                          <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                            🟡 {TIER_LABELS.UNEXPLAINED}
+                          <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap flex items-center gap-0.5">
+                            <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />{TIER_LABELS.UNEXPLAINED}
                           </span>
                         )}
                       </div>
@@ -599,7 +593,7 @@ export default function WatchlistHomePage() {
                   </div>
 
                   {/* Row 2: Recent Signal Dots, Research Thesis & Actions */}
-                  <div className="mt-2 pt-2 border-t border-surfaceBorder/40 flex flex-wrap items-center justify-between gap-2">
+                  <div className="mt-1.5 pt-1.5 border-t border-surfaceBorder/40 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
                       {/* Tier History Dot Strip */}
                       {item.tierHistory && item.tierHistory.length > 0 && (
@@ -638,11 +632,11 @@ export default function WatchlistHomePage() {
                           return (
                             <button
                               onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                              className="text-[11px] text-foreground hover:text-brand-500 font-mono bg-surfaceElevated hover:bg-surface border border-surfaceBorder px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all text-left max-w-full shadow-sm"
+                              className="text-[11px] text-foreground hover:text-brand-500 font-mono bg-surfaceElevated hover:bg-surface border border-surfaceBorder px-2 py-0.5 rounded flex items-center gap-1.5 transition-all text-left max-w-full"
                               title="Click to edit research thesis & invalidation point"
                             >
-                              <BookOpen className="w-3.5 h-3.5 shrink-0 text-brand-500" />
-                              <span className="truncate max-w-[200px] sm:max-w-[320px] font-medium">Thesis: "{parsedThesis}"</span>
+                              <BookOpen className="w-3 h-3 shrink-0 text-brand-500" />
+                              <span className="truncate max-w-[200px] sm:max-w-[320px] font-medium">Thesis: &quot;{parsedThesis}&quot;</span>
                             </button>
                           );
                         }
@@ -682,7 +676,7 @@ export default function WatchlistHomePage() {
                           setSelectedVisualizerItem(item);
                           setShowVisualizerModal(true);
                         }}
-                        className="h-7 w-7 text-muted hover:text-foreground flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-foreground flex items-center justify-center rounded hover:bg-surfaceElevated transition-colors"
                         title="Open Catalyst-Pinned Visualizer"
                       >
                         <BarChart2 className="w-3.5 h-3.5" />
@@ -690,7 +684,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                        className="h-7 w-7 text-muted hover:text-foreground flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-foreground flex items-center justify-center rounded hover:bg-surfaceElevated transition-colors"
                         title="Edit Research Thesis"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
@@ -698,7 +692,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => handleMarkItemSeen(item.id)}
-                        className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded hover:bg-surfaceElevated transition-colors"
                         title="Mark seen (update watermark for this item)"
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
@@ -706,7 +700,7 @@ export default function WatchlistHomePage() {
 
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                        className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded hover:bg-surfaceElevated transition-colors"
                         title="Remove from Watchlist"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

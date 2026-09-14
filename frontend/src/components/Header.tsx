@@ -98,7 +98,7 @@ export function Header({
           <button
             type="button"
             onClick={onOpenSearch}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-full bg-surfaceElevated hover:bg-surface border border-surfaceBorder text-muted hover:text-foreground text-xs font-medium transition-all"
+          className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md bg-surfaceElevated hover:bg-surface border border-surfaceBorder text-muted hover:text-foreground text-xs font-medium transition-all"
           >
             <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -115,7 +115,7 @@ export function Header({
           )}
 
           {/* Feed status — desktop only */}
-          <div className={`hidden xl:flex items-center gap-1.5 border rounded-full px-3 py-1 text-xs font-mono ${
+          <div className={`hidden xl:flex items-center gap-1.5 border rounded-md px-2.5 py-1 text-xs font-mono ${
             feedStatus.status === "killed" ? "bg-redwood-bg border-redwood-border text-redwood-text"
             : isAlerted ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50 text-amber-800 dark:text-amber-300"
             : "bg-surfaceElevated border-surfaceBorder text-foreground"
