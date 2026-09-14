@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Search, Cpu, AlertTriangle, ShieldCheck, FileCheck, Waves, Anchor, Activity, Check } from "lucide-react";
+import { CheckCircle, Search, Cpu, AlertTriangle, ShieldCheck, FileCheck, Waves, Building2, Activity, Check } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { TIER_BADGES, TierKey } from "@/lib/tiers";
 
@@ -44,7 +44,7 @@ export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewPr
     if (step.includes("proactive") || step.includes("filing")) return <FileCheck className="w-3.5 h-3.5 text-emerald-500" />;
     if (step.includes("statistical")) return <Activity className="w-3.5 h-3.5 text-amber-500" />;
     if (step.includes("contagion") || step.includes("ripple")) return <Waves className="w-3.5 h-3.5 text-purple-500" />;
-    if (step.includes("informed") || step.includes("insider")) return <Anchor className="w-3.5 h-3.5 text-teal-500" />;
+    if (step.includes("informed") || step.includes("insider")) return <Building2 className="w-3.5 h-3.5 text-teal-500" />;
     if (step.includes("gather")) return <Search className="w-3.5 h-3.5 text-teal-500" />;
     if (step.includes("classify")) return <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />;
     if (step.includes("llm") || step.includes("groq") || step.includes("write")) return <Cpu className="w-3.5 h-3.5 text-sky-500" />;

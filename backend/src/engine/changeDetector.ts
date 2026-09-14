@@ -223,7 +223,7 @@ export async function processSnapshotForChange(
 
     let finalNarrative = data.narrative;
     if (insiderNarrative) {
-      finalNarrative += ` 🐋 ${insiderNarrative}`;
+      finalNarrative += ` 🏛️ ${insiderNarrative}`;
     }
     if (historicalResolutionNote) {
       finalNarrative += ` 🕰️ ${historicalResolutionNote}`;
@@ -257,7 +257,7 @@ export async function processSnapshotForChange(
       if (filingSummary) {
         fallbackNarrative = `CATALYST CONFIRMED — ${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% following official exchange disclosure: ${filingSummary}.`;
       } else if (hasInsiderBuy) {
-        fallbackNarrative = `CATALYST CONFIRMED — ${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% — 🐋 Informed Flow: Promoter/Insider buying corroborates market move. ${insiderNarrative}`;
+        fallbackNarrative = `CATALYST CONFIRMED — ${snapshot.symbol} moved ${sign}${changePct.toFixed(2)}% — 🏛️ Informed Flow: Promoter/Insider buying corroborates market move. ${insiderNarrative}`;
       }
     } else {
       fallbackNarrative = `UNINFORMED FLOW — ${snapshot.symbol} moved ${sign}${changePct.toFixed(
@@ -267,7 +267,7 @@ export async function processSnapshotForChange(
       }${sectorChangePct.toFixed(2)}%; real market move, but no official exchange filing corroborates it yet.`;
     }
 
-    if (insiderNarrative) fallbackNarrative += ` 🐋 ${insiderNarrative}`;
+    if (insiderNarrative) fallbackNarrative += ` 🏛️ ${insiderNarrative}`;
     if (historicalResolutionNote) fallbackNarrative += ` 🕰️ ${historicalResolutionNote}`;
 
     const baseSteps: any[] = [
@@ -335,7 +335,7 @@ function buildEnrichedTrace(
     trace.push({
       step: "informed_flow_check",
       timestamp: new Date().toISOString(),
-      detail: `🐋 Informed Flow (Promoter/Institutional disclosure) detected: ${buys.length} BUY order(s) (₹${buys.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr), ${sells.length} SELL order(s) (₹${sells.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr). Sources: ${[...new Set(insiderTrades.map(t => t.source))].join(", ")}.`
+      detail: `🏛️ Informed Flow (Promoter/Institutional disclosure) detected: ${buys.length} BUY order(s) (₹${buys.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr), ${sells.length} SELL order(s) (₹${sells.reduce((s, t) => s + t.valueInCr, 0).toFixed(0)}Cr). Sources: ${[...new Set(insiderTrades.map(t => t.source))].join(", ")}.`
     });
   }
 

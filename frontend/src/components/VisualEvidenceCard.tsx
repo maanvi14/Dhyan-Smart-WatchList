@@ -57,12 +57,12 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
         </div>
       )}
 
-      {/* 🐋 Informed Flow: Promoter & Institutional Disclosures */}
+      {/* Institutional & Promoter Disclosures */}
       {event.insiderData && event.insiderData.length > 0 && (
         <div className="bg-teal-500/5 dark:bg-teal-500/10 border border-teal-500/30 rounded-2xl p-3.5 space-y-2.5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs text-teal-700 dark:text-teal-300 font-bold tracking-wide">
-              <Anchor className="w-4 h-4 text-teal-500" />
+              <Building2 className="w-4 h-4 text-teal-500" />
               <span>Informed Flow — Institutional &amp; Promoter Disclosures</span>
             </div>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30">

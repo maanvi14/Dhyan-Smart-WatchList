@@ -15,7 +15,7 @@ import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustR
 import { TIER_BADGES, TIER_LABELS } from "@/lib/tiers";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { useI18n } from "@/lib/i18n";
-import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Anchor, Smartphone, BookOpen, AlertOctagon } from "lucide-react";
+import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen, AlertOctagon } from "lucide-react";
 
 export default function WatchlistHomePage() {
   const router = useRouter();
