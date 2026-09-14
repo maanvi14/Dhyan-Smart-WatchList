@@ -11,11 +11,12 @@ import { SectorRiskRadar } from "@/components/SectorRiskRadar";
 import { WatermarkSparkline } from "@/components/WatermarkSparkline";
 import { WatchlistTrustRatio } from "@/components/WatchlistTrustRatio";
 import { ResearchThesisModal } from "@/components/ResearchThesisModal";
+import { StockVisualizerModal } from "@/components/StockVisualizerModal";
 import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustRatioData } from "@/lib/api";
 import { TIER_BADGES, TIER_LABELS } from "@/lib/tiers";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { useI18n } from "@/lib/i18n";
-import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen, AlertOctagon } from "lucide-react";
+import { Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock, Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen, AlertOctagon, BarChart2 } from "lucide-react";
 
 export default function WatchlistHomePage() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function WatchlistHomePage() {
   const [showChat, setShowChat] = useState(false);
   const [showThesisModal, setShowThesisModal] = useState(false);
   const [selectedThesisItem, setSelectedThesisItem] = useState<WatchlistItemPrice | null>(null);
+  const [showVisualizerModal, setShowVisualizerModal] = useState(false);
+  const [selectedVisualizerItem, setSelectedVisualizerItem] = useState<WatchlistItemPrice | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 2026 UX: Attention Priority sorting toggle
@@ -641,7 +644,14 @@ export default function WatchlistHomePage() {
                   </div>
 
                   {/* Center: Watermark Delta Sparkline */}
-                  <div className="hidden sm:block px-3">
+                  <div
+                    onClick={() => {
+                      setSelectedVisualizerItem(item);
+                      setShowVisualizerModal(true);
+                    }}
+                    className="hidden sm:block px-3 cursor-pointer hover:scale-105 transition-transform"
+                    title="Click to open Evidence-Pinned Stock Visualizer"
+                  >
                     <WatermarkSparkline
                       points={item.sparkline}
                       changePct={item.changePct}
@@ -667,6 +677,17 @@ export default function WatchlistHomePage() {
 
                     {/* Quick Micro-Actions */}
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => {
+                          setSelectedVisualizerItem(item);
+                          setShowVisualizerModal(true);
+                        }}
+                        className="min-h-[44px] min-w-[36px] text-muted hover:text-brand-500 flex items-center justify-center"
+                        title="Open Catalyst-Pinned Visualizer"
+                      >
+                        <BarChart2 className="w-4 h-4" />
+                      </button>
+
                       <button
                         onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
                         className="min-h-[44px] min-w-[36px] text-muted hover:text-brand-500 flex items-center justify-center"
@@ -727,6 +748,22 @@ export default function WatchlistHomePage() {
           watchlistId={user.watchlistId}
           item={selectedThesisItem}
           onSaved={loadData}
+        />
+      )}
+
+      {/* 📊 Evidence-Pinned Stock Visualizer Modal */}
+      {selectedVisualizerItem && (
+        <StockVisualizerModal
+          isOpen={showVisualizerModal}
+          onClose={() => {
+            setShowVisualizerModal(false);
+            setSelectedVisualizerItem(null);
+          }}
+          item={selectedVisualizerItem}
+          onOpenThesis={(it) => {
+            setSelectedThesisItem(it);
+            setShowThesisModal(true);
+          }}
         />
       )}
     </div>
