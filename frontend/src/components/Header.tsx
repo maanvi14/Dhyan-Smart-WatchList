@@ -41,9 +41,13 @@ export function Header({
 
   const indices = [
     { name: "NIFTY 50", value: "24,852.15", change: "+0.42%", isPos: true },
-    { name: "SENSEX",   value: "81,332.72", change: "+0.38%", isPos: true },
+    { name: "SENSEX", value: "81,332.72", change: "+0.38%", isPos: true },
     { name: "BANK NIFTY", value: "51,215.40", change: "-0.15%", isPos: false },
-    { name: "INDIA VIX", value: "12.29",     change: "+4.15%", isPos: true },
+    { name: "NIFTY IT", value: "35,420.80", change: "+1.24%", isPos: true },
+    { name: "INDIA VIX", value: "12.29", change: "+4.15%", isPos: true },
+    { name: "BRENT CRUDE", value: "$82.40", change: "-0.65%", isPos: false },
+    { name: "USD/INR", value: "₹83.45", change: "+0.04%", isPos: true },
+    { name: "GOLD (10g)", value: "₹71,840", change: "+0.32%", isPos: true },
   ];
 
   const fetchUnread = async () => {
@@ -197,22 +201,35 @@ export function Header({
         </div>
       </div>
 
-      {/* Ticker strip */}
-      <div className="border-t border-surfaceBorder/50 bg-surfaceElevated/50 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-4 px-3 sm:px-4 py-1 text-[10px] sm:text-[11px] font-mono whitespace-nowrap min-w-0">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-muted shrink-0 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            MKTS
-          </span>
-          {indices.map((idx) => (
-            <div key={idx.name} className="flex items-center gap-1 shrink-0">
-              <span className="text-muted">{idx.name}</span>
-              <span className="font-bold text-foreground">{idx.value}</span>
-              <span className={`font-semibold ${ idx.isPos ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400" }`}>
-                {idx.isPos ? "▲" : "▼"}{idx.change}
-              </span>
-            </div>
-          ))}
+      {/* 🚀 Seamless Infinite Loop Marquee Ticker Strip */}
+      <div className="border-t border-surfaceBorder/60 bg-surfaceElevated/60 backdrop-blur-sm flex items-center overflow-hidden relative select-none">
+        {/* Fixed LIVE Market Pill Indicator on Left */}
+        <div className="z-10 flex items-center gap-1.5 px-3 py-1 bg-surface border-r border-surfaceBorder shrink-0 text-[10px] font-mono font-bold uppercase tracking-wider text-muted shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-foreground font-extrabold hidden xs:inline">LIVE</span>
+          <span>MKTS</span>
+        </div>
+
+        {/* Continuous Looping Track */}
+        <div className="flex-1 overflow-hidden ticker-fade-mask py-1">
+          <div className="animate-marquee flex items-center gap-6 text-[10px] sm:text-[11px] font-mono whitespace-nowrap">
+            {/* Duplicated list creates the seamless infinite loop */}
+            {[...indices, ...indices].map((idx, i) => (
+              <div key={`${idx.name}-${i}`} className="flex items-center gap-1.5 shrink-0 px-1">
+                <span className="text-muted font-medium">{idx.name}</span>
+                <span className="font-bold text-foreground tabular-nums">{idx.value}</span>
+                <span
+                  className={`font-semibold px-1 py-0.2 rounded text-[9px] sm:text-[10px] tabular-nums ${
+                    idx.isPos
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  }`}
+                >
+                  {idx.isPos ? "▲" : "▼"} {idx.change}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </header>

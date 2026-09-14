@@ -112,3 +112,30 @@ body {
     touch-action: manipulation;
   }
 }
+
+/* 🚀 Fintech Continuous Marquee Ticker */
+@keyframes ticker-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: ticker-marquee 32s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Edge gradient fade masks for fintech ticker */
+.ticker-fade-mask {
+  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent 100%);
+}
