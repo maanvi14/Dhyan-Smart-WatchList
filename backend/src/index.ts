@@ -11,6 +11,7 @@ import verifyTipRoutes from "./routes/verifyTip";
 import { priceFeed, SnapshotData } from "./feed/priceFeed";
 import { processSnapshotForChange, generateRippleEvent, getSectorPeers } from "./engine/changeDetector";
 import { proactiveFilingScanner } from "./engine/proactiveScanner";
+import { seedCorrelationHistory } from "./feed/seedCorrelationHistory";
 import { prisma } from "./db";
 
 dotenv.config();
@@ -116,18 +117,33 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
               event: created
             });
 
-            // 🌊 RIPPLE EFFECT: If this is a high-magnitude event, sweep sector peers
+            // 🌊 RIPPLE EFFECT: If this is a high-magnitude event, sweep sector peers with quant-backed contagion
             if (changeResult.magnitude >= 50) {
-              const peers = getSectorPeers(snapshot.symbol);
-              if (peers.length > 0) {
-                // Find any watchlist items tracking these peer symbols
+              const visitedSymbols = new Set<string>([snapshot.symbol]);
+              const symbolInfo = (await import("./feed/symbols")).getSymbolInfo(snapshot.symbol);
+              const sector = symbolInfo?.sector || "General";
+
+              // Hop 1: Direct sector peers
+              const hop1Peers = getSectorPeers(snapshot.symbol);
+              for (const peerSymbol of hop1Peers) {
+                if (visitedSymbols.has(peerSymbol)) continue;
+                visitedSymbols.add(peerSymbol);
+
                 const peerItems = await prisma.watchlistItem.findMany({
-                  where: { symbol: { in: peers } },
+                  where: { symbol: peerSymbol },
                   include: { watchlist: true }
                 });
+                if (peerItems.length === 0) continue;
 
-                const symbolInfo = (await import("./feed/symbols")).getSymbolInfo(snapshot.symbol);
-                const sector = symbolInfo?.sector || "General";
+                const rippleResult = generateRippleEvent(
+                  peerSymbol,
+                  snapshot.symbol,
+                  changeResult.magnitude,
+                  sector,
+                  1 // Hop 1
+                );
+
+                if (!rippleResult) continue; // Dropped if |rho| < 0.2
 
                 for (const peerItem of peerItems) {
                   // Avoid ripple events for the same pair within 1 hour
@@ -141,13 +157,6 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
                   });
 
                   if (!recentRipple) {
-                    const rippleResult = generateRippleEvent(
-                      peerItem.symbol,
-                      snapshot.symbol,
-                      changeResult.magnitude,
-                      sector
-                    );
-
                     const rippleEvent = await prisma.changeEvent.create({
                       data: {
                         watchlistItemId: peerItem.id,
@@ -160,17 +169,87 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
                         volumeDivergence: false,
                         detectedAt: rippleResult.detectedAt,
                         isRippleEffect: true,
-                        rippleSourceSymbol: snapshot.symbol
+                        rippleSourceSymbol: snapshot.symbol,
+                        correlationCoefficient: rippleResult.correlationCoefficient,
+                        betaCoefficient: rippleResult.betaCoefficient,
+                        residualZScore: rippleResult.residualZScore,
+                        hopCount: rippleResult.hopCount
                       }
                     });
 
-                    console.log(`[Ripple] Created contagion alert for ${peerItem.symbol} (source: ${snapshot.symbol})`);
+                    console.log(`[Ripple Hop 1] Created contagion alert for ${peerItem.symbol} (source: ${snapshot.symbol}, mag: ${rippleResult.magnitude})`);
 
                     io.emit("new_change_event", {
                       watchlistId: peerItem.watchlistId,
                       event: rippleEvent,
                       isRipple: true
                     });
+                  }
+                }
+
+                // Hop 2: If Hop 1 decayed magnitude is still >= 50, propagate to second-order peers
+                if (rippleResult.magnitude >= 50) {
+                  const hop2Peers = getSectorPeers(peerSymbol);
+                  for (const subPeerSymbol of hop2Peers) {
+                    if (visitedSymbols.has(subPeerSymbol)) continue;
+                    visitedSymbols.add(subPeerSymbol);
+
+                    const subPeerItems = await prisma.watchlistItem.findMany({
+                      where: { symbol: subPeerSymbol },
+                      include: { watchlist: true }
+                    });
+                    if (subPeerItems.length === 0) continue;
+
+                    const subRippleResult = generateRippleEvent(
+                      subPeerSymbol,
+                      peerSymbol,
+                      rippleResult.magnitude,
+                      sector,
+                      2 // Hop 2
+                    );
+
+                    if (!subRippleResult) continue;
+
+                    for (const subItem of subPeerItems) {
+                      const recentSubRipple = await prisma.changeEvent.findFirst({
+                        where: {
+                          watchlistItemId: subItem.id,
+                          isRippleEffect: true,
+                          rippleSourceSymbol: peerSymbol,
+                          detectedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }
+                        }
+                      });
+
+                      if (!recentSubRipple) {
+                        const subRippleEvent = await prisma.changeEvent.create({
+                          data: {
+                            watchlistItemId: subItem.id,
+                            symbol: subItem.symbol,
+                            confidenceTier: subRippleResult.confidenceTier,
+                            magnitude: subRippleResult.magnitude,
+                            narrative: subRippleResult.narrative,
+                            evidenceTrace: JSON.stringify(subRippleResult.evidenceTrace),
+                            sectorDivergence: false,
+                            volumeDivergence: false,
+                            detectedAt: subRippleResult.detectedAt,
+                            isRippleEffect: true,
+                            rippleSourceSymbol: peerSymbol,
+                            correlationCoefficient: subRippleResult.correlationCoefficient,
+                            betaCoefficient: subRippleResult.betaCoefficient,
+                            residualZScore: subRippleResult.residualZScore,
+                            hopCount: subRippleResult.hopCount
+                          }
+                        });
+
+                        console.log(`[Ripple Hop 2] Created second-order contagion alert for ${subItem.symbol} (source: ${peerSymbol}, mag: ${subRippleResult.magnitude})`);
+
+                        io.emit("new_change_event", {
+                          watchlistId: subItem.watchlistId,
+                          event: subRippleEvent,
+                          isRipple: true
+                        });
+                      }
+                    }
                   }
                 }
               }
@@ -183,6 +262,9 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
     console.error("[Engine Error] Failed to process snapshot for change detection:", (err as Error).message);
   }
 });
+
+// Seed synthetic correlation and beta history before starting polling
+seedCorrelationHistory();
 
 // Start price polling
 priceFeed.startPolling(15000);

@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle, Search, Cpu, AlertTriangle, ShieldCheck, FileCheck, Waves, Building2, Activity, Check } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle, Search, Cpu, AlertTriangle, ShieldCheck, FileCheck, Waves, Building2, Activity, Code2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { TIER_BADGES, TierKey } from "@/lib/tiers";
 
@@ -8,6 +9,11 @@ interface EvidenceStep {
   step: string;
   timestamp: string;
   detail: string;
+  correlationCoefficient?: number | null;
+  betaCoefficient?: number | null;
+  residualZScore?: number | null;
+  hopCount?: number | null;
+  [key: string]: any;
 }
 
 interface EvidenceTraceViewProps {
@@ -26,11 +32,13 @@ const STEP_TRANSLATIONS_HI: Record<string, string> = {
   statistical_dislocation_check: "सांख्यिकीय विचलन सत्यापन",
   proactive_regulatory_sweep: "सक्रिय फाइलिंग स्कैन",
   sector_contagion_detection: "सेक्टर संक्रामक विश्लेषण",
+  sector_correlation_check: "सेक्टर सहसंबंध विश्लेषण",
   informed_flow_check: "प्रमोटर / संस्थागत प्रवाह"
 };
 
 export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewProps) {
   const { language, t } = useI18n();
+  const [openWorkbenches, setOpenWorkbenches] = useState<Record<number, boolean>>({});
 
   if (!trace || trace.length === 0) {
     return (
@@ -40,9 +48,16 @@ export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewPr
     );
   }
 
+  const toggleWorkbench = (idx: number) => {
+    setOpenWorkbenches(prev => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }));
+  };
+
   const getStepIcon = (step: string) => {
     if (step.includes("proactive") || step.includes("filing")) return <FileCheck className="w-3.5 h-3.5 text-emerald-500" />;
-    if (step.includes("statistical")) return <Activity className="w-3.5 h-3.5 text-amber-500" />;
+    if (step.includes("statistical") || step.includes("correlation")) return <Activity className="w-3.5 h-3.5 text-amber-500" />;
     if (step.includes("contagion") || step.includes("ripple")) return <Waves className="w-3.5 h-3.5 text-purple-500" />;
     if (step.includes("informed") || step.includes("insider")) return <Building2 className="w-3.5 h-3.5 text-teal-500" />;
     if (step.includes("gather")) return <Search className="w-3.5 h-3.5 text-teal-500" />;
@@ -78,6 +93,11 @@ export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewPr
       {/* Modern Connected Vertical Pipeline */}
       <div className="relative pl-6 space-y-3 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-brand-500 before:via-brand-500/50 before:to-surfaceBorder">
         {trace.map((item, idx) => {
+          const hasQuantData =
+            item.correlationCoefficient !== undefined ||
+            item.step === "sector_correlation_check";
+          const isExpanded = Boolean(openWorkbenches[idx]);
+
           return (
             <div key={idx} className="relative group">
               {/* Stepper Dot */}
@@ -104,6 +124,78 @@ export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewPr
                 <p className="text-xs text-foreground/85 leading-relaxed font-medium pl-8">
                   {item.detail}
                 </p>
+
+                {/* Opt-in Raw JSON Workbench for Quantitative Verification */}
+                {hasQuantData && (
+                  <div className="mt-2.5 pt-2 pl-8 border-t border-surfaceBorder/60">
+                    <button
+                      type="button"
+                      onClick={() => toggleWorkbench(idx)}
+                      className="inline-flex items-center space-x-1.5 text-[11px] font-mono text-muted hover:text-foreground font-semibold px-2 py-1 rounded-lg bg-surface hover:bg-surfaceElevated border border-surfaceBorder transition-all"
+                    >
+                      <Code2 className="w-3.5 h-3.5 text-brand-500" />
+                      <span>
+                        {isExpanded
+                          ? "Hide Raw JSON Workbench"
+                          : "Raw JSON Workbench (for users who want to verify the math)"}
+                      </span>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-2 p-3 rounded-xl bg-slate-950/90 dark:bg-slate-900 border border-purple-500/30 font-mono text-xs space-y-1.5 shadow-inner animate-in fade-in duration-150">
+                        <div className="text-[10px] text-purple-300 uppercase font-sans font-bold tracking-wider mb-2">
+                          Raw Quantitative Audit Trail — For users who want to verify the math:
+                        </div>
+                        <div className="grid grid-cols-1 gap-1 text-slate-200">
+                          <div>
+                            <span className="text-purple-400">correlationCoefficient:</span>{" "}
+                            <span className="font-bold">
+                              {item.correlationCoefficient !== undefined && item.correlationCoefficient !== null
+                                ? Number(item.correlationCoefficient).toFixed(2)
+                                : "0.00"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-blue-400">betaCoefficient:</span>{" "}
+                            <span className="font-bold">
+                              {item.betaCoefficient !== undefined && item.betaCoefficient !== null
+                                ? Number(item.betaCoefficient).toFixed(2)
+                                : "0.00"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-amber-400">residualZScore:</span>{" "}
+                            <span className="font-bold">
+                              {item.residualZScore !== undefined && item.residualZScore !== null
+                                ? Number(item.residualZScore).toFixed(2)
+                                : "0.00"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-emerald-400">hopCount:</span>{" "}
+                            <span className="font-bold">
+                              {item.hopCount !== undefined && item.hopCount !== null ? item.hopCount : 0}
+                            </span>
+                          </div>
+                        </div>
+                        <pre className="mt-2 pt-2 border-t border-slate-800 text-[10px] text-slate-400 overflow-x-auto">
+                          {JSON.stringify(
+                            {
+                              step: item.step,
+                              correlationCoefficient: item.correlationCoefficient,
+                              betaCoefficient: item.betaCoefficient,
+                              residualZScore: item.residualZScore,
+                              hopCount: item.hopCount,
+                              timestamp: item.timestamp
+                            },
+                            null,
+                            2
+                          )}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

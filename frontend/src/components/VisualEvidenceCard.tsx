@@ -36,7 +36,7 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
   return (
     <div className="mt-3 pt-3 border-t border-surfaceBorder/80 space-y-3 font-sans">
       {/* 🌊 Ripple Effect / Contagion Alert Banner */}
-      {event.isRippleEffect && event.rippleSourceName && (
+      {event.isRippleEffect && (event.rippleSourceName || event.rippleSourceSymbol) && (
         <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-3.5 flex items-start space-x-3 shadow-sm">
           <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
             <Waves className="w-4 h-4" />
@@ -44,14 +44,24 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
           <div>
             <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5" />
-              <span>Sector Contagion Alert</span>
+              <span>
+                {event.hopCount && event.hopCount > 1
+                  ? "Second-Order Contagion Alert"
+                  : "Sector Contagion Alert"}
+              </span>
             </div>
             <p className="text-xs text-foreground/90 font-medium leading-relaxed">
-              High signal event detected on{" "}
-              <span className="font-bold text-purple-600 dark:text-purple-300">
-                {event.rippleSourceName}
-              </span>{" "}
-              in this sector. {event.symbol.replace("NSE:", "")} is a sector peer with no direct company catalyst logged yet.
+              {event.narrative ? (
+                event.narrative.replace(/^[⚡\s]*(Second-Order Contagion Alert|Sector Contagion Alert):\s*/, "")
+              ) : (
+                <>
+                  High signal event detected on{" "}
+                  <span className="font-bold text-purple-600 dark:text-purple-300">
+                    {event.rippleSourceName || event.rippleSourceSymbol}
+                  </span>{" "}
+                  in this sector. {event.symbol.replace("NSE:", "")} is a sector peer with no direct company catalyst logged yet.
+                </>
+              )}
             </p>
           </div>
         </div>

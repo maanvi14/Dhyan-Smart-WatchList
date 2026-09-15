@@ -71,6 +71,11 @@ model ChangeEvent {
   rippleSourceSymbol String?     // which symbol triggered this contagion warning
   // New: Insider/Promoter trade link
   insiderTradeData String?       // JSON: { traderType, action, shares, value, timestamp }
+  // Quant-backed Ripple Effect metrics
+  correlationCoefficient Float?
+  betaCoefficient        Float?
+  residualZScore         Float?
+  hopCount               Int?          @default(0)
   watchlistItem    WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
 }
 

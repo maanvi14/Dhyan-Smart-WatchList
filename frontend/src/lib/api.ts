@@ -103,6 +103,11 @@ export interface ChangeEventData {
   isRippleEffect?: boolean;
   rippleSourceSymbol?: string | null;
   rippleSourceName?: string | null;
+  // 🔬 Quant-backed Audit Fields (for Raw JSON Workbench only)
+  correlationCoefficient?: number | null;
+  betaCoefficient?: number | null;
+  residualZScore?: number | null;
+  hopCount?: number | null;
 }
 
 export interface UnreadSummary {

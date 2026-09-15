@@ -271,6 +271,12 @@ router.get("/:id/since-last-checked", async (req: AuthRequest, res: Response) =>
         ce."sectorDivergence", 
         ce."volumeDivergence", 
         ce."detectedAt",
+        ce."isRippleEffect",
+        ce."rippleSourceSymbol",
+        ce."correlationCoefficient",
+        ce."betaCoefficient",
+        ce."residualZScore",
+        ce."hopCount",
         wi.notes,
         wi."lastViewedAt"
       FROM "ChangeEvent" ce
@@ -371,6 +377,10 @@ router.get("/:id/since-last-checked", async (req: AuthRequest, res: Response) =>
           isRippleEffect: Boolean(e.isRippleEffect),
           rippleSourceSymbol: e.rippleSourceSymbol || null,
           rippleSourceName: e.rippleSourceSymbol ? (getSymbolInfo(e.rippleSourceSymbol)?.name || e.rippleSourceSymbol) : null,
+          correlationCoefficient: e.correlationCoefficient ?? null,
+          betaCoefficient: e.betaCoefficient ?? null,
+          residualZScore: e.residualZScore ?? null,
+          hopCount: e.hopCount ?? 0,
           evidenceTrace: typeof e.evidenceTrace === "string" ? JSON.parse(e.evidenceTrace) : e.evidenceTrace
         };
       })

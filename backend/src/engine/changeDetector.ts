@@ -7,6 +7,13 @@ import {
   buildInsiderNarrative,
   InsiderTrade
 } from "../feed/insiderStore";
+import {
+  computeCorrelation,
+  computeBeta,
+  computeResidualZScore,
+  exponentialDecay
+} from "./correlationEngine";
+import { getStockReturns, getSectorReturns } from "../feed/seedCorrelationHistory";
 import { prisma } from "../db";
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
@@ -23,6 +30,10 @@ export interface ChangeDetectionResult {
   // ── NEW: Ripple Effect ───────────────────────────────────────────
   isRippleEffect?: boolean;
   rippleSourceSymbol?: string;
+  correlationCoefficient?: number;
+  betaCoefficient?: number;
+  residualZScore?: number;
+  hopCount?: number;
   // ── NEW: Skin in the Game ────────────────────────────────────────
   insiderTradeData?: InsiderTrade[] | null;
 }
@@ -56,30 +67,130 @@ export function computeInternalRSI(prices: number[], period = 14): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ⚡ SECTOR CONTAGION: Returns a lightweight contagion alert for a peer symbol
-// Called by index.ts after a high-magnitude event on a "source" symbol.
+// ⚡ TRANSLATION LAYER: Quantitative signal -> plain English narrative
+// The ONLY bridge between statistical math and user-facing text.
+// ─────────────────────────────────────────────────────────────────────────────
+export function translateSignalToPlainLanguage(
+  rho: number,
+  beta: number,
+  residualZScore: number,
+  sourceName: string = "its sector peer"
+): {
+  strengthPhrase: string;
+  sensitivityPhrase: string;
+  anomalyNote: string | null;
+} {
+  // Sensitivity phrasing from sector beta
+  let sensitivityPhrase = "";
+  if (beta > 1.2) {
+    sensitivityPhrase = "historically reacts more strongly than the sector average";
+  } else if (beta < 0.8) {
+    sensitivityPhrase = "historically reacts more mildly than the sector average";
+  }
+
+  // Anomaly phrasing from residual z-score
+  let anomalyNote: string | null = null;
+  if (Math.abs(residualZScore) > 2) {
+    anomalyNote = `This move is larger than usual for how this stock typically follows ${sourceName}`;
+  }
+
+  // Strength phrasing from correlation rho
+  let strengthPhrase = "";
+  if (rho >= 0.7) {
+    strengthPhrase = `shares strong historical co-movement with ${sourceName}`;
+  } else if (rho >= 0.4) {
+    strengthPhrase = `shares moderate historical co-movement with ${sourceName}`;
+  } else {
+    strengthPhrase = `shares mild historical co-movement with ${sourceName}`;
+  }
+
+  return { strengthPhrase, sensitivityPhrase, anomalyNote };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚡ SECTOR CONTAGION: Returns a quant-backed contagion alert for a peer symbol
+// Evaluates rolling correlation, beta sensitivity, and hop decay.
 // ─────────────────────────────────────────────────────────────────────────────
 export function generateRippleEvent(
   peerSymbol: string,
   sourceSymbol: string,
   sourceMagnitude: number,
-  sector: string
-): ChangeDetectionResult {
+  sector: string,
+  hopCount: number = 0
+): ChangeDetectionResult | null {
   const sourceInfo = getSymbolInfo(sourceSymbol);
   const sourceName = sourceInfo?.name || sourceSymbol;
   const peerInfo = getSymbolInfo(peerSymbol);
   const peerName = peerInfo?.name || peerSymbol;
 
+  // 1. Retrieve return histories from seeded store
+  const peerReturns = getStockReturns(peerSymbol);
+  const sourceReturns = getStockReturns(sourceSymbol);
+  const sectorReturns = getSectorReturns(sector);
+
+  // 2. Pearson correlation rho
+  const rho = computeCorrelation(peerReturns, sourceReturns);
+  if (Math.abs(rho) < 0.2) {
+    // Insufficient historical co-movement; drop contagion signal
+    return null;
+  }
+
+  // 3. Sector beta clamped between 0 and 2
+  const rawBeta = computeBeta(peerReturns, sectorReturns);
+  const beta = Math.max(0, Math.min(2, rawBeta));
+
+  // 4. Residual Z-Score
+  const minLen = Math.min(peerReturns.length, sourceReturns.length);
+  const pSlice = peerReturns.slice(peerReturns.length - minLen);
+  const sSlice = sourceReturns.slice(sourceReturns.length - minLen);
+  const residualHistory = pSlice.map((pRet, idx) => pRet - beta * sSlice[idx]);
+
+  const actualMove = pSlice.length > 0 ? pSlice[pSlice.length - 1] : 0;
+  const predictedMove = sSlice.length > 0 ? beta * sSlice[sSlice.length - 1] : 0;
+  const residualZScore = computeResidualZScore(actualMove, predictedMove, residualHistory);
+
+  // 5. Magnitude attenuation via half-life exponential decay
+  const decayedMagnitude = Math.round(exponentialDecay(sourceMagnitude, hopCount, 1.5));
+  const magnitude = Math.max(1, Math.min(100, decayedMagnitude));
+
+  // 6. Plain language narrative translation
+  const { strengthPhrase, sensitivityPhrase, anomalyNote } = translateSignalToPlainLanguage(
+    rho,
+    beta,
+    residualZScore,
+    sourceName
+  );
+
+  const alertTitle = hopCount > 1 ? "⚡ Second-Order Contagion Alert" : "⚡ Sector Contagion Alert";
+  let narrative = `${alertTitle}: ${sourceName} triggered an alert in the ${sector} sector. Peer ${peerName} ${strengthPhrase}`;
+  if (sensitivityPhrase) {
+    narrative += `, and ${sensitivityPhrase}`;
+  }
+  narrative += ".";
+  if (anomalyNote) {
+    narrative += ` ${anomalyNote}.`;
+  }
+  narrative += ` No direct company catalyst confirmed yet.`;
+
   return {
     symbol: peerSymbol,
     confidenceTier: "UNEXPLAINED",
-    magnitude: Math.round(sourceMagnitude * 0.6), // contagion is typically attenuated
-    narrative: `⚡ Sector Contagion Alert: ${sourceName} triggered a ${sourceMagnitude.toFixed(0)}-point event in the ${sector} sector. Peer ${peerName} flagged for contagion spread; no verified catalyst confirmed yet.`,
+    magnitude,
+    narrative,
     evidenceTrace: [
       {
         step: "sector_contagion_detection",
         timestamp: new Date().toISOString(),
-        detail: `Source event: ${sourceSymbol} (signal strength ${sourceMagnitude.toFixed(0)}) in sector ${sector}. Sector peer ${peerSymbol} flagged for contagion sweep.`
+        detail: `Source event: ${sourceSymbol} in sector ${sector}. Sector peer ${peerSymbol} flagged for contagion sweep.`
+      },
+      {
+        step: "sector_correlation_check",
+        timestamp: new Date().toISOString(),
+        detail: "Statistical co-movement and sector sensitivity verified against rolling historical returns.",
+        correlationCoefficient: Number(rho.toFixed(2)),
+        betaCoefficient: Number(beta.toFixed(2)),
+        residualZScore: Number(residualZScore.toFixed(2)),
+        hopCount: hopCount
       },
       {
         step: "classify_tier",
@@ -91,7 +202,11 @@ export function generateRippleEvent(
     volumeDivergence: false,
     detectedAt: new Date(),
     isRippleEffect: true,
-    rippleSourceSymbol: sourceSymbol
+    rippleSourceSymbol: sourceSymbol,
+    correlationCoefficient: rho,
+    betaCoefficient: beta,
+    residualZScore: residualZScore,
+    hopCount
   };
 }
 
