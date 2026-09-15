@@ -242,5 +242,9 @@ export const debugApi = {
   triggerUninformed: async () => {
     const res = await api.post("/debug/trigger-uninformed");
     return res.data;
+  },
+  resetDemo: async () => {
+    const res = await api.post("/debug/reset-demo");
+    return res.data;
   }
 };

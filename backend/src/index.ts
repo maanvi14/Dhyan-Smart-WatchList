@@ -116,139 +116,139 @@ priceFeed.onTick(async (snapshot: SnapshotData) => {
               watchlistId: item.watchlistId,
               event: created
             });
+          }
 
-            // 🌊 RIPPLE EFFECT: If this is a high-magnitude event, sweep sector peers with quant-backed contagion
-            if (changeResult.magnitude >= 50) {
-              const visitedSymbols = new Set<string>([snapshot.symbol]);
-              const symbolInfo = (await import("./feed/symbols")).getSymbolInfo(snapshot.symbol);
-              const sector = symbolInfo?.sector || "General";
+          // 🌊 RIPPLE EFFECT: If this is a high-magnitude event, sweep sector peers with quant-backed contagion
+          if (changeResult.magnitude >= 50) {
+            const visitedSymbols = new Set<string>([snapshot.symbol]);
+            const symbolInfo = (await import("./feed/symbols")).getSymbolInfo(snapshot.symbol);
+            const sector = symbolInfo?.sector || "General";
 
-              // Hop 1: Direct sector peers
-              const hop1Peers = getSectorPeers(snapshot.symbol);
-              for (const peerSymbol of hop1Peers) {
-                if (visitedSymbols.has(peerSymbol)) continue;
-                visitedSymbols.add(peerSymbol);
+            // Hop 1: Direct sector peers
+            const hop1Peers = getSectorPeers(snapshot.symbol);
+            for (const peerSymbol of hop1Peers) {
+              if (visitedSymbols.has(peerSymbol)) continue;
+              visitedSymbols.add(peerSymbol);
 
-                const peerItems = await prisma.watchlistItem.findMany({
-                  where: { symbol: peerSymbol },
-                  include: { watchlist: true }
+              const peerItems = await prisma.watchlistItem.findMany({
+                where: { symbol: peerSymbol },
+                include: { watchlist: true }
+              });
+              if (peerItems.length === 0) continue;
+
+              const rippleResult = generateRippleEvent(
+                peerSymbol,
+                snapshot.symbol,
+                changeResult.magnitude,
+                sector,
+                1 // Hop 1
+              );
+
+              if (!rippleResult) continue; // Dropped if |rho| < 0.2
+
+              for (const peerItem of peerItems) {
+                // Avoid ripple events for the same pair within 30 seconds
+                const recentRipple = await prisma.changeEvent.findFirst({
+                  where: {
+                    watchlistItemId: peerItem.id,
+                    isRippleEffect: true,
+                    rippleSourceSymbol: snapshot.symbol,
+                    detectedAt: { gte: new Date(Date.now() - 30 * 1000) }
+                  }
                 });
-                if (peerItems.length === 0) continue;
 
-                const rippleResult = generateRippleEvent(
-                  peerSymbol,
-                  snapshot.symbol,
-                  changeResult.magnitude,
-                  sector,
-                  1 // Hop 1
-                );
-
-                if (!rippleResult) continue; // Dropped if |rho| < 0.2
-
-                for (const peerItem of peerItems) {
-                  // Avoid ripple events for the same pair within 1 hour
-                  const recentRipple = await prisma.changeEvent.findFirst({
-                    where: {
+                if (!recentRipple) {
+                  const rippleEvent = await prisma.changeEvent.create({
+                    data: {
                       watchlistItemId: peerItem.id,
+                      symbol: peerItem.symbol,
+                      confidenceTier: rippleResult.confidenceTier,
+                      magnitude: rippleResult.magnitude,
+                      narrative: rippleResult.narrative,
+                      evidenceTrace: JSON.stringify(rippleResult.evidenceTrace),
+                      sectorDivergence: false,
+                      volumeDivergence: false,
+                      detectedAt: rippleResult.detectedAt,
                       isRippleEffect: true,
                       rippleSourceSymbol: snapshot.symbol,
-                      detectedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }
+                      correlationCoefficient: rippleResult.correlationCoefficient,
+                      betaCoefficient: rippleResult.betaCoefficient,
+                      residualZScore: rippleResult.residualZScore,
+                      hopCount: rippleResult.hopCount
                     }
                   });
 
-                  if (!recentRipple) {
-                    const rippleEvent = await prisma.changeEvent.create({
-                      data: {
-                        watchlistItemId: peerItem.id,
-                        symbol: peerItem.symbol,
-                        confidenceTier: rippleResult.confidenceTier,
-                        magnitude: rippleResult.magnitude,
-                        narrative: rippleResult.narrative,
-                        evidenceTrace: JSON.stringify(rippleResult.evidenceTrace),
-                        sectorDivergence: false,
-                        volumeDivergence: false,
-                        detectedAt: rippleResult.detectedAt,
+                  console.log(`[Ripple Hop 1] Created contagion alert for ${peerItem.symbol} (source: ${snapshot.symbol}, mag: ${rippleResult.magnitude})`);
+
+                  io.emit("new_change_event", {
+                    watchlistId: peerItem.watchlistId,
+                    event: rippleEvent,
+                    isRipple: true
+                  });
+                }
+              }
+
+              // Hop 2: If Hop 1 decayed magnitude is still >= 50, propagate to second-order peers
+              if (rippleResult.magnitude >= 50) {
+                const hop2Peers = getSectorPeers(peerSymbol);
+                for (const subPeerSymbol of hop2Peers) {
+                  if (visitedSymbols.has(subPeerSymbol)) continue;
+                  visitedSymbols.add(subPeerSymbol);
+
+                  const subPeerItems = await prisma.watchlistItem.findMany({
+                    where: { symbol: subPeerSymbol },
+                    include: { watchlist: true }
+                  });
+                  if (subPeerItems.length === 0) continue;
+
+                  const subRippleResult = generateRippleEvent(
+                    subPeerSymbol,
+                    peerSymbol,
+                    rippleResult.magnitude,
+                    sector,
+                    2 // Hop 2
+                  );
+
+                  if (!subRippleResult) continue;
+
+                  for (const subItem of subPeerItems) {
+                    const recentSubRipple = await prisma.changeEvent.findFirst({
+                      where: {
+                        watchlistItemId: subItem.id,
                         isRippleEffect: true,
-                        rippleSourceSymbol: snapshot.symbol,
-                        correlationCoefficient: rippleResult.correlationCoefficient,
-                        betaCoefficient: rippleResult.betaCoefficient,
-                        residualZScore: rippleResult.residualZScore,
-                        hopCount: rippleResult.hopCount
+                        rippleSourceSymbol: peerSymbol,
+                        detectedAt: { gte: new Date(Date.now() - 30 * 1000) }
                       }
                     });
 
-                    console.log(`[Ripple Hop 1] Created contagion alert for ${peerItem.symbol} (source: ${snapshot.symbol}, mag: ${rippleResult.magnitude})`);
-
-                    io.emit("new_change_event", {
-                      watchlistId: peerItem.watchlistId,
-                      event: rippleEvent,
-                      isRipple: true
-                    });
-                  }
-                }
-
-                // Hop 2: If Hop 1 decayed magnitude is still >= 50, propagate to second-order peers
-                if (rippleResult.magnitude >= 50) {
-                  const hop2Peers = getSectorPeers(peerSymbol);
-                  for (const subPeerSymbol of hop2Peers) {
-                    if (visitedSymbols.has(subPeerSymbol)) continue;
-                    visitedSymbols.add(subPeerSymbol);
-
-                    const subPeerItems = await prisma.watchlistItem.findMany({
-                      where: { symbol: subPeerSymbol },
-                      include: { watchlist: true }
-                    });
-                    if (subPeerItems.length === 0) continue;
-
-                    const subRippleResult = generateRippleEvent(
-                      subPeerSymbol,
-                      peerSymbol,
-                      rippleResult.magnitude,
-                      sector,
-                      2 // Hop 2
-                    );
-
-                    if (!subRippleResult) continue;
-
-                    for (const subItem of subPeerItems) {
-                      const recentSubRipple = await prisma.changeEvent.findFirst({
-                        where: {
+                    if (!recentSubRipple) {
+                      const subRippleEvent = await prisma.changeEvent.create({
+                        data: {
                           watchlistItemId: subItem.id,
+                          symbol: subItem.symbol,
+                          confidenceTier: subRippleResult.confidenceTier,
+                          magnitude: subRippleResult.magnitude,
+                          narrative: subRippleResult.narrative,
+                          evidenceTrace: JSON.stringify(subRippleResult.evidenceTrace),
+                          sectorDivergence: false,
+                          volumeDivergence: false,
+                          detectedAt: subRippleResult.detectedAt,
                           isRippleEffect: true,
                           rippleSourceSymbol: peerSymbol,
-                          detectedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }
+                          correlationCoefficient: subRippleResult.correlationCoefficient,
+                          betaCoefficient: subRippleResult.betaCoefficient,
+                          residualZScore: subRippleResult.residualZScore,
+                          hopCount: subRippleResult.hopCount
                         }
                       });
 
-                      if (!recentSubRipple) {
-                        const subRippleEvent = await prisma.changeEvent.create({
-                          data: {
-                            watchlistItemId: subItem.id,
-                            symbol: subItem.symbol,
-                            confidenceTier: subRippleResult.confidenceTier,
-                            magnitude: subRippleResult.magnitude,
-                            narrative: subRippleResult.narrative,
-                            evidenceTrace: JSON.stringify(subRippleResult.evidenceTrace),
-                            sectorDivergence: false,
-                            volumeDivergence: false,
-                            detectedAt: subRippleResult.detectedAt,
-                            isRippleEffect: true,
-                            rippleSourceSymbol: peerSymbol,
-                            correlationCoefficient: subRippleResult.correlationCoefficient,
-                            betaCoefficient: subRippleResult.betaCoefficient,
-                            residualZScore: subRippleResult.residualZScore,
-                            hopCount: subRippleResult.hopCount
-                          }
-                        });
+                      console.log(`[Ripple Hop 2] Created second-order contagion alert for ${subItem.symbol} (source: ${peerSymbol}, mag: ${subRippleResult.magnitude})`);
 
-                        console.log(`[Ripple Hop 2] Created second-order contagion alert for ${subItem.symbol} (source: ${peerSymbol}, mag: ${subRippleResult.magnitude})`);
-
-                        io.emit("new_change_event", {
-                          watchlistId: subItem.watchlistId,
-                          event: subRippleEvent,
-                          isRipple: true
-                        });
-                      }
+                      io.emit("new_change_event", {
+                        watchlistId: subItem.watchlistId,
+                        event: subRippleEvent,
+                        isRipple: true
+                      });
                     }
                   }
                 }

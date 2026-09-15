@@ -64,6 +64,19 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
     }
   };
 
+  const handleResetDemo = async () => {
+    setLoading(true);
+    try {
+      const res = await debugApi.resetDemo();
+      setStatusMsg(`🔄 ${res.message} Now click "⚡ Trigger Catalyst Disclosure (TCS)" to see the ripple effect fresh!`);
+      if (onStatusChange) onStatusChange();
+    } catch (e) {
+      setStatusMsg("Error resetting demo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-surfaceElevated border border-amber-500/40 rounded-2xl p-4 my-4 shadow-md transition-all">
       <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-xs tracking-wider uppercase mb-3">
@@ -104,6 +117,14 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
         >
           <Play className="w-3.5 h-3.5" />
           <span>Revive Feed</span>
+        </button>
+
+        <button
+          onClick={handleResetDemo}
+          disabled={loading}
+          className="min-h-[40px] px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white dark:bg-violet-950/60 dark:hover:bg-violet-900/80 dark:text-violet-300 border border-violet-500/50 font-bold rounded-xl text-xs flex items-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+        >
+          <span>🔄 Reset Demo (Clear Ripple Cache)</span>
         </button>
       </div>
 

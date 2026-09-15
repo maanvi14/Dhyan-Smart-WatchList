@@ -2,6 +2,8 @@ import { Router } from "express";
 import { priceFeed } from "../feed/priceFeed";
 import { addFiling } from "../feed/filingsStore";
 import { proactiveFilingScanner } from "../engine/proactiveScanner";
+import { prisma } from "../db";
+import { populateUniverseWatchlist } from "../populateUniverse";
 
 const router = Router();
 
@@ -68,6 +70,34 @@ router.post("/trigger-uninformed", (req, res) => {
       success: true,
       message: "Triggered live Uninformed Flow dislocation for NSE:HDFCBANK",
       symbol
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+// 🔄 Demo Reset: Wipe all ripple events + populate all 32 symbols + push watermarks back 3h so next trigger-catalyst fires fresh
+router.post("/reset-demo", async (req, res) => {
+  try {
+    // 1. Delete all ripple (contagion) change events — clears the debounce
+    const deleted = await prisma.changeEvent.deleteMany({
+      where: { isRippleEffect: true }
+    });
+
+    // 2. Ensure all 32 universe companies are in the watchlist
+    const addedSymbols = await populateUniverseWatchlist();
+
+    // 3. Push every watchlist item's lastViewedAt to 3 hours ago so new events appear as "new"
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await prisma.watchlistItem.updateMany({
+      data: { lastViewedAt: threeHoursAgo }
+    });
+
+    res.json({
+      success: true,
+      message: `Demo reset complete. Cleared ${deleted.count} ripple events. Populated ${addedSymbols} universe symbols (32 total companies). Watermarks reset.`
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
