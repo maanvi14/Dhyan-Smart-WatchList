@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [seedStockCount, setSeedStockCount] = useState<number>(9);
+  const [seedStockCount, setSeedStockCount] = useState<number>(32);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

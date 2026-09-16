@@ -52,10 +52,10 @@ router.get("/demo-info", async (req, res) => {
       include: { watchlists: { include: { items: true } } }
     });
 
-    const count = user?.watchlists[0]?.items?.length || 9;
+    const count = user?.watchlists[0]?.items?.length || 32;
     res.json({ seedStockCount: count });
   } catch (err) {
-    res.json({ seedStockCount: 9 });
+    res.json({ seedStockCount: 32 });
   }
 });
 

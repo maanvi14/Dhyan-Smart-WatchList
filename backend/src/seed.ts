@@ -35,27 +35,16 @@ async function seed() {
     }
   });
 
-  // 3. Add 9 Symbols Across Sectors
-  const symbols = [
-    { symbol: "NSE:TCS", sector: "IT", notes: "Core tech allocation - check Q3 dividend" },
-    { symbol: "NSE:INFY", sector: "IT", notes: "US retail spending derivative play" },
-    { symbol: "NSE:HDFCBANK", sector: "Banking", notes: "RBI merger approval watch" },
-    { symbol: "NSE:ICICIBANK", sector: "Banking", notes: "Credit growth momentum" },
-    { symbol: "NSE:HINDUNILVR", sector: "FMCG", notes: "Rural demand recovery candidate" },
-    { symbol: "NSE:ITC", sector: "FMCG", notes: "Hotel demerger timeline" },
-    { symbol: "NSE:TATAMOTORS", sector: "Auto", notes: "EV sales volume numbers" },
-    { symbol: "NSE:SUNPHARMA", sector: "Pharma", notes: "FDA Halol inspection EIR update" },
-    { symbol: "NSE:RELIANCE", sector: "Energy", notes: "Clean energy green hydrogen announcement" }
-  ];
-
+  // 3. Add all 32 Symbols Across 7 Sectors from SYMBOL_UNIVERSE
+  const { SYMBOL_UNIVERSE } = await import("./feed/symbols");
   const items = [];
-  for (const s of symbols) {
+  for (const s of SYMBOL_UNIVERSE) {
     const item = await prisma.watchlistItem.create({
       data: {
         watchlistId: watchlist.id,
         symbol: s.symbol,
         sector: s.sector,
-        notes: s.notes,
+        notes: `${s.name} — ${s.sector} core tracking`,
         addedAt: fiveHoursAgo,
         lastViewedAt: threeHoursAgo // Watermark set to 3 hours ago so events after 3h appear!
       }
