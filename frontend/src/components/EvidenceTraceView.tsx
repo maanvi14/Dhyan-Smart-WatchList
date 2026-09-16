@@ -39,6 +39,7 @@ const STEP_TRANSLATIONS_HI: Record<string, string> = {
 export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewProps) {
   const { language, t } = useI18n();
   const [openWorkbenches, setOpenWorkbenches] = useState<Record<number, boolean>>({});
+  const [showFullJson, setShowFullJson] = useState(false);
 
   if (!trace || trace.length === 0) {
     return (
@@ -80,15 +81,46 @@ export function EvidenceTraceView({ trace, confidenceTier }: EvidenceTraceViewPr
 
   return (
     <div className="mt-3 pt-3 border-t border-surfaceBorder/80 font-sans">
-      <div className="flex items-center justify-between mb-3.5">
+      <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
         <div className="text-xs font-extrabold text-foreground flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-brand-500" />
           <span>Verification Graph Evidence Trace (Audit Trail)</span>
         </div>
-        <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${tierBadge.bg} ${tierBadge.textCol} ${tierBadge.border}`}>
-          {tierBadge.text}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowFullJson(!showFullJson)}
+            className="inline-flex items-center space-x-1.5 text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-surfaceElevated hover:bg-surface border border-surfaceBorder text-brand-600 dark:text-brand-400 transition-colors"
+          >
+            <Code2 className="w-3 h-3" />
+            <span>{showFullJson ? "Hide Trace JSON" : "View Full JSON"}</span>
+          </button>
+          <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${tierBadge.bg} ${tierBadge.textCol} ${tierBadge.border}`}>
+            {tierBadge.text}
+          </span>
+        </div>
       </div>
+
+      {/* Global Full JSON Viewer */}
+      {showFullJson && (
+        <div className="mb-3 p-3 rounded-xl bg-slate-950/95 dark:bg-slate-900 border border-brand-500/40 font-mono text-[11px] shadow-inner animate-in fade-in duration-150">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-slate-300">
+            <span className="text-[10px] font-bold text-brand-400 uppercase tracking-wider">Raw Complete Evidence Trace (JSON)</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(JSON.stringify(trace, null, 2));
+                alert("Copied full evidence trace JSON to clipboard!");
+              }}
+              className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded"
+            >
+              Copy JSON
+            </button>
+          </div>
+          <pre className="text-slate-300 overflow-x-auto max-h-60 text-[10px] leading-relaxed">
+            {JSON.stringify(trace, null, 2)}
+          </pre>
+        </div>
+      )}
 
       {/* Modern Connected Vertical Pipeline */}
       <div className="relative pl-6 space-y-3 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-brand-500 before:via-brand-500/50 before:to-surfaceBorder">

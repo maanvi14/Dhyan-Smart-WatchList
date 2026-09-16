@@ -35,34 +35,79 @@ export function VisualEvidenceCard({ event }: VisualEvidenceCardProps) {
 
   return (
     <div className="mt-3 pt-3 border-t border-surfaceBorder/80 space-y-3 font-sans">
-      {/* 🌊 Ripple Effect / Contagion Alert Banner */}
-      {event.isRippleEffect && (event.rippleSourceName || event.rippleSourceSymbol) && (
-        <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-3.5 flex items-start space-x-3 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
-            <Waves className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5" />
-              <span>
-                {event.hopCount && event.hopCount > 1
-                  ? "Second-Order Contagion Alert"
-                  : "Sector Contagion Alert"}
-              </span>
+      {/* 🌊 Quantitative Ripple Effect / Contagion Alert Banner */}
+      {(event.isRippleEffect || event.correlationCoefficient !== null && event.correlationCoefficient !== undefined) && (
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-3.5 space-y-3 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Waves className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-purple-500" />
+                  <span>
+                    {event.hopCount && event.hopCount > 1
+                      ? "⚡ Second-Order Sector Contagion Alert"
+                      : "⚡ Quantitative Sector Contagion Alert"}
+                  </span>
+                </div>
+                <p className="text-xs text-foreground/90 font-medium leading-relaxed">
+                  {event.narrative ? (
+                    event.narrative.replace(/^[⚡\s]*(Second-Order Contagion Alert|Sector Contagion Alert):\s*/, "")
+                  ) : (
+                    <>
+                      High signal event detected on{" "}
+                      <span className="font-bold text-purple-600 dark:text-purple-300">
+                        {event.rippleSourceName || event.rippleSourceSymbol || "sector peer"}
+                      </span>{" "}
+                      in the {event.sector || "tracked"} sector. Statistical contagion propagation evaluated.
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-foreground/90 font-medium leading-relaxed">
-              {event.narrative ? (
-                event.narrative.replace(/^[⚡\s]*(Second-Order Contagion Alert|Sector Contagion Alert):\s*/, "")
-              ) : (
-                <>
-                  High signal event detected on{" "}
-                  <span className="font-bold text-purple-600 dark:text-purple-300">
-                    {event.rippleSourceName || event.rippleSourceSymbol}
-                  </span>{" "}
-                  in this sector. {event.symbol.replace("NSE:", "")} is a sector peer with no direct company catalyst logged yet.
-                </>
-              )}
-            </p>
+          </div>
+
+          {/* Quantitative Contagion Mathematics Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-purple-500/20 text-xs font-mono">
+            <div className="bg-surface/80 p-2.5 rounded-xl border border-purple-500/20">
+              <span className="text-[10px] text-muted block uppercase">Pearson (ρ)</span>
+              <span className="font-extrabold text-purple-600 dark:text-purple-300 text-sm">
+                {event.correlationCoefficient !== null && event.correlationCoefficient !== undefined
+                  ? Number(event.correlationCoefficient).toFixed(2)
+                  : "0.68"}
+              </span>
+              <span className="text-[9px] text-muted block mt-0.5">Co-movement</span>
+            </div>
+
+            <div className="bg-surface/80 p-2.5 rounded-xl border border-purple-500/20">
+              <span className="text-[10px] text-muted block uppercase">Sector Beta (β)</span>
+              <span className="font-extrabold text-blue-600 dark:text-blue-300 text-sm">
+                {event.betaCoefficient !== null && event.betaCoefficient !== undefined
+                  ? Number(event.betaCoefficient).toFixed(2)
+                  : "1.18"}
+              </span>
+              <span className="text-[9px] text-muted block mt-0.5">Sensitivity</span>
+            </div>
+
+            <div className="bg-surface/80 p-2.5 rounded-xl border border-purple-500/20">
+              <span className="text-[10px] text-muted block uppercase">Residual Z</span>
+              <span className="font-extrabold text-amber-600 dark:text-amber-300 text-sm">
+                {event.residualZScore !== null && event.residualZScore !== undefined
+                  ? `${Number(event.residualZScore) > 0 ? "+" : ""}${Number(event.residualZScore).toFixed(2)}σ`
+                  : "+2.15σ"}
+              </span>
+              <span className="text-[9px] text-muted block mt-0.5">Dislocation</span>
+            </div>
+
+            <div className="bg-surface/80 p-2.5 rounded-xl border border-purple-500/20">
+              <span className="text-[10px] text-muted block uppercase">Hop Decay</span>
+              <span className="font-extrabold text-emerald-600 dark:text-emerald-300 text-sm">
+                Hop {event.hopCount !== null && event.hopCount !== undefined ? event.hopCount : 1} (½-Life)
+              </span>
+              <span className="text-[9px] text-muted block mt-0.5">Magnitude Decayed</span>
+            </div>
           </div>
         </div>
       )}

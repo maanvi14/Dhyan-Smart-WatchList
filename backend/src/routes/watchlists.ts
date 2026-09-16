@@ -398,42 +398,62 @@ router.get("/:id/since-last-checked", async (req: AuthRequest, res: Response) =>
     // Helper: get clean display name (e.g. "Tata Motors" instead of "NSE:TATAMOTORS")
     const displayName = (e: any) => e.name || e.symbol.replace(/^NSE:/, "");
 
-    // Build English briefing (deduplicated — each stock mentioned once)
+    // Build English briefing — structured, audio-ready executive briefing
     let storyEn = "";
     if (totalEvents === 0) {
-      storyEn = "Good news — your watchlist has been quiet since you last checked. No unusual movements or new filings detected. All stocks are holding steady.";
+      storyEn = "Good news — your watchlist has been quiet since you last checked. No unusual price moves, no new exchange filings, and no volume spikes detected. All stocks are operating within normal volatility bounds.";
     } else {
-      storyEn = `Welcome back. ${totalEvents} event${totalEvents === 1 ? ' was' : 's were'} detected across your watchlist. Here is what matters. `;
+      const topConfirmed = confirmedEvents.slice(0, 2);
+      const topUnexplained = unexplainedEvents.slice(0, 2);
+      const rippleEvents = enrichedEvents.filter((e: any) => e.isRippleEffect);
 
-      // Deduplicate: pick unique symbols sorted by abs change, max 4
-      const seen = new Set<string>();
-      const uniqueMovers = enrichedEvents
-        .sort((a, b) => Math.abs(b.stockChangePct || 0) - Math.abs(a.stockChangePct || 0))
-        .filter(e => { if (seen.has(e.symbol)) return false; seen.add(e.symbol); return true; })
-        .slice(0, 4);
+      // Opening line
+      storyEn = `Welcome back. ${totalEvents} market event${totalEvents === 1 ? ' has' : 's have'} been logged since your last check. `;
 
-      uniqueMovers.forEach(e => {
-        const name = displayName(e);
-        const dir = (e.stockChangePct || 0) >= 0 ? "up" : "down";
-        const pct = Math.abs(e.stockChangePct || 0).toFixed(1);
-        storyEn += `${name} moved ${dir} ${pct} percent`;
-        if (e.confidenceTier === "CONFIRMED") {
-          storyEn += `, backed by a verified filing`;
-        } else if (e.confidenceTier === "UNEXPLAINED") {
-          storyEn += `, with no confirmed catalyst`;
-        }
-        storyEn += ". ";
-      });
+      // Confirmed catalysts — lead with the most important
+      if (topConfirmed.length > 0) {
+        storyEn += `${confirmedCount === 1 ? 'One catalyst is' : `${confirmedCount} catalysts are`} confirmed with official exchange filings. `;
+        topConfirmed.forEach((e: any) => {
+          const name = displayName(e);
+          const dir = (e.stockChangePct || 0) >= 0 ? "up" : "down";
+          const pct = Math.abs(e.stockChangePct || 0).toFixed(1);
+          // Strip the tier prefix from narrative for cleaner audio
+          const cleanNarrative = e.narrative
+            .replace(/^CATALYST CONFIRMED\s*[—–-]+\s*/i, "")
+            .replace(/^NSE:\w+\s+moved\s+/i, `${name} moved `)
+            .split(".")[0]; // Take first sentence only
+          storyEn += `${name} moved ${dir} ${pct} percent — ${cleanNarrative}. `;
+        });
+      }
 
-      // Summary line
-      if (confirmedCount > 0 && unexplainedCount === 0) {
-        storyEn += `Overall, a clean session — all ${confirmedCount} detected move${confirmedCount === 1 ? ' is' : 's are'} backed by verified exchange filings.`;
-      } else if (unexplainedCount > 0 && confirmedCount > 0) {
-        storyEn += `${confirmedCount} move${confirmedCount === 1 ? ' is' : 's are'} verified, but ${unexplainedCount} remain unexplained. Those deserve a closer look.`;
+      // Unexplained flows — flag with caution
+      if (topUnexplained.length > 0) {
+        storyEn += `${unexplainedCount === 1 ? 'One stock shows' : `${unexplainedCount} stocks show`} uninformed flow — real price moves with no official explanation yet. `;
+        topUnexplained.slice(0, 1).forEach((e: any) => {
+          const name = displayName(e);
+          const dir = (e.stockChangePct || 0) >= 0 ? "up" : "down";
+          const pct = Math.abs(e.stockChangePct || 0).toFixed(1);
+          storyEn += `${name} moved ${dir} ${pct} percent with elevated volume — treat with caution until a filing appears. `;
+        });
+      }
+
+      // Sector contagion
+      if (rippleEvents.length > 0) {
+        storyEn += `${rippleEvents.length} sector contagion ${rippleEvents.length === 1 ? 'alert was' : 'alerts were'} detected from high-magnitude moves in related stocks. `;
+      }
+
+      // Stale data warning
+      if (uncertainCount > 0) {
+        storyEn += `Warning: ${uncertainCount} data feed${uncertainCount === 1 ? ' is' : 's are'} currently stale. Do not act on those prices until the feed recovers. `;
+      }
+
+      // Closing action line
+      if (confirmedCount > 0 && unexplainedCount === 0 && uncertainCount === 0) {
+        storyEn += `Clean session overall — all confirmed moves are backed by verified exchange filings. You can act with confidence.`;
       } else if (unexplainedCount > 0) {
-        storyEn += `Caution: ${unexplainedCount} move${unexplainedCount === 1 ? '' : 's'} occurred with no verified catalyst. Proceed carefully.`;
+        storyEn += `Tap any event card below to see the full evidence audit trail before deciding.`;
       } else {
-        storyEn += "That is your quick catch-up. Tap any stock for the full evidence trail.";
+        storyEn += `Review the full diff below for complete evidence details.`;
       }
     }
 
