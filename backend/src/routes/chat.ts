@@ -24,17 +24,19 @@ router.post("/", async (req: AuthRequest, res: Response) => {
 
     if (!watchlist) return res.status(404).json({ error: "Watchlist not found" });
 
-    // Retrieve recent ChangeEvents
+    // 1. Retrieve recent ChangeEvents with rich context
     const events: any[] = await prisma.$queryRaw`
-      SELECT ce.id, ce.symbol, ce."confidenceTier", ce.magnitude, ce.narrative, ce."detectedAt"
+      SELECT ce.id, ce.symbol, ce."confidenceTier", ce.magnitude, ce.narrative, ce."detectedAt",
+             ce."sectorDivergence", ce."volumeDivergence", ce."isRippleEffect", ce."rippleSourceSymbol",
+             ce."correlationCoefficient", ce."betaCoefficient", ce."residualZScore"
       FROM "ChangeEvent" ce
       JOIN "WatchlistItem" wi ON ce."watchlistItemId" = wi.id
       WHERE wi."watchlistId" = ${watchlistId}
       ORDER BY ce."detectedAt" DESC
-      LIMIT 10
+      LIMIT 15
     `;
 
-    // Retrieve current PriceSnapshots
+    // 2. Retrieve current PriceSnapshots & live metrics
     const itemsWithSnapshots = watchlist.items.map(item => {
       const snap = priceFeed.getLatestSnapshot(item.symbol);
       return {
@@ -42,15 +44,25 @@ router.post("/", async (req: AuthRequest, res: Response) => {
         sector: item.sector,
         ltp: snap?.ltp || 0,
         changePct: snap?.changePct || 0,
-        isStale: snap?.isStale || false
+        volume: snap?.volume || 0,
+        avgVolume20d: snap?.avgVolume20d || 1000000,
+        isStale: snap?.isStale || false,
+        notes: item.notes
       };
     });
+
+    // 3. Relevant symbol search for focused RAG
+    const queryLower = message.toLowerCase();
+    const relevantSymbols = watchlist.items
+      .filter(it => queryLower.includes(it.symbol.toLowerCase()) || queryLower.includes(it.symbol.replace("NSE:", "").toLowerCase()))
+      .map(it => it.symbol);
 
     const concentration = checkWatchlistConcentration(watchlist.items);
 
     const payload = {
       watchlistName: watchlist.name,
       itemsCount: watchlist.items.length,
+      focusedSymbols: relevantSymbols,
       items: itemsWithSnapshots,
       events: events,
       concentrationWarning: concentration
