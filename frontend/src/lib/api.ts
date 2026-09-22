@@ -191,6 +191,10 @@ export const watchlistApi = {
   getSymbolsUniverse: async () => {
     const res = await api.get("/watchlists/universe/symbols");
     return res.data;
+  },
+  synthesizeVoice: async (text: string, language: string = "hi") => {
+    const res = await api.post("/watchlists/voice/briefing", { text, language });
+    return res.data;
   }
 };
 

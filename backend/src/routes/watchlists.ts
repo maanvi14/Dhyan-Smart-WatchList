@@ -642,6 +642,24 @@ router.get("/:id/concentration", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// POST synthesize Sarvam AI voice briefing
+router.post("/voice/briefing", async (req: AuthRequest, res: Response) => {
+  try {
+    const { text, language = "hi" } = req.body;
+    const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+    const axios = (await import("axios")).default;
+
+    const aiRes = await axios.post(`${AI_SERVICE_URL}/voice/synthesize`, {
+      text,
+      language
+    }, { timeout: 10000 });
+
+    res.json(aiRes.data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message, fallback: true });
+  }
+});
+
 // GET available symbol universe search
 router.get("/universe/symbols", (req, res) => {
   res.json(SYMBOL_UNIVERSE);

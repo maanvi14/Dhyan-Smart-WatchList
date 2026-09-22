@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Volume2, VolumeX, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { Volume2, VolumeX, Sparkles, Loader2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { watchlistApi } from "@/lib/api";
 
 interface VoiceBriefingButtonProps {
   story?: { en: string; hi: string } | null;
@@ -11,24 +12,59 @@ interface VoiceBriefingButtonProps {
 export function VoiceBriefingButton({ story }: VoiceBriefingButtonProps) {
   const { language } = useI18n();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handlePlayBriefing = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("Speech synthesis is not supported on this browser.");
-      return;
-    }
-
+  const handlePlayBriefing = async () => {
     if (isPlaying) {
-      window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
       setIsPlaying(false);
       return;
     }
 
-    // Use the backend-generated conversational briefing summary
     const speechText = language === "hi"
       ? (story?.hi || "नमस्ते! अभी कोई नई जानकारी नहीं है।")
       : (story?.en || "Hello! No new updates right now.");
 
+    // Try Sarvam AI neural voice synthesis first
+    setIsLoading(true);
+    try {
+      const res = await watchlistApi.synthesizeVoice(speechText, language);
+      if (res?.audioBase64) {
+        const audioSrc = `data:audio/wav;base64,${res.audioBase64}`;
+        if (!audioRef.current) {
+          audioRef.current = new Audio(audioSrc);
+        } else {
+          audioRef.current.src = audioSrc;
+        }
+        audioRef.current.onended = () => setIsPlaying(false);
+        audioRef.current.onerror = () => fallbackToSpeechSynthesis(speechText);
+        await audioRef.current.play();
+        setIsPlaying(true);
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.warn("Sarvam AI voice stream fallback:", err);
+    } finally {
+      setIsLoading(false);
+    }
+
+    // High-cadence fallback to local SpeechSynthesis
+    fallbackToSpeechSynthesis(speechText);
+  };
+
+  const fallbackToSpeechSynthesis = (speechText: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("Speech synthesis is not supported on this browser.");
+      return;
+    }
     const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.rate = 1.05;
     utterance.pitch = 1.0;
