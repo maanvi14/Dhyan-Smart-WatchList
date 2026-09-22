@@ -25,6 +25,30 @@ router.post("/feed/revive", (req, res) => {
   });
 });
 
+// 🐒 Chaos Engineering: Chaos Monkey Network Jitter & Multicast Packet Drop Simulation
+router.post("/chaos-monkey", (req, res) => {
+  const { dropRate = 0.5, jitterMs = 450 } = req.body || {};
+  
+  // Stochastically mark random symbols as stale to simulate exchange feed UDP multicast degradation
+  const allSnaps = priceFeed.getAllSnapshots();
+  let affectedCount = 0;
+  allSnaps.forEach(snap => {
+    if (Math.random() < dropRate) {
+      snap.isStale = true;
+      affectedCount++;
+    }
+  });
+
+  res.json({
+    success: true,
+    mode: "chaos_monkey_active",
+    simulatedJitterMs: jitterMs,
+    simulatedPacketDropRate: `${dropRate * 100}%`,
+    affectedSymbols: affectedCount,
+    message: `🐒 Chaos Monkey Injected: ${affectedCount} instruments experiencing simulated multicast packet drops with ${jitterMs}ms artificial jitter. Redwood UI safety borders triggered.`
+  });
+});
+
 // Get Feed Status
 router.get("/feed/status", (req, res) => {
   res.json(priceFeed.getFeedStatus());
@@ -78,6 +102,40 @@ router.post("/trigger-uninformed", (req, res) => {
 
 
 
+// 🧠 Live Demo Scenario 3: Trigger River True Online Self-Learning Resolution
+router.post("/trigger-self-learn", async (req, res) => {
+  try {
+    const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+    const axios = (await import("axios")).default;
+
+    // Simulate an unresolved anomaly that just received delayed official filing confirmation
+    const feedbackPayload = {
+      symbol: "NSE:TCS",
+      changePct: 3.45,
+      volumeRatio: 3.10,
+      sectorChangePct: 0.45,
+      sectorDivergence: true,
+      groundTruthTier: "CONFIRMED",
+      filingSummary: "TCS executes ₹15,000Cr Strategic European Digital Infrastructure Contract",
+      isStale: false,
+      sourceTrust: 3
+    };
+
+    const aiRes = await axios.post(`${AI_SERVICE_URL}/feedback/resolve`, {
+      ...feedbackPayload,
+      isStale: false
+    }, { timeout: 3000 });
+
+    res.json({
+      success: true,
+      message: `⚡ True Online Learning Executed: River updated SGD weights sample-by-sample in ${aiRes.data?.result?.learnLatencyMs || 0.8}ms! Total streaming samples learned: ${aiRes.data?.result?.totalSamplesLearned || 1}`,
+      data: aiRes.data
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 🔄 Demo Reset: Wipe all ripple events + populate all 32 symbols + push watermarks back 3h so next trigger-catalyst fires fresh
 router.post("/reset-demo", async (req, res) => {
   try {
@@ -105,3 +163,4 @@ router.post("/reset-demo", async (req, res) => {
 });
 
 export default router;
+

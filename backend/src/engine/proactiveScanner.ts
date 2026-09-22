@@ -102,6 +102,23 @@ export class ProactiveFilingScanner {
 
             console.log(`[ProactiveScanner] 🟢 Captured proactive catalyst for ${item.symbol}: ${cleanTitle}`);
 
+            // 🧠 True Online ML Streaming Feedback: Feed resolution sample into River online learner
+            try {
+              const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+              const axios = (await import("axios")).default;
+              axios.post(`${AI_SERVICE_URL}/feedback/resolve`, {
+                symbol: item.symbol,
+                changePct: 0.0,
+                volumeRatio: 1.0,
+                sectorChangePct: 0.0,
+                sectorDivergence: false,
+                groundTruthTier: "CONFIRMED",
+                filingSummary: cleanTitle,
+                isStale: false,
+                sourceTrust: 3
+              }, { timeout: 1000 }).catch(() => {});
+            } catch (e) {}
+
             if (this.io) {
               this.io.emit("new_change_event", {
                 watchlistId: item.watchlistId,

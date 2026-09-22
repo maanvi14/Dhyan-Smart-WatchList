@@ -243,6 +243,14 @@ export const debugApi = {
     const res = await api.post("/debug/trigger-uninformed");
     return res.data;
   },
+  triggerSelfLearn: async () => {
+    const res = await api.post("/debug/trigger-self-learn");
+    return res.data;
+  },
+  triggerChaosMonkey: async () => {
+    const res = await api.post("/debug/chaos-monkey", { dropRate: 0.45, jitterMs: 500 });
+    return res.data;
+  },
   resetDemo: async () => {
     const res = await api.post("/debug/reset-demo");
     return res.data;
