@@ -92,6 +92,7 @@ router.get("/", async (req: Request, res: Response) => {
         title: f.title,
         summary: f.summary,
         source: `BSE/NSE Reg 30 (${f.category})`,
+        link: (f as any).link || `https://www.bseindia.com/corporates/ann.aspx?scrip=${(f as any).bseScripCode || ""}&dur=A&Start=0&End=10`,
         timestamp: f.timestamp.toISOString(),
         confidenceTier: "CONFIRMED",
         changePct,
