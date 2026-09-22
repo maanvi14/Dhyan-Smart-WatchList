@@ -1,31 +1,55 @@
 import Redis from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const SHOULD_TRY_REDIS = Boolean(process.env.REDIS_URL);
 
 export const redis = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: 2,
+  maxRetriesPerRequest: 1,
+  connectTimeout: 2000,
   retryStrategy(times) {
-    if (times > 3) {
-      // Don't spam retries if redis is not running locally
-      return null;
-    }
-    return Math.min(times * 200, 1000);
+    if (times > 2) return null;
+    return 500;
   },
   lazyConnect: true
 });
 
 export const redisSub = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: 2,
+  maxRetriesPerRequest: 1,
+  connectTimeout: 2000,
+  retryStrategy(times) {
+    if (times > 2) return null;
+    return 500;
+  },
   lazyConnect: true
+});
+
+// Suppress unhandled error events from crashing Node.js
+redis.on("error", (err) => {
+  if (isRedisConnected) {
+    console.warn("[Redis Client Error]:", err.message);
+  }
+});
+
+redisSub.on("error", (err) => {
+  if (isRedisConnected) {
+    console.warn("[Redis Sub Error]:", err.message);
+  }
 });
 
 export let isRedisConnected = false;
 
-// Attempt connection gracefully
+// Attempt connection gracefully without crashing on Render / cloud environments
 (async () => {
+  if (!SHOULD_TRY_REDIS) {
+    console.log("[Redis] No REDIS_URL provided — running in high-performance in-memory fallback mode.");
+    return;
+  }
+
   try {
-    await redis.connect();
-    await redisSub.connect();
+    await Promise.race([
+      Promise.all([redis.connect(), redisSub.connect()]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timeout")), 2500))
+    ]);
     isRedisConnected = true;
     console.log(`[Redis] Connected successfully to ${REDIS_URL}`);
     
@@ -34,26 +58,15 @@ export let isRedisConnected = false;
       await redis.xgroup("CREATE", "market.ticks", "change_detectors", "$", "MKSTREAM");
       console.log("[Redis Streams] Consumer group 'change_detectors' initialized on 'market.ticks'");
     } catch (grpErr: any) {
-      // BUSYGROUP Consumer Group name already exists is normal on restart
       if (!grpErr.message?.includes("BUSYGROUP")) {
         console.warn("[Redis Streams] Consumer group init:", grpErr.message);
       }
     }
   } catch (err: any) {
     isRedisConnected = false;
-    console.warn(`[Redis] Running in local memory fallback mode (Redis unavailable at ${REDIS_URL}):`, err.message);
+    console.warn(`[Redis] Running in local memory fallback mode (Redis unavailable):`, err.message);
   }
 })();
-
-redis.on("connect", () => {
-  isRedisConnected = true;
-});
-
-redis.on("error", (err) => {
-  if (isRedisConnected) {
-    console.warn("[Redis Error]:", err.message);
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Shared State: Snapshots & Price History in Redis Hashes & Lists

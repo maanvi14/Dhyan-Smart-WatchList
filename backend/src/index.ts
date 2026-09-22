@@ -43,8 +43,12 @@ const io = new SocketIOServer(server, {
 
 // Attach Redis Adapter for Multi-Replica Horizontal Scaling if Redis is ready
 try {
-  io.adapter(createAdapter(redis, redisSub));
-  console.log("[Socket.io] Redis Adapter attached for multi-replica scaling.");
+  if (isRedisConnected) {
+    io.adapter(createAdapter(redis, redisSub));
+    console.log("[Socket.io] Redis Adapter attached for multi-replica scaling.");
+  } else {
+    console.log("[Socket.io] Running with local memory adapter.");
+  }
 } catch (e: any) {
   console.log("[Socket.io] Running with local adapter:", e.message);
 }
@@ -310,11 +314,6 @@ seedCorrelationHistory();
 
 // Start price polling
 priceFeed.startPolling(15000);
-
-server.listen(PORT, () => {
-  console.log(`[Dhyan Monolith Backend] Server listening on port ${PORT}`);
-});
-
 
 // Start proactive regulatory filing scanner
 proactiveFilingScanner.init(io);
