@@ -12,8 +12,6 @@ interface ResearchThesisModalProps {
   onSaved: () => void;
 }
 
-import { COLLECTION_TAGS } from "./AddSymbolModal";
-
 export function ResearchThesisModal({
   isOpen,
   onClose,
@@ -23,34 +21,26 @@ export function ResearchThesisModal({
 }: ResearchThesisModalProps) {
   const [thesisText, setThesisText] = useState("");
   const [invalidationPoint, setInvalidationPoint] = useState("");
-  const [selectedTag, setSelectedTag] = useState("Long Term");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (item) {
-      if (item.tag) {
-        setSelectedTag(item.tag);
-      }
-      if (item.notes) {
-        try {
-          const parsed = JSON.parse(item.notes);
-          if (typeof parsed === "object" && parsed !== null) {
-            setThesisText(parsed.thesisText || "");
-            setInvalidationPoint(parsed.invalidationPoint || "");
-            if (parsed.tag) setSelectedTag(parsed.tag);
-            return;
-          }
-        } catch (_) {
-          // legacy plain text notes
-          setThesisText(item.notes);
-          setInvalidationPoint("");
+    if (item && item.notes) {
+      try {
+        const parsed = JSON.parse(item.notes);
+        if (typeof parsed === "object" && parsed !== null) {
+          setThesisText(parsed.thesisText || "");
+          setInvalidationPoint(parsed.invalidationPoint || "");
           return;
         }
+      } catch (_) {
+        // legacy plain text notes
+        setThesisText(item.notes);
+        setInvalidationPoint("");
+        return;
       }
     }
     setThesisText("");
     setInvalidationPoint("");
-    setSelectedTag("Long Term");
   }, [item]);
 
   if (!isOpen || !item) return null;
@@ -58,7 +48,7 @@ export function ResearchThesisModal({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await watchlistApi.updateThesis(watchlistId, item.id, thesisText.trim(), invalidationPoint.trim(), selectedTag);
+      await watchlistApi.updateThesis(watchlistId, item.id, thesisText.trim(), invalidationPoint.trim());
       onSaved();
       onClose();
     } catch (err) {
@@ -98,34 +88,6 @@ export function ResearchThesisModal({
         {/* Content Body */}
         <div className="space-y-4 text-xs">
           
-          {/* Collection / Strategy Tag */}
-          <div>
-            <label className="block text-foreground font-semibold mb-1.5 flex items-center space-x-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-              <span>Collection / Strategy Tag</span>
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {COLLECTION_TAGS.map(t => {
-                const isSelected = selectedTag === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setSelectedTag(t.id)}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-semibold flex items-center gap-1 border transition-all ${
-                      isSelected
-                        ? "bg-brand-500/15 border-brand-500 text-brand-600 dark:text-brand-400 font-bold shadow-sm"
-                        : "bg-surfaceElevated hover:bg-surface border-surfaceBorder text-muted hover:text-foreground"
-                    }`}
-                  >
-                    <span>{t.icon}</span>
-                    <span>{t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Field 1: Why is this in your watchlist? */}
           <div>
             <label className="block text-foreground font-semibold mb-1 flex items-center space-x-1.5">

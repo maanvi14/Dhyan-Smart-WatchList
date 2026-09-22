@@ -306,7 +306,7 @@ export function StockVisualizerModal({
                 fontFamily="monospace"
                 fontWeight="bold"
               >
-                ⏱️ Since Last Checked
+                Since Last Checked
               </text>
 
               {/* Area Gradient Fill */}
