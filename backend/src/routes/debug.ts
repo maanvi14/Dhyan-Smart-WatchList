@@ -102,7 +102,30 @@ router.post("/trigger-uninformed", (req, res) => {
 
 
 
-// 🧠 Live Demo Scenario 3: Trigger River True Online Self-Learning Resolution
+// ⚡ Live Demo Scenario 3: Trigger Sector Contagion + Ripple Spread (IT Sector)
+router.post("/trigger-contagion-ripple", async (req, res) => {
+  try {
+    // Inject a large enough tick on NSE:TCS to exceed the magnitude threshold
+    // and kick off the ripple propagation loop to sector peers (INFY, WIPRO, HCL, etc.)
+    priceFeed.injectTick("NSE:TCS", 4.8, 3.9);
+
+    // Small delay then run proactive scan to ensure detection
+    setTimeout(async () => {
+      try { await proactiveFilingScanner.scan(); } catch (_) {}
+    }, 500);
+
+    res.json({
+      success: true,
+      message: "🌊 Sector Contagion triggered on NSE:TCS (IT). Ripple events will propagate to sector peers (INFY, WIPRO, HCLTECH, TECHM) within ~2s as the stream consumer processes the injected tick.",
+      symbol: "NSE:TCS",
+      sector: "IT"
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🧠 Live Demo Scenario 4: Trigger River True Online Self-Learning Resolution
 router.post("/trigger-self-learn", async (req, res) => {
   try {
     const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";

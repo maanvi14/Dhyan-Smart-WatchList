@@ -255,6 +255,10 @@ export const debugApi = {
     const res = await api.post("/debug/chaos-monkey", { dropRate: 0.45, jitterMs: 500 });
     return res.data;
   },
+  triggerContagionRipple: async () => {
+    const res = await api.post("/debug/trigger-contagion-ripple");
+    return res.data;
+  },
   resetDemo: async () => {
     const res = await api.post("/debug/reset-demo");
     return res.data;

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { debugApi } from "@/lib/api";
 import {
   AlertTriangle, Play, ZapOff, CheckCircle2, Activity, Brain, Radio,
-  RefreshCw, FileText, Server, Flame, ShieldAlert, Cpu
+  RefreshCw, FileText, Server, Flame, ShieldAlert, Cpu, Waves
 } from "lucide-react";
 
 interface DebugPanelProps {
@@ -135,6 +135,19 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
     }
   };
 
+  const handleTriggerContagionRipple = async () => {
+    setLoading(true);
+    try {
+      const res = await debugApi.triggerContagionRipple();
+      setStatusMsg(res.message?.replace(/^[^\w🌊]+/, '') || "🌊 Sector Contagion triggered on NSE:TCS. Ripple events propagating to IT sector peers within ~2s.");
+      if (onStatusChange) onStatusChange();
+    } catch (e: any) {
+      setStatusMsg("Error triggering contagion: " + (e.response?.data?.error || e.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResetDemo = async () => {
     setLoading(true);
     try {
@@ -142,6 +155,8 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
       setStatusMsg(`${res.message?.replace(/^[^\w]+/, '') || "State reset complete."} Watermarks, caches, and contagion buffers initialized.`);
       fetchTelemetry();
       if (onStatusChange) onStatusChange();
+      // Scroll back to top so user is at base state
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setStatusMsg("Error resetting demo state.");
     } finally {
@@ -236,6 +251,16 @@ export function DebugPanel({ onStatusChange }: DebugPanelProps) {
         >
           <Activity className="w-3.5 h-3.5" />
           <span>Trigger Uninformed (HDFC)</span>
+        </button>
+
+        <button
+          onClick={handleTriggerContagionRipple}
+          disabled={loading}
+          className="min-h-[38px] px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-500/40 font-semibold rounded-xl text-xs flex items-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+          title="Injects a large TCS tick that triggers sector contagion → ripple events spread to IT sector peers"
+        >
+          <Waves className="w-3.5 h-3.5" />
+          <span>Sector Contagion + Ripple (IT)</span>
         </button>
 
         <button
