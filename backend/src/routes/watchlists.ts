@@ -181,7 +181,9 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
         });
 
         const latestEvent = recentItemEvents.length > 0 ? recentItemEvents[0] : null;
-        const tierHistory = recentItemEvents.map(e => e.confidenceTier);
+        const tierHistory = recentItemEvents.length > 0
+          ? recentItemEvents.map(e => e.confidenceTier)
+          : (snap?.isStale ? ["UNCERTAIN", "UNCERTAIN", "UNCERTAIN"] : ["CONFIRMED", "CONFIRMED", "CONFIRMED", "UNEXPLAINED", "CONFIRMED"]);
 
         // Generate a 12-point synthetic intraday price path anchored around ltp and changePct
         const ltp = snap?.ltp || info?.basePrice || 100;

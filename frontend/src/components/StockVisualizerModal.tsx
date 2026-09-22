@@ -44,6 +44,7 @@ export function StockVisualizerModal({
   onOpenThesis
 }: StockVisualizerModalProps) {
   const [timeframe, setTimeframe] = useState<"1D" | "1W" | "1M" | "1Y" | "ALL">("1D");
+  const [chartStyle, setChartStyle] = useState<"line" | "candle">("line");
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
 
   if (!isOpen || !item) return null;
@@ -55,9 +56,6 @@ export function StockVisualizerModal({
   const tierBadge = TIER_BADGES[(tier as TierKey) || "CONFIRMED"] || TIER_BADGES.CONFIRMED;
 
   // ── Real price chart: use actual sparkline buffer from live feed ──────────
-  // Extend the sparkline with the current ltp as final point, so chart always
-  // ends at the true live price. Fall back to a simple open→close line if no
-  // sparkline is available.
   const chartData = useMemo(() => {
     const base = ltp / (1 + changePct / 100);
     if (timeframe === "1D" && item.sparkline && item.sparkline.length >= 2) {
@@ -77,6 +75,24 @@ export function StockVisualizerModal({
     pts.push(ltp);
     return pts;
   }, [item.symbol, item.sparkline, timeframe, ltp, changePct]);
+
+  // Synthetic Candlestick OHLC bars derived from price timeline
+  const candles = useMemo(() => {
+    const numCandles = Math.min(18, chartData.length);
+    const step = Math.max(1, Math.floor(chartData.length / numCandles));
+    const result = [];
+
+    for (let i = 0; i < chartData.length; i += step) {
+      const chunk = chartData.slice(i, i + step);
+      if (chunk.length === 0) continue;
+      const open = chunk[0];
+      const close = chunk[chunk.length - 1];
+      const high = Math.max(...chunk) * (1 + 0.002);
+      const low = Math.min(...chunk) * (1 - 0.002);
+      result.push({ open, high, low, close, isBullish: close >= open });
+    }
+    return result;
+  }, [chartData]);
 
   // ── Real catalyst pins from latestEvent + tierHistory ────────────────────
   // Instead of three hardcoded fictional events, we build pins from what we
@@ -239,22 +255,51 @@ export function StockVisualizerModal({
             <span className="text-[11px] text-muted font-mono">Today's Delta</span>
           </div>
 
-          {/* Timeframe Selector Pills (Groww-Style) */}
-          <div className="flex items-center gap-1 bg-surfaceElevated/70 p-1 rounded-full border border-surfaceBorder">
-            {(["1D", "1W", "1M", "1Y", "ALL"] as const).map(tf => (
+          {/* Right: Timeframe & Chart Style Switcher */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Chart Style Switcher (Line vs Candlestick) */}
+            <div className="flex items-center gap-0.5 bg-surfaceElevated p-0.5 rounded-full border border-surfaceBorder">
               <button
-                key={tf}
                 type="button"
-                onClick={() => setTimeframe(tf)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                  timeframe === tf
+                onClick={() => setChartStyle("line")}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+                  chartStyle === "line"
                     ? "bg-brand-500 text-white font-bold shadow-sm"
-                    : "text-muted hover:text-foreground hover:bg-surface"
+                    : "text-muted hover:text-foreground"
                 }`}
               >
-                {tf}
+                Line
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={() => setChartStyle("candle")}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+                  chartStyle === "candle"
+                    ? "bg-brand-500 text-white font-bold shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                Candles
+              </button>
+            </div>
+
+            {/* Timeframe Selector Pills (Groww-Style) */}
+            <div className="flex items-center gap-1 bg-surfaceElevated/70 p-1 rounded-full border border-surfaceBorder">
+              {(["1D", "1W", "1M", "1Y", "ALL"] as const).map(tf => (
+                <button
+                  key={tf}
+                  type="button"
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+                    timeframe === tf
+                      ? "bg-foreground text-background font-bold shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -265,7 +310,7 @@ export function StockVisualizerModal({
           <div className="flex items-center justify-between text-[11px] font-mono text-muted mb-2 px-1">
             <span className="flex items-center gap-1.5 font-bold text-foreground">
               <Zap className="w-3.5 h-3.5 text-brand-500" />
-              Catalyst-Pinned Price Timeline
+              {chartStyle === "candle" ? "OHLC Catalyst Candlesticks" : "Catalyst-Pinned Price Timeline"}
             </span>
             <span className="text-[10px] text-muted">
               Click any pin to inspect verified catalyst
@@ -309,18 +354,52 @@ export function StockVisualizerModal({
                 Since Last Checked
               </text>
 
-              {/* Area Gradient Fill */}
-              <path d={areaString} fill="url(#visualizer-gradient)" />
+              {/* Render Candlesticks or Smooth Evidence Line */}
+              {chartStyle === "candle" ? (
+                // Candlestick Rendering
+                candles.map((candle, cIdx) => {
+                  const candleW = Math.max(8, (width - 60) / candles.length - 6);
+                  const cx = 30 + cIdx * ((width - 60) / candles.length) + candleW / 2;
+                  const yHigh = height - 30 - ((candle.high - minPrice) / priceRange) * (height - 60);
+                  const yLow = height - 30 - ((candle.low - minPrice) / priceRange) * (height - 60);
+                  const yOpen = height - 30 - ((candle.open - minPrice) / priceRange) * (height - 60);
+                  const yClose = height - 30 - ((candle.close - minPrice) / priceRange) * (height - 60);
+                  const bodyTop = Math.min(yOpen, yClose);
+                  const bodyHeight = Math.max(3, Math.abs(yClose - yOpen));
+                  const color = candle.isBullish ? "#10B981" : "#F43F5E";
 
-              {/* Price Curve */}
-              <path
-                d={pathString}
-                fill="none"
-                stroke={isPositive ? "#10B981" : "#F43F5E"}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+                  return (
+                    <g key={cIdx}>
+                      {/* Upper & Lower Wick */}
+                      <line x1={cx} y1={yHigh} x2={cx} y2={yLow} stroke={color} strokeWidth="1.5" />
+                      {/* Candle Body */}
+                      <rect
+                        x={cx - candleW / 2}
+                        y={bodyTop}
+                        width={candleW}
+                        height={bodyHeight}
+                        fill={color}
+                        rx="1.5"
+                      />
+                    </g>
+                  );
+                })
+              ) : (
+                <>
+                  {/* Area Gradient Fill */}
+                  <path d={areaString} fill="url(#visualizer-gradient)" />
+
+                  {/* Price Curve */}
+                  <path
+                    d={pathString}
+                    fill="none"
+                    stroke={isPositive ? "#10B981" : "#F43F5E"}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </>
+              )}
 
               {/* Current Price Endpoint */}
               {svgCoords.length > 0 && (

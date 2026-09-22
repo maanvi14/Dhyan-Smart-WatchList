@@ -247,7 +247,7 @@ export const watchlistApi = {
     return res.data;
   },
   getMarketBreadth: async (): Promise<MarketBreadthData> => {
-    const res = await api.get("/watchlists/market/breadth");
+    const res = await api.get("/market-wire/breadth");
     return res.data;
   },
   getMarketWire: async (): Promise<{ total: number; timestamp: string; items: WireItem[] }> => {
