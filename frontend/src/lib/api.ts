@@ -40,6 +40,7 @@ export interface WatchlistItemPrice {
   symbol: string;
   name: string;
   sector: string;
+  tag?: string;
   notes?: string;
   addedAt: string;
   lastViewedAt?: string;
@@ -182,16 +183,20 @@ export const watchlistApi = {
     const res = await api.get(`/watchlists/${watchlistId}/concentration`);
     return res.data;
   },
-  addItem: async (watchlistId: string, symbol: string, notes?: string) => {
-    const res = await api.post(`/watchlists/${watchlistId}/items`, { symbol, notes });
+  addItem: async (watchlistId: string, symbol: string, notes?: string, tag?: string) => {
+    const res = await api.post(`/watchlists/${watchlistId}/items`, { symbol, notes, tag });
     return res.data;
   },
   removeItem: async (watchlistId: string, itemId: string) => {
     const res = await api.delete(`/watchlists/${watchlistId}/items/${itemId}`);
     return res.data;
   },
-  updateThesis: async (watchlistId: string, itemId: string, thesisText: string, invalidationPoint: string) => {
-    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/thesis`, { thesisText, invalidationPoint });
+  updateThesis: async (watchlistId: string, itemId: string, thesisText: string, invalidationPoint: string, tag?: string) => {
+    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/thesis`, { thesisText, invalidationPoint, tag });
+    return res.data;
+  },
+  updateTag: async (watchlistId: string, itemId: string, tag: string) => {
+    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/tag`, { tag });
     return res.data;
   },
   getSymbolsUniverse: async () => {

@@ -47,7 +47,7 @@ router.post("/", async (req: AuthRequest, res: Response) => {
 router.post("/:id/items", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { symbol, notes } = req.body;
+    const { symbol, notes, tag } = req.body;
 
     if (!symbol) return res.status(400).json({ error: "Symbol required" });
 
@@ -67,12 +67,40 @@ router.post("/:id/items", async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: "Symbol already in watchlist" });
     }
 
+    let notesPayload: string | null = null;
+    const assignedTag = tag || "Long Term";
+    if (notes || tag) {
+      try {
+        const parsed = typeof notes === "string" ? JSON.parse(notes) : notes;
+        notesPayload = JSON.stringify({
+          tag: assignedTag,
+          thesisText: parsed?.thesisText || (typeof notes === "string" ? notes : ""),
+          invalidationPoint: parsed?.invalidationPoint || "",
+          updatedAt: new Date().toISOString()
+        });
+      } catch (_) {
+        notesPayload = JSON.stringify({
+          tag: assignedTag,
+          thesisText: notes || "",
+          invalidationPoint: "",
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } else {
+      notesPayload = JSON.stringify({
+        tag: assignedTag,
+        thesisText: "",
+        invalidationPoint: "",
+        updatedAt: new Date().toISOString()
+      });
+    }
+
     const item = await prisma.watchlistItem.create({
       data: {
         watchlistId: id,
         symbol: info.symbol,
         sector: info.sector,
-        notes: notes || null
+        notes: notesPayload
       }
     });
 
@@ -179,11 +207,23 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           ? Date.now() - new Date(snap.timestamp).getTime()
           : null;
 
+        // Parse collection tag
+        let itemTag: string = "Long Term";
+        if (item.notes) {
+          try {
+            const parsedNotes = JSON.parse(item.notes);
+            if (parsedNotes?.tag) {
+              itemTag = parsedNotes.tag;
+            }
+          } catch (_) {}
+        }
+
         return {
           id: item.id,
           symbol: item.symbol,
           name: info?.name || item.symbol,
           sector: item.sector || info?.sector || "Other",
+          tag: itemTag,
           notes: item.notes,
           addedAt: item.addedAt,
           lastViewedAt: item.lastViewedAt,
@@ -225,20 +265,65 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PATCH update research thesis & invalidation point
+// PATCH update research thesis & invalidation point & tag
 router.patch("/:id/items/:itemId/thesis", async (req: AuthRequest, res: Response) => {
   try {
     const { id, itemId } = req.params;
-    const { thesisText, invalidationPoint } = req.body;
+    const { thesisText, invalidationPoint, tag } = req.body;
 
     const item = await prisma.watchlistItem.findFirst({
       where: { id: itemId, watchlistId: id }
     });
     if (!item) return res.status(404).json({ error: "Item not found" });
 
+    let existing: any = {};
+    try {
+      if (item.notes) existing = JSON.parse(item.notes);
+    } catch (_) {
+      existing = { thesisText: item.notes || "" };
+    }
+
     const notesPayload = JSON.stringify({
-      thesisText: thesisText || "",
-      invalidationPoint: invalidationPoint || "",
+      tag: tag !== undefined ? tag : (existing.tag || "Long Term"),
+      thesisText: thesisText !== undefined ? thesisText : (existing.thesisText || ""),
+      invalidationPoint: invalidationPoint !== undefined ? invalidationPoint : (existing.invalidationPoint || ""),
+      updatedAt: new Date().toISOString()
+    });
+
+    const updated = await prisma.watchlistItem.update({
+      where: { id: itemId },
+      data: { notes: notesPayload }
+    });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// PATCH quick update collection tag
+router.patch("/:id/items/:itemId/tag", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, itemId } = req.params;
+    const { tag } = req.body;
+
+    if (!tag) return res.status(400).json({ error: "Tag required" });
+
+    const item = await prisma.watchlistItem.findFirst({
+      where: { id: itemId, watchlistId: id }
+    });
+    if (!item) return res.status(404).json({ error: "Item not found" });
+
+    let existing: any = {};
+    try {
+      if (item.notes) existing = JSON.parse(item.notes);
+    } catch (_) {
+      existing = { thesisText: item.notes || "" };
+    }
+
+    const notesPayload = JSON.stringify({
+      ...existing,
+      tag,
       updatedAt: new Date().toISOString()
     });
 

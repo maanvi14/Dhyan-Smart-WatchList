@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { DebugPanel } from "@/components/DebugPanel";
-import { AddSymbolModal } from "@/components/AddSymbolModal";
+import { AddSymbolModal, COLLECTION_TAGS } from "@/components/AddSymbolModal";
 import { AskDhyanChat } from "@/components/AskDhyanChat";
 import { SectorRiskRadar } from "@/components/SectorRiskRadar";
 import { WatermarkSparkline } from "@/components/WatermarkSparkline";
@@ -21,7 +21,7 @@ import {
   Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock,
   Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen,
   AlertOctagon, BarChart2, ChevronRight, PieChart, ShieldCheck, Search,
-  Radio, Zap, ArrowUpRight, ArrowDownRight, Activity
+  Radio, Zap, ArrowUpRight, ArrowDownRight, Activity, Tag
 } from "lucide-react";
 
 export default function WatchlistHomePage() {
@@ -47,6 +47,7 @@ export default function WatchlistHomePage() {
 
   // Filter & Search Controls
   const [activeFilter, setActiveFilter] = useState<"all" | "attention" | "confirmed" | "unexplained" | "stale">("all");
+  const [activeTagFilter, setActiveTagFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Dynamic Live Tick Flash Animations (symbol -> "up" | "down")
@@ -301,9 +302,24 @@ export default function WatchlistHomePage() {
     return { rupees, pct };
   }, [items]);
 
+  // Compute Collection counts
+  const collectionCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: items.length };
+    items.forEach(it => {
+      const tag = it.tag || "Long Term";
+      counts[tag] = (counts[tag] || 0) + 1;
+    });
+    return counts;
+  }, [items]);
+
   // Filter & Search Pipeline
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
+
+    // Collection tag filter
+    if (activeTagFilter !== "all") {
+      result = result.filter(it => (it.tag || "Long Term") === activeTagFilter);
+    }
 
     // Search query filter
     if (searchQuery.trim()) {
@@ -311,7 +327,8 @@ export default function WatchlistHomePage() {
       result = result.filter(it =>
         it.symbol.toLowerCase().includes(q) ||
         (it.name && it.name.toLowerCase().includes(q)) ||
-        (it.sector && it.sector.toLowerCase().includes(q))
+        (it.sector && it.sector.toLowerCase().includes(q)) ||
+        (it.tag && it.tag.toLowerCase().includes(q))
       );
     }
 
@@ -331,7 +348,7 @@ export default function WatchlistHomePage() {
     }
 
     return result;
-  }, [items, activeFilter, searchQuery]);
+  }, [items, activeTagFilter, activeFilter, searchQuery]);
 
   if (loading) {
     return (
@@ -590,7 +607,42 @@ export default function WatchlistHomePage() {
             </div>
           </div>
 
-          {/* Filter Pills */}
+          {/* Groww-Style Collections / Strategy Segment Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
+            <button
+              onClick={() => setActiveTagFilter("all")}
+              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                activeTagFilter === "all"
+                  ? "bg-brand-500 text-white font-bold border-brand-600 shadow-sm"
+                  : "bg-surface hover:bg-surfaceElevated text-muted border-surfaceBorder"
+              }`}
+            >
+              <span>📁</span>
+              <span>All Collections</span>
+              <span className="text-[10px] opacity-80">({items.length})</span>
+            </button>
+            {COLLECTION_TAGS.map(tag => {
+              const count = collectionCounts[tag.id] || 0;
+              const isSelected = activeTagFilter === tag.id;
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => setActiveTagFilter(tag.id)}
+                  className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                    isSelected
+                      ? "bg-brand-500 text-white font-bold border-brand-600 shadow-sm"
+                      : "bg-surface hover:bg-surfaceElevated text-muted border-surfaceBorder"
+                  }`}
+                >
+                  <span>{tag.icon}</span>
+                  <span>{tag.label}</span>
+                  <span className="text-[10px] opacity-80">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Signal & Attention Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
             <button
               onClick={() => setActiveFilter("all")}
@@ -600,7 +652,7 @@ export default function WatchlistHomePage() {
                   : "bg-surface hover:bg-surfaceElevated text-muted border-surfaceBorder"
               }`}
             >
-              All ({items.length})
+              All Signals ({filteredAndSortedItems.length})
             </button>
             <button
               onClick={() => setActiveFilter("attention")}
@@ -835,10 +887,29 @@ export default function WatchlistHomePage() {
                             </div>
                           )}
                         </div>
-                        <div className="text-xs text-muted truncate mt-0.5 font-medium flex items-center gap-1">
+                        <div className="text-xs text-muted truncate mt-0.5 font-medium flex items-center gap-1.5 flex-wrap">
                           <span>{item.name}</span>
                           <span className="opacity-40">·</span>
                           <span className="opacity-70">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
+                          {/* Collection Tag Badge */}
+                          {(() => {
+                            const currentTag = item.tag || "Long Term";
+                            const tagObj = COLLECTION_TAGS.find(t => t.id === currentTag) || COLLECTION_TAGS[0];
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedThesisItem(item);
+                                  setShowThesisModal(true);
+                                }}
+                                className={`text-[9px] font-mono font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 hover:opacity-80 transition-opacity ${tagObj.color}`}
+                                title={`Collection: ${tagObj.label} (Click to reassign/edit)`}
+                              >
+                                <span>{tagObj.icon}</span>
+                                <span>{tagObj.label}</span>
+                              </button>
+                            );
+                          })()}
                         </div>
                         {/* Thesis preview */}
                         {parsedThesis && (

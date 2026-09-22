@@ -20,10 +20,19 @@ interface SymbolOption {
 
 const CATEGORIES = ["All", "Banking", "IT", "Auto", "Pharma", "Energy", "Metals"];
 
+export const COLLECTION_TAGS = [
+  { id: "Long Term", label: "Long Term", icon: "💎", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30" },
+  { id: "Active Trading", label: "Active Trading", icon: "⚡", color: "text-amber-500 bg-amber-500/10 border-amber-500/30" },
+  { id: "Swing Trade", label: "Swing Trade", icon: "🌊", color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/30" },
+  { id: "High Conviction", label: "High Conviction", icon: "🎯", color: "text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/30" },
+  { id: "Watchlist Only", label: "Watchlist Only", icon: "👀", color: "text-slate-400 bg-slate-500/10 border-slate-500/30" },
+];
+
 export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSymbolModalProps) {
   const [universe, setUniverse] = useState<SymbolOption[]>([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedTag, setSelectedTag] = useState("Long Term");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -69,11 +78,12 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
     setLoading(true);
     setError(null);
     try {
-      await watchlistApi.addItem(watchlistId, selectedSymbol, notes);
+      await watchlistApi.addItem(watchlistId, selectedSymbol, notes, selectedTag);
       onAdded();
       onClose();
       setSelectedSymbol(null);
       setNotes("");
+      setSelectedTag("Long Term");
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to add symbol");
     } finally {
@@ -207,6 +217,34 @@ export function AddSymbolModal({ watchlistId, isOpen, onClose, onAdded }: AddSym
                 );
               })
             )}
+          </div>
+
+          {/* Collection / Strategy Tag Selection (Groww-Style) */}
+          <div>
+            <label className="block text-xs text-muted font-semibold mb-1.5 flex items-center space-x-1">
+              <Sparkles className="w-3.5 h-3.5 text-brand-500" />
+              <span>Assign to Collection / Strategy</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              {COLLECTION_TAGS.map(t => {
+                const isSelected = selectedTag === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedTag(t.id)}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 border transition-all ${
+                      isSelected
+                        ? "bg-brand-500/15 border-brand-500 text-brand-600 dark:text-brand-400 ring-1 ring-brand-500/30 font-bold"
+                        : "bg-surfaceElevated hover:bg-surface border-surfaceBorder text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <span>{t.icon}</span>
+                    <span className="truncate">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Optional User Note */}
