@@ -258,5 +258,18 @@ export const debugApi = {
   resetDemo: async () => {
     const res = await api.post("/debug/reset-demo");
     return res.data;
+  },
+  getArchitectureTelemetry: async () => {
+    const res = await api.get("/debug/architecture-telemetry");
+    return res.data;
+  },
+  triggerFaultInjection: async (symbol: string = "NSE:INFY") => {
+    const res = await api.post("/debug/fault-injection/ai-timeout", { symbol });
+    return res.data;
+  },
+  clearFaultInjection: async () => {
+    const res = await api.post("/debug/fault-injection/clear");
+    return res.data;
   }
 };
+

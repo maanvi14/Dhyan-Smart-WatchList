@@ -307,31 +307,28 @@ export async function processSnapshotForChange(
     // Non-blocking: if DB unavailable, skip historical note
   }
 
-  // Step D — Verification flow
+  // Step D — Verification flow via Opossum Circuit Breaker
   try {
-    const response = await axios.post(
-      `${AI_SERVICE_URL}/verify`,
-      {
-        symbol: snapshot.symbol,
-        changePct,
-        volumeRatio,
-        sectorChangePct,
-        sectorDivergence,
-        volumeDivergence,
-        filingSummary,
-        isStale: snapshot.isStale,
-        sourceTrust: snapshot.sourceTrust,
-        lowDataMode,
-        // Pass insider data to AI for richer narrative
-        insiderNarrative
-      },
-      { timeout: 5000 }
-    );
+    const timer = (await import("../metrics")).aiVerificationDuration.startTimer();
+    const { aiVerificationBreaker } = await import("../circuitBreaker");
+    
+    const data = await aiVerificationBreaker.fire({
+      symbol: snapshot.symbol,
+      changePct,
+      volumeRatio,
+      sectorChangePct,
+      sectorDivergence,
+      volumeDivergence,
+      filingSummary,
+      isStale: snapshot.isStale,
+      sourceTrust: snapshot.sourceTrust,
+      lowDataMode
+    });
 
-    const data = response.data;
+    timer();
 
     // Elevate tier if insider confirmation present
-    let finalTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN" = data.confidenceTier;
+    let finalTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN" = data.confidenceTier as any;
     if (hasInsiderBuy && finalTier === "UNEXPLAINED") {
       finalTier = "CONFIRMED";
     }
@@ -355,7 +352,7 @@ export async function processSnapshotForChange(
       detectedAt: new Date(),
       insiderTradeData: insiderTrades.length > 0 ? insiderTrades : null
     };
-  } catch (err) {
+  } catch (err: any) {
     // Internal TypeScript fallback verification if Python service is offline
     let fallbackTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN" = snapshot.isStale
       ? "UNCERTAIN"
