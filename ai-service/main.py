@@ -440,6 +440,7 @@ class VerifyTipRequest(BaseModel):
   filingSummary: Optional[str] = None
   isStale: bool = False
   sourceTrust: int = 1
+  newsHeadlines: Optional[List[str]] = None
 
 async def call_groq_tip_narrative(req: VerifyTipRequest, tier: str) -> str:
   if not GROQ_API_KEY:
@@ -447,20 +448,23 @@ async def call_groq_tip_narrative(req: VerifyTipRequest, tier: str) -> str:
 
   filing_clean = clean_filing_title(req.filingSummary)
   claim_snippet = req.originalTip[:120]
+  news_snippet = " | ".join(req.newsHeadlines[:2]) if req.newsHeadlines else "None found"
 
   prompt = f"""You are a factual market data assistant for Indian retail investors. You do not predict, recommend, or forecast anything.
 
-Original tip text (max 120 chars): "{claim_snippet}"
+Original tip text: "{claim_snippet}"
 Symbol detected: {req.symbol} ({req.symbolName})
 Claim type: {"Filing/corporate action" if req.isFilingClaim else "Price movement" if req.isPriceClaim else "General"}
-Filing found in last 30 days: {filing_clean if req.filingSummary else "None"}
+Official Filing found in last 30 days: {filing_clean if req.filingSummary else "None"}
+Financial Press Coverage (Moneycontrol/ET/Mint): {news_snippet}
 Current price change: {req.changePct:+.2f}%
 Volume vs avg: {req.volumeRatio:.1f}x
 Confidence tier assigned: {tier}
 
-Write ONE factual sentence (max 30 words) explaining what the evidence says about this tip:
+Write ONE factual sentence (max 28 words) explaining what the evidence says about this tip:
 - CONFIRMED: state that a matching exchange filing exists and cite it briefly.
-- UNCERTAIN: state clearly that no filing was found OR data is unavailable — tell the user to treat the tip with caution.
+- PRESS_CORROBORATED: state that mainstream financial press reports this, but official exchange filing is awaited.
+- UNCERTAIN: state clearly that no filing or accredited media was found — warn user to treat tip with caution.
 - UNEXPLAINED: state the actual price/volume data and say no confirmed catalyst was found.
 
 Never use "likely", "expected", "target", "buy", "sell", or any predictive/advisory language. Start with the symbol name."""
@@ -495,27 +499,37 @@ async def verify_tip(req: VerifyTipRequest):
     "detail": f"Detected symbol {req.symbol} ({req.symbolName}) in tip text. Claim type: {'filing-based' if req.isFilingClaim else 'price-move' if req.isPriceClaim else 'general'}."
   })
 
-  # Step 2 — Filing lookup (30-day window done by backend; result passed in)
+  # Step 2 — Filing lookup (30-day window)
   trace.append({
     "step": "filing_lookup_30d",
     "timestamp": format_timestamp(),
     "detail": f"Exchange filings (30-day window): {'Found — ' + clean_filing_title(req.filingSummary) if req.filingSummary else f'No filings found for {req.symbol} in the last 30 days.'}",
   })
 
-  # Step 3 — Tier classification
+  # Step 3 — Press Corroboration
+  has_news = bool(req.newsHeadlines and len(req.newsHeadlines) > 0)
+  trace.append({
+    "step": "press_corroboration",
+    "timestamp": format_timestamp(),
+    "detail": f"Financial Press (Moneycontrol / ET / Mint): {req.newsHeadlines[0] if has_news else 'No corroborating accredited press stories found in last 7 days.'}"
+  })
+
+  # Step 4 — Tier classification
   tier = "UNEXPLAINED"
   if req.isStale or req.sourceTrust < 1:
     tier = "UNCERTAIN"
     tier_reason = "Uncertain: price data is stale or unavailable — claim cannot be verified against current market data."
   elif req.isFilingClaim and req.filingSummary:
     tier = "CONFIRMED"
-    tier_reason = f"Confirmed: filing '{clean_filing_title(req.filingSummary)}' corroborates the tip."
+    tier_reason = f"Confirmed: official exchange filing '{clean_filing_title(req.filingSummary)}' corroborates the tip."
+  elif req.isFilingClaim and has_news:
+    tier = "PRESS_CORROBORATED"
+    tier_reason = f"Press Corroborated: financial media reported this development, awaiting official BSE/NSE filing."
   elif req.isFilingClaim and not req.filingSummary:
     tier = "UNCERTAIN"
     tier_reason = "Uncertain: tip claims a corporate action but no matching NSE filing found in last 30 days."
   elif req.isPriceClaim:
-    # Check if claimed direction matches actual move
-    claimed_up = any(kw in req.originalTip.lower() for kw in ["up", "rally", "buy", "breakout", "rise"])
+    claimed_up = any(kw in req.originalTip.lower() for kw in ["up", "rally", "buy", "breakout", "rise", "उछाल", "तेजी"])
     actual_up = req.changePct >= 0
     if claimed_up != actual_up and abs(req.changePct) > 1.0:
       tier = "UNCERTAIN"
@@ -524,8 +538,8 @@ async def verify_tip(req: VerifyTipRequest):
       tier = "UNEXPLAINED"
       tier_reason = f"Unexplained: price changed {req.changePct:+.2f}% with {req.volumeRatio:.1f}x volume but no confirmed catalyst found."
   else:
-    tier = "UNEXPLAINED"
-    tier_reason = "Unexplained: no filing match found and no directional price evidence."
+    tier = "PRESS_CORROBORATED" if has_news else "UNEXPLAINED"
+    tier_reason = f"Media coverage active: {req.newsHeadlines[0]}" if has_news else "Unexplained: no filing match found and no directional price evidence."
 
   trace.append({
     "step": "classify_tier",
@@ -533,7 +547,7 @@ async def verify_tip(req: VerifyTipRequest):
     "detail": tier_reason
   })
 
-  # Step 4 — Narrative
+  # Step 5 — Narrative
   narrative = ""
   try:
     narrative = await call_groq_tip_narrative(req, tier)
@@ -544,17 +558,14 @@ async def verify_tip(req: VerifyTipRequest):
     })
   except Exception as e:
     error_msg = str(e)
-    if "timeout" in error_msg.lower():
-      fallback_reason = "Fallback: Groq API timed out"
-    elif "not set" in error_msg.lower():
-      fallback_reason = "Fallback: GROQ_API_KEY not set"
-    else:
-      fallback_reason = f"Fallback: {error_msg}"
+    fallback_reason = "Fallback: Groq API unavailable"
 
-    # Deterministic fallback narrative for tip
     sign = "+" if req.changePct >= 0 else ""
     if tier == "CONFIRMED":
-      narrative = f"{req.symbolName} ({req.symbol}): A matching exchange filing corroborates this tip — {clean_filing_title(req.filingSummary)}."
+      narrative = f"{req.symbolName} ({req.symbol}): Official exchange filing confirms this catalyst — {clean_filing_title(req.filingSummary)}."
+    elif tier == "PRESS_CORROBORATED":
+      news_title = req.newsHeadlines[0] if (req.newsHeadlines and len(req.newsHeadlines) > 0) else "Financial Press"
+      narrative = f"{req.symbolName}: Corroborated in financial media ({news_title}). Formal exchange disclosure awaited."
     elif tier == "UNCERTAIN":
       if req.filingSummary is None and req.isFilingClaim:
         narrative = f"{req.symbolName}: No exchange filing found for this claimed event in the last 30 days — treat this tip with caution."

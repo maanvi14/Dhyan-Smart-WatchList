@@ -1,5 +1,6 @@
 export const TIER_KEYS = {
   CONFIRMED: "CONFIRMED",
+  PRESS_CORROBORATED: "PRESS_CORROBORATED",
   UNEXPLAINED: "UNEXPLAINED",
   UNCERTAIN: "UNCERTAIN"
 } as const;
@@ -8,6 +9,7 @@ export type TierKey = typeof TIER_KEYS[keyof typeof TIER_KEYS];
 
 export const TIER_LABELS: Record<TierKey, string> = {
   CONFIRMED: "CATALYST CONFIRMED",
+  PRESS_CORROBORATED: "PRESS CORROBORATED",
   UNEXPLAINED: "UNINFORMED FLOW",
   UNCERTAIN: "STALE QUOTE"
 };
@@ -19,6 +21,13 @@ export const TIER_BADGES: Record<TierKey, { text: string; bg: string; textCol: s
     textCol: "text-emerald-700 dark:text-emerald-300",
     border: "border-emerald-300 dark:border-emerald-500/40",
     icon: "🟢"
+  },
+  PRESS_CORROBORATED: {
+    text: "PRESS CORROBORATED",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    textCol: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-300 dark:border-blue-500/40",
+    icon: "📰"
   },
   UNEXPLAINED: {
     text: "UNINFORMED FLOW",

@@ -35,6 +35,12 @@ const TIER_CONFIG = {
     badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40",
     dot: "bg-emerald-500"
   },
+  PRESS_CORROBORATED: {
+    bg: "bg-blue-50/80 dark:bg-blue-950/40",
+    border: "border-blue-300 dark:border-blue-500/40",
+    badge: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border-blue-300 dark:border-blue-500/40",
+    dot: "bg-blue-500"
+  },
   UNEXPLAINED: {
     bg: "bg-amber-50/80 dark:bg-amber-950/40",
     border: "border-amber-300 dark:border-amber-500/40",
@@ -56,9 +62,10 @@ function buildCardSvg(result: VerifyTipResult, tipText: string, language: string
   const tier = result.confidenceTier ?? "UNCERTAIN";
 
   const tierColors: Record<string, { bg: string; accent: string; dot: string }> = {
-    CONFIRMED:   { bg: "#064e3b", accent: "#10b981", dot: "#34d399" },
-    UNEXPLAINED: { bg: "#451a03", accent: "#f59e0b", dot: "#fcd34d" },
-    UNCERTAIN:   { bg: "#5A1414", accent: "#DC2626", dot: "#F87171" } // Redwood / rich crimson tone
+    CONFIRMED:          { bg: "#064e3b", accent: "#10b981", dot: "#34d399" },
+    PRESS_CORROBORATED: { bg: "#0c2d48", accent: "#38bdf8", dot: "#67e8f9" },
+    UNEXPLAINED:        { bg: "#451a03", accent: "#f59e0b", dot: "#fcd34d" },
+    UNCERTAIN:          { bg: "#5A1414", accent: "#DC2626", dot: "#F87171" } // Redwood / rich crimson tone
   };
   const c = tierColors[tier];
 
@@ -273,6 +280,38 @@ function VerifyResultCard({
       <p className="text-xs text-foreground font-medium leading-relaxed font-sans">
         {displayNarrative}
       </p>
+
+      {/* Press Corroboration Citations */}
+      {result.newsArticles && result.newsArticles.length > 0 && (
+        <div className="pt-2 border-t border-surfaceBorder/40 space-y-1.5">
+          <div className="text-[10px] font-bold text-muted uppercase tracking-wider flex items-center gap-1">
+            <span>📰 Financial Press Citations (Moneycontrol / ET / Mint)</span>
+          </div>
+          <div className="space-y-1">
+            {result.newsArticles.map((article, idx) => (
+              <a
+                key={idx}
+                href={article.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-2 rounded-lg bg-surface/60 hover:bg-surface border border-surfaceBorder/60 text-[11px] text-foreground transition group"
+              >
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-badgeBg text-brand-500 border border-surfaceBorder">
+                    {article.publisher}
+                  </span>
+                  <span className="truncate text-slate-300 group-hover:text-white">
+                    {article.title}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted shrink-0 ml-2 group-hover:text-brand-400">
+                  Read →
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions row */}
       <div className="flex items-center justify-between pt-1 border-t border-surfaceBorder/60">

@@ -35,6 +35,13 @@ export interface TrustRatioData {
   stalePct: number;
 }
 
+export interface GhostPosition {
+  hypotheticalAmount: number | null;
+  basePriceAtAdd: number;
+  hesitationReturnPct: number;
+  opportunityCost: number | null;
+}
+
 export interface WatchlistItemPrice {
   id: string;
   symbol: string;
@@ -42,6 +49,9 @@ export interface WatchlistItemPrice {
   sector: string;
   tag?: string;
   notes?: string;
+  thesisText?: string;
+  invalidationPoint?: string;
+  ghostPosition?: GhostPosition;
   addedAt: string;
   lastViewedAt?: string;
   ltp: number;
@@ -103,14 +113,11 @@ export interface ChangeEventData {
     timestamp: string;
     summary: string;
   } | null;
-  // 🐋 Skin in the Game
   insiderData?: InsiderTradeItem[] | null;
   insiderNarrative?: string | null;
-  // 🌊 Ripple Effect
   isRippleEffect?: boolean;
   rippleSourceSymbol?: string | null;
   rippleSourceName?: string | null;
-  // 🔬 Quant-backed Audit Fields (for Raw JSON Workbench only)
   correlationCoefficient?: number | null;
   betaCoefficient?: number | null;
   residualZScore?: number | null;
@@ -133,6 +140,42 @@ export interface UnreadSummary {
     rippleSource: string | null;
     detectedAt: string;
   }[];
+}
+
+export interface SectorBreadth {
+  sector: string;
+  changePct: number;
+  total: number;
+  advances: number;
+  declines: number;
+  unchanged: number;
+}
+
+export interface MarketBreadthData {
+  timestamp: string;
+  totalSectors: number;
+  advancingSectors: number;
+  decliningSectors: number;
+  neutralSectors: number;
+  averageSectorChangePct: number;
+  breadthState: "ADVANCING" | "DECLINING" | "BALANCED";
+  sectors: SectorBreadth[];
+}
+
+export interface WireItem {
+  id: string;
+  type: "FILING" | "NEWS";
+  symbol: string;
+  symbolName: string;
+  sector: string;
+  title: string;
+  summary?: string;
+  source: string;
+  link?: string;
+  timestamp: string;
+  confidenceTier: "CONFIRMED" | "PRESS_CORROBORATED" | "UNEXPLAINED";
+  changePct: number;
+  ltp: number;
 }
 
 export const authApi = {
@@ -191,8 +234,8 @@ export const watchlistApi = {
     const res = await api.delete(`/watchlists/${watchlistId}/items/${itemId}`);
     return res.data;
   },
-  updateThesis: async (watchlistId: string, itemId: string, thesisText: string, invalidationPoint: string, tag?: string) => {
-    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/thesis`, { thesisText, invalidationPoint, tag });
+  updateThesis: async (watchlistId: string, itemId: string, thesisText: string, invalidationPoint: string, tag?: string, hypotheticalAmount?: number | null) => {
+    const res = await api.patch(`/watchlists/${watchlistId}/items/${itemId}/thesis`, { thesisText, invalidationPoint, tag, hypotheticalAmount });
     return res.data;
   },
   updateTag: async (watchlistId: string, itemId: string, tag: string) => {
@@ -201,6 +244,14 @@ export const watchlistApi = {
   },
   getSymbolsUniverse: async () => {
     const res = await api.get("/watchlists/universe/symbols");
+    return res.data;
+  },
+  getMarketBreadth: async (): Promise<MarketBreadthData> => {
+    const res = await api.get("/watchlists/market/breadth");
+    return res.data;
+  },
+  getMarketWire: async (): Promise<{ total: number; timestamp: string; items: WireItem[] }> => {
+    const res = await api.get("/market-wire");
     return res.data;
   },
   synthesizeVoice: async (text: string, language: string = "hi") => {
@@ -216,16 +267,26 @@ export const chatApi = {
   }
 };
 
+export interface NewsArticleItem {
+  id: string;
+  title: string;
+  publisher: string;
+  link: string;
+  publishedAt: string;
+  isAccreditedMedia: boolean;
+}
+
 export interface VerifyTipResult {
   extractedSymbol: string | null;
   symbolName?: string;
   sector?: string;
   isFilingClaim?: boolean;
   isPriceClaim?: boolean;
-  confidenceTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN" | null;
+  confidenceTier: "CONFIRMED" | "PRESS_CORROBORATED" | "UNEXPLAINED" | "UNCERTAIN" | null;
   narrative: string | null;
   narrativeHi?: string | null;
   evidenceTrace: { step: string; timestamp: string; detail: string }[];
+  newsArticles?: NewsArticleItem[];
   message?: string;
   messageHi?: string;
 }
@@ -287,4 +348,3 @@ export const debugApi = {
     return res.data;
   }
 };
-

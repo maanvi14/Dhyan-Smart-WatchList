@@ -9,6 +9,7 @@ import watchlistRoutes from "./routes/watchlists";
 import debugRoutes from "./routes/debug";
 import chatRoutes from "./routes/chat";
 import verifyTipRoutes from "./routes/verifyTip";
+import marketWireRoutes from "./routes/marketWire";
 import { priceFeed, SnapshotData } from "./feed/priceFeed";
 import { processSnapshotForChange, generateRippleEvent, getSectorPeers } from "./engine/changeDetector";
 import { proactiveFilingScanner } from "./engine/proactiveScanner";
@@ -59,6 +60,7 @@ app.use("/api/watchlists", watchlistRoutes);
 app.use("/api/debug", debugRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/verify-tip", verifyTipRoutes);
+app.use("/api/market-wire", marketWireRoutes);
 
 // Prometheus /metrics Endpoint
 app.get("/metrics", async (req, res) => {

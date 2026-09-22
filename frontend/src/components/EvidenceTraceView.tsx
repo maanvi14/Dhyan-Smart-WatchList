@@ -18,12 +18,14 @@ interface EvidenceStep {
 
 interface EvidenceTraceViewProps {
   trace: EvidenceStep[];
-  confidenceTier: "CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN";
+  confidenceTier: TierKey | "CONFIRMED" | "PRESS_CORROBORATED" | "UNEXPLAINED" | "UNCERTAIN";
 }
 
 const STEP_TRANSLATIONS_HI: Record<string, string> = {
   tip_symbol_extract: "टिप प्रतीक पहचान",
   filing_lookup_30d: "30-दिन एक्सचेंज फाइलिंग खोज",
+  press_corroboration: "वित्तीय प्रेस सत्यापन",
+  historical_event_precedent: "ऐतिहासिक घटना पूर्ववृत्त",
   classify_tier: "विश्वास स्तर वर्गीकरण",
   write_narrative_groq_llm: "एआई विवरण निर्माण",
   fallback_node: "सत्यापन नियम निष्पादन",

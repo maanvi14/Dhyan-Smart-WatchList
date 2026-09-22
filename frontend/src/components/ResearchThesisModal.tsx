@@ -21,6 +21,7 @@ export function ResearchThesisModal({
 }: ResearchThesisModalProps) {
   const [thesisText, setThesisText] = useState("");
   const [invalidationPoint, setInvalidationPoint] = useState("");
+  const [hypotheticalAmount, setHypotheticalAmount] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -30,17 +31,20 @@ export function ResearchThesisModal({
         if (typeof parsed === "object" && parsed !== null) {
           setThesisText(parsed.thesisText || "");
           setInvalidationPoint(parsed.invalidationPoint || "");
+          setHypotheticalAmount(parsed.hypotheticalAmount ? String(parsed.hypotheticalAmount) : "");
           return;
         }
       } catch (_) {
         // legacy plain text notes
         setThesisText(item.notes);
         setInvalidationPoint("");
+        setHypotheticalAmount("");
         return;
       }
     }
     setThesisText("");
     setInvalidationPoint("");
+    setHypotheticalAmount("");
   }, [item]);
 
   if (!isOpen || !item) return null;
@@ -48,7 +52,15 @@ export function ResearchThesisModal({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await watchlistApi.updateThesis(watchlistId, item.id, thesisText.trim(), invalidationPoint.trim());
+      const amountNum = hypotheticalAmount.trim() ? parseFloat(hypotheticalAmount) : null;
+      await watchlistApi.updateThesis(
+        watchlistId,
+        item.id,
+        thesisText.trim(),
+        invalidationPoint.trim(),
+        item.tag || "Long Term",
+        amountNum
+      );
       onSaved();
       onClose();
     } catch (err) {
@@ -115,6 +127,27 @@ export function ResearchThesisModal({
               rows={2}
               className="w-full bg-surfaceElevated border border-surfaceBorder rounded-xl p-3 text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-rose-500/80 transition-colors resize-none font-sans leading-relaxed"
             />
+          </div>
+
+          {/* Field 3: Ghost Portfolio / Opportunity Cost Simulator */}
+          <div>
+            <label className="block text-amber-500 font-semibold mb-1 flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ghost Portfolio Allocation (₹ Hypothetical Entry Amount)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted font-bold text-xs">₹</span>
+              <input
+                type="number"
+                value={hypotheticalAmount}
+                onChange={e => setHypotheticalAmount(e.target.value)}
+                placeholder="e.g. 50000"
+                className="w-full pl-7 pr-3 py-2 bg-surfaceElevated border border-surfaceBorder rounded-xl text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-amber-500/80 transition-colors font-mono"
+              />
+            </div>
+            <p className="text-[10px] text-muted mt-1">
+              Dhyan will simulate your opportunity cost and hesitation P&L from the exact moment this stock was watchlisted.
+            </p>
           </div>
 
           {/* Action Footer */}

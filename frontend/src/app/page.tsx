@@ -12,7 +12,10 @@ import { WatermarkSparkline } from "@/components/WatermarkSparkline";
 import { WatchlistTrustRatio } from "@/components/WatchlistTrustRatio";
 import { ResearchThesisModal } from "@/components/ResearchThesisModal";
 import { StockVisualizerModal } from "@/components/StockVisualizerModal";
-import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustRatioData } from "@/lib/api";
+import { MarketBreadthBar } from "@/components/MarketBreadthBar";
+import { CausalTreemap } from "@/components/CausalTreemap";
+import { MarketWireModal } from "@/components/MarketWireModal";
+import { watchlistApi, debugApi, WatchlistItemPrice, User, UnreadSummary, TrustRatioData, MarketBreadthData } from "@/lib/api";
 import { TIER_BADGES, TIER_LABELS } from "@/lib/tiers";
 import { getSocket, subscribeToSymbols } from "@/lib/socket";
 import { decodeBinaryTickFrame } from "@/lib/binaryDecoder";
@@ -21,7 +24,7 @@ import {
   Plus, Bell, Trash2, TrendingUp, TrendingDown, ShieldAlert, Bot, Clock,
   Filter, CheckCheck, Sparkles, Waves, Building2, Smartphone, BookOpen,
   AlertOctagon, BarChart2, ChevronRight, PieChart, ShieldCheck, Search,
-  Radio, Zap, ArrowUpRight, ArrowDownRight, Activity
+  Radio, Zap, ArrowUpRight, ArrowDownRight, Activity, LayoutGrid, List
 } from "lucide-react";
 
 export default function WatchlistHomePage() {
@@ -36,6 +39,9 @@ export default function WatchlistHomePage() {
   const [trustRatioData, setTrustRatioData] = useState<TrustRatioData | null>(null);
   const [concentrationWarning, setConcentrationWarning] = useState<string | null>(null);
   const [sectorBreakdown, setSectorBreakdown] = useState<any[]>([]);
+  const [breadthData, setBreadthData] = useState<MarketBreadthData | null>(null);
+  const [showWireModal, setShowWireModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "treemap">("list");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -129,14 +135,16 @@ export default function WatchlistHomePage() {
       }
 
       try {
-        const [unreadRes, unreadSummaryRes, concRes] = await Promise.all([
+        const [unreadRes, unreadSummaryRes, concRes, breadthRes] = await Promise.all([
           watchlistApi.getUnreadCount(u.watchlistId).catch(() => ({ unreadCount: 0 })),
           watchlistApi.getUnreadSummary(u.watchlistId).catch(() => null),
-          watchlistApi.getConcentration(u.watchlistId).catch(() => ({ concentrationWarning: null, breakdown: [] }))
+          watchlistApi.getConcentration(u.watchlistId).catch(() => ({ concentrationWarning: null, breakdown: [] })),
+          watchlistApi.getMarketBreadth().catch(() => null)
         ]);
         setUnreadCount(unreadRes?.unreadCount || 0);
         if (unreadSummaryRes) setUnreadSummary(unreadSummaryRes);
         setConcentrationWarning(concRes?.concentrationWarning || null);
+        if (breadthRes) setBreadthData(breadthRes);
         if (concRes?.breakdown && concRes.breakdown.length > 0) {
           setSectorBreakdown(concRes.breakdown);
         } else {
@@ -441,6 +449,11 @@ export default function WatchlistHomePage() {
         {/* Debug Panel Toggle */}
         {showDebug && <DebugPanel onStatusChange={loadData} />}
 
+        {/* 1.5️⃣ Macro: Nifty 50 Sector Breadth & Momentum Bar */}
+        <div className="mb-3">
+          <MarketBreadthBar data={breadthData} />
+        </div>
+
         {/* 2️⃣ Flagship: Personal Watermark Timeline Banner */}
         {timeAwayString && (
           <div className="bg-surface border border-surfaceBorder rounded-2xl p-3.5 mb-3 shadow-sm hover:border-brand-500/30 transition-all">
@@ -572,6 +585,16 @@ export default function WatchlistHomePage() {
                 />
               </div>
 
+              {/* ⚡ Market Wire Modal Action Button */}
+              <button
+                onClick={() => setShowWireModal(true)}
+                className="h-8 px-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
+                title="Open Market-Wide Verified Wire"
+              >
+                <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
+                <span className="hidden sm:inline">Market Wire</span>
+              </button>
+
               <button
                 onClick={() => setShowChat(true)}
                 className="h-8 px-2.5 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
@@ -590,66 +613,103 @@ export default function WatchlistHomePage() {
             </div>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
-            <button
-              onClick={() => setActiveFilter("all")}
-              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 ${
-                activeFilter === "all"
-                  ? "bg-foreground text-background font-bold border-foreground shadow-sm"
-                  : "bg-surface hover:bg-surfaceElevated text-muted border-surfaceBorder"
-              }`}
-            >
-              All ({items.length})
-            </button>
-            <button
-              onClick={() => setActiveFilter("attention")}
-              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
-                activeFilter === "attention"
-                  ? "bg-amber-500 text-white font-bold border-amber-600 shadow-sm"
-                  : "bg-surface hover:bg-surfaceElevated text-amber-500 border-surfaceBorder"
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>Needs Attention</span>
-            </button>
-            <button
-              onClick={() => setActiveFilter("confirmed")}
-              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
-                activeFilter === "confirmed"
-                  ? "bg-emerald-600 text-white font-bold border-emerald-700 shadow-sm"
-                  : "bg-surface hover:bg-surfaceElevated text-emerald-500 border-surfaceBorder"
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Confirmed Catalysts</span>
-            </button>
-            <button
-              onClick={() => setActiveFilter("unexplained")}
-              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
-                activeFilter === "unexplained"
-                  ? "bg-amber-600 text-white font-bold border-amber-700 shadow-sm"
-                  : "bg-surface hover:bg-surfaceElevated text-amber-400 border-surfaceBorder"
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              <span>Uninformed Flows</span>
-            </button>
-            <button
-              onClick={() => setActiveFilter("stale")}
-              className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
-                activeFilter === "stale"
-                  ? "bg-rose-600 text-white font-bold border-rose-700 shadow-sm"
-                  : "bg-surface hover:bg-surfaceElevated text-rose-400 border-surfaceBorder"
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              <span>Stale Feeds</span>
-            </button>
+          {/* Filter Pills + View Switcher */}
+          <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setActiveFilter("all")}
+                className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 ${
+                  activeFilter === "all"
+                    ? "bg-foreground text-background font-bold border-foreground shadow-sm"
+                    : "bg-surface hover:bg-surfaceElevated text-muted border-surfaceBorder"
+                }`}
+              >
+                All ({items.length})
+              </button>
+              <button
+                onClick={() => setActiveFilter("attention")}
+                className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                  activeFilter === "attention"
+                    ? "bg-amber-500 text-white font-bold border-amber-600 shadow-sm"
+                    : "bg-surface hover:bg-surfaceElevated text-amber-500 border-surfaceBorder"
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Needs Attention</span>
+              </button>
+              <button
+                onClick={() => setActiveFilter("confirmed")}
+                className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                  activeFilter === "confirmed"
+                    ? "bg-emerald-600 text-white font-bold border-emerald-700 shadow-sm"
+                    : "bg-surface hover:bg-surfaceElevated text-emerald-500 border-surfaceBorder"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Confirmed Catalysts</span>
+              </button>
+              <button
+                onClick={() => setActiveFilter("unexplained")}
+                className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                  activeFilter === "unexplained"
+                    ? "bg-amber-600 text-white font-bold border-amber-700 shadow-sm"
+                    : "bg-surface hover:bg-surfaceElevated text-amber-400 border-surfaceBorder"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span>Uninformed Flows</span>
+              </button>
+              <button
+                onClick={() => setActiveFilter("stale")}
+                className={`px-3 py-1.5 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                  activeFilter === "stale"
+                    ? "bg-rose-600 text-white font-bold border-rose-700 shadow-sm"
+                    : "bg-surface hover:bg-surfaceElevated text-rose-400 border-surfaceBorder"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>Stale Feeds</span>
+              </button>
+            </div>
+
+            {/* View Mode Switcher (List vs Treemap) */}
+            <div className="flex items-center gap-1 bg-surface border border-surfaceBorder p-0.5 rounded-xl ml-auto shrink-0">
+              <button
+                onClick={() => setViewMode("list")}
+                title="List View"
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                  viewMode === "list" ? "bg-surfaceElevated text-foreground shadow-sm" : "text-muted hover:text-foreground"
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">List</span>
+              </button>
+              <button
+                onClick={() => setViewMode("treemap")}
+                title="Causal Treemap"
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
+                  viewMode === "treemap" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm" : "text-muted hover:text-foreground"
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Treemap</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 6️⃣ Interactive Stock Universe Grid Cards with Live Flash & Micro-actions */}
+        {/* 6️⃣ Interactive Stock Universe: Treemap or List View */}
+        {viewMode === "treemap" ? (
+          <div className="mb-8">
+            <CausalTreemap
+              items={filteredAndSortedItems}
+              onSelectItem={(item) => {
+                setSelectedVisualizerItem(item);
+                setShowVisualizerModal(true);
+              }}
+            />
+          </div>
+        ) : (
         <div className="bg-surface border border-surfaceBorder rounded-2xl divide-y divide-surfaceBorder overflow-hidden shadow-sm mb-8">
           {filteredAndSortedItems.length === 0 ? (
             <div className="p-8 text-center text-muted text-xs font-mono">
@@ -803,6 +863,19 @@ export default function WatchlistHomePage() {
                           </button>
                         );
                       })()}
+                      {/* Ghost Portfolio Simulation Badge */}
+                      {item.ghostPosition && item.ghostPosition.hypotheticalAmount && (
+                        <div
+                          className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold"
+                          title={`Hypothetical Allocation: ₹${item.ghostPosition.hypotheticalAmount.toLocaleString("en-IN")} at ₹${item.ghostPosition.basePriceAtAdd}`}
+                        >
+                          <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span>Ghost P&L:</span>
+                          <span className={item.ghostPosition.hesitationReturnPct >= 0 ? "text-emerald-500" : "text-rose-500"}>
+                            {item.ghostPosition.hesitationReturnPct >= 0 ? "+" : ""}₹{Math.abs(item.ghostPosition.opportunityCost || 0).toLocaleString("en-IN")} ({item.ghostPosition.hesitationReturnPct >= 0 ? "+" : ""}{item.ghostPosition.hesitationReturnPct}%)
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Micro-Action Buttons */}
@@ -841,6 +914,7 @@ export default function WatchlistHomePage() {
             })
           )}
         </div>
+        )}
 
       </main>
 
@@ -869,6 +943,15 @@ export default function WatchlistHomePage() {
           watchlistId={user.watchlistId}
           item={selectedThesisItem}
           onSaved={loadData}
+        />
+      )}
+
+      {user && (
+        <MarketWireModal
+          isOpen={showWireModal}
+          onClose={() => setShowWireModal(false)}
+          watchlistId={user.watchlistId}
+          onStockAdded={loadData}
         />
       )}
 

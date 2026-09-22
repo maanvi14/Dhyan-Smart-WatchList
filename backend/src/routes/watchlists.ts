@@ -1,4 +1,4 @@
-import { Router, Response } from "express";
+import { Router, Request, Response } from "express";
 import { prisma } from "../db";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { priceFeed } from "../feed/priceFeed";
@@ -207,16 +207,35 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           ? Date.now() - new Date(snap.timestamp).getTime()
           : null;
 
-        // Parse collection tag
+        // Parse collection tag, thesis, and ghost position
         let itemTag: string = "Long Term";
+        let thesisText: string = "";
+        let invalidationPoint: string = "";
+        let hypotheticalAmount: number | null = null;
         if (item.notes) {
           try {
             const parsedNotes = JSON.parse(item.notes);
-            if (parsedNotes?.tag) {
-              itemTag = parsedNotes.tag;
+            if (parsedNotes?.tag) itemTag = parsedNotes.tag;
+            if (parsedNotes?.thesisText) thesisText = parsedNotes.thesisText;
+            if (parsedNotes?.invalidationPoint) invalidationPoint = parsedNotes.invalidationPoint;
+            if (parsedNotes?.hypotheticalAmount !== undefined && parsedNotes.hypotheticalAmount !== null && parsedNotes.hypotheticalAmount !== "") {
+              hypotheticalAmount = Number(parsedNotes.hypotheticalAmount);
             }
           } catch (_) {}
         }
+
+        const basePriceAtAdd = info?.basePrice || (ltp / (1 + (changePct / 100)));
+        const hesitationReturnPct = basePriceAtAdd > 0 ? Number((((ltp - basePriceAtAdd) / basePriceAtAdd) * 100).toFixed(2)) : 0;
+        const opportunityCost = (hypotheticalAmount && hypotheticalAmount > 0)
+          ? Number(((hesitationReturnPct / 100) * hypotheticalAmount).toFixed(2))
+          : null;
+
+        const ghostPosition = {
+          hypotheticalAmount,
+          basePriceAtAdd: Number(basePriceAtAdd.toFixed(2)),
+          hesitationReturnPct,
+          opportunityCost
+        };
 
         return {
           id: item.id,
@@ -225,6 +244,9 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           sector: item.sector || info?.sector || "Other",
           tag: itemTag,
           notes: item.notes,
+          thesisText,
+          invalidationPoint,
+          ghostPosition,
           addedAt: item.addedAt,
           lastViewedAt: item.lastViewedAt,
           ltp,
@@ -265,11 +287,11 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PATCH update research thesis & invalidation point & tag
+// PATCH update research thesis & invalidation point & tag & hypotheticalAmount
 router.patch("/:id/items/:itemId/thesis", async (req: AuthRequest, res: Response) => {
   try {
     const { id, itemId } = req.params;
-    const { thesisText, invalidationPoint, tag } = req.body;
+    const { thesisText, invalidationPoint, tag, hypotheticalAmount } = req.body;
 
     const item = await prisma.watchlistItem.findFirst({
       where: { id: itemId, watchlistId: id }
@@ -287,6 +309,7 @@ router.patch("/:id/items/:itemId/thesis", async (req: AuthRequest, res: Response
       tag: tag !== undefined ? tag : (existing.tag || "Long Term"),
       thesisText: thesisText !== undefined ? thesisText : (existing.thesisText || ""),
       invalidationPoint: invalidationPoint !== undefined ? invalidationPoint : (existing.invalidationPoint || ""),
+      hypotheticalAmount: hypotheticalAmount !== undefined ? hypotheticalAmount : (existing.hypotheticalAmount ?? null),
       updatedAt: new Date().toISOString()
     });
 
@@ -819,6 +842,54 @@ router.post("/voice/briefing", async (req: AuthRequest, res: Response) => {
     }
   } catch (err: any) {
     res.status(500).json({ error: err.message, fallback: true });
+  }
+});
+
+// GET market breadth & sector performance
+router.get("/market/breadth", (req: Request, res: Response) => {
+  try {
+    const sectors = Array.from(new Set(SYMBOL_UNIVERSE.map(s => s.sector)));
+    const sectorStats = sectors.map(sector => {
+      const symbolsInSector = SYMBOL_UNIVERSE.filter(s => s.sector === sector);
+      let advances = 0;
+      let declines = 0;
+      let unchanged = 0;
+
+      symbolsInSector.forEach(sym => {
+        const snap = priceFeed.getLatestSnapshot(sym.symbol);
+        const change = snap?.changePct ?? 0;
+        if (change > 0.05) advances++;
+        else if (change < -0.05) declines++;
+        else unchanged++;
+      });
+
+      const changePct = priceFeed.getSectorChangePct(sector);
+      return {
+        sector,
+        changePct: Number(changePct.toFixed(2)),
+        total: symbolsInSector.length,
+        advances,
+        declines,
+        unchanged
+      };
+    });
+
+    const advancingSectors = sectorStats.filter(s => s.changePct > 0).length;
+    const decliningSectors = sectorStats.filter(s => s.changePct < 0).length;
+    const avgChange = sectorStats.reduce((acc, s) => acc + s.changePct, 0) / (sectorStats.length || 1);
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      totalSectors: sectors.length,
+      advancingSectors,
+      decliningSectors,
+      neutralSectors: sectors.length - (advancingSectors + decliningSectors),
+      averageSectorChangePct: Number(avgChange.toFixed(2)),
+      breadthState: advancingSectors > decliningSectors ? "ADVANCING" : decliningSectors > advancingSectors ? "DECLINING" : "BALANCED",
+      sectors: sectorStats
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to calculate breadth" });
   }
 });
 
