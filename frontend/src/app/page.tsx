@@ -660,180 +660,270 @@ export default function WatchlistHomePage() {
               const isPositive = item.changePct >= 0;
               const sign = isPositive ? "+" : "";
               const flash = tickFlashes[item.symbol];
+              const tier = item.latestEvent?.confidenceTier;
+              const isConfirmed = tier === "CONFIRMED";
+              const isUninformed = tier === "UNEXPLAINED";
+              const isStaleCard = item.isStale;
 
-              // Accent border based on confidence tier of latest event
-              const tierAccent = item.latestEvent?.confidenceTier === "CONFIRMED"
-                ? "border-l-4 border-l-emerald-500"
-                : item.latestEvent?.confidenceTier === "UNEXPLAINED"
-                ? "border-l-4 border-l-amber-500"
-                : item.isStale
-                ? "border-l-4 border-l-rose-500"
-                : "border-l-4 border-l-transparent";
+              // ── Tier-specific visual tokens ─────────────────────────────
+              const tierConfig = isConfirmed ? {
+                border: "border-l-4 border-l-emerald-500",
+                headerBg: "bg-emerald-500/8 dark:bg-emerald-500/10",
+                badgeBg: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+                dot: "bg-emerald-500",
+                label: "CATALYST CONFIRMED",
+                icon: <ShieldCheck className="w-3 h-3 text-emerald-500" />,
+              } : isUninformed ? {
+                border: "border-l-4 border-l-amber-500",
+                headerBg: "bg-amber-500/8 dark:bg-amber-500/10",
+                badgeBg: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+                dot: "bg-amber-500 animate-pulse",
+                label: "UNINFORMED FLOW",
+                icon: <AlertOctagon className="w-3 h-3 text-amber-500" />,
+              } : isStaleCard ? {
+                border: "border-l-4 border-l-rose-500",
+                headerBg: "bg-rose-500/8 dark:bg-rose-500/10",
+                badgeBg: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30",
+                dot: "bg-rose-500 animate-pulse",
+                label: "STALE QUOTE",
+                icon: <ShieldAlert className="w-3 h-3 text-rose-500" />,
+              } : null;
+
+              // ── Parsed thesis ───────────────────────────────────────────
+              let parsedThesis = "";
+              if (item.notes) {
+                try {
+                  const p = JSON.parse(item.notes);
+                  if (p?.thesisText) parsedThesis = p.thesisText;
+                } catch (_) { parsedThesis = item.notes; }
+              }
+
+              // ── Stale age label ─────────────────────────────────────────
+              const staleMinutes = item.staleAgeMs ? Math.floor(item.staleAgeMs / 60000) : null;
+              const staleLabel = staleMinutes !== null
+                ? staleMinutes < 60 ? `${staleMinutes}m ago` : `${Math.floor(staleMinutes / 60)}h ago`
+                : null;
 
               return (
                 <div
                   key={item.id}
-                  className={`p-3 hover:bg-surfaceElevated/60 transition-all group ${tierAccent} ${
+                  className={`group transition-all ${tierConfig?.border ?? "border-l-4 border-l-transparent"} ${
                     flash === "up" ? "bg-emerald-500/10" : flash === "down" ? "bg-rose-500/10" : ""
                   }`}
                 >
-                  {/* Row 1: Symbol, Badges, & Company vs LTP & Sparkline */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm sm:text-base text-foreground font-mono tracking-tight shrink-0">
-                          {item.symbol}
+                  {/* ── Tier header strip (only shown when there's an active signal) ── */}
+                  {tierConfig && (
+                    <div className={`px-3 pt-2.5 pb-1.5 ${tierConfig.headerBg} flex items-center justify-between gap-2 flex-wrap`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${tierConfig.dot}`} />
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${tierConfig.badgeBg}`}>
+                          {tierConfig.icon}
+                          {tierConfig.label}
                         </span>
-                        {item.isStale && (
-                          <span className="bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap flex items-center gap-0.5">
-                            <span className="w-1 h-1 rounded-full bg-rose-500 inline-block animate-ping" />{TIER_LABELS.UNCERTAIN}
+                        {/* ── CONFIRMED: filing category pill ── */}
+                        {isConfirmed && item.latestEvent?.filingCategory && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-surface border border-surfaceBorder text-muted">
+                            {item.latestEvent.filingCategory}
                           </span>
                         )}
-                        {item.latestEvent?.confidenceTier === "CONFIRMED" && (
-                          <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap flex items-center gap-1">
-                            <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                            <span>{TIER_LABELS.CONFIRMED}</span>
+                        {/* ── UNINFORMED: volume anomaly pill ── */}
+                        {isUninformed && item.volumeRatio && item.volumeRatio > 1 && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300">
+                            {item.volumeRatio.toFixed(1)}× vol
                           </span>
                         )}
-                        {item.latestEvent?.confidenceTier === "UNEXPLAINED" && (
-                          <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap flex items-center gap-1">
-                            <Activity className="w-3 h-3 text-amber-500" />
-                            <span>{TIER_LABELS.UNEXPLAINED}</span>
+                        {/* ── STALE: last-verified label ── */}
+                        {isStaleCard && staleLabel && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400">
+                            Last verified {staleLabel}
                           </span>
                         )}
                       </div>
-
-                      <div className="text-xs text-muted truncate mt-0.5 font-medium">
-                        {item.name} • <span className="opacity-80">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
-                      </div>
-                    </div>
-
-                    {/* Right: LTP, Change %, Sparkline */}
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
-                        <div className={`font-bold font-mono text-sm sm:text-base text-foreground tabular-nums transition-colors ${
-                          flash === "up" ? "text-emerald-500 scale-105" : flash === "down" ? "text-rose-500 scale-105" : ""
-                        }`}>
-                          ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                        </div>
-                        <div
-                          className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
-                            isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                          <span>{sign}{item.changePct.toFixed(2)}%</span>
-                        </div>
-                      </div>
-
-                      {/* Watermark Delta Sparkline */}
-                      <div
-                        onClick={() => {
-                          setSelectedVisualizerItem(item);
-                          setShowVisualizerModal(true);
-                        }}
-                        className="cursor-pointer hover:scale-105 transition-transform"
-                        title="Click to open Evidence-Pinned Stock Visualizer"
-                      >
-                        <WatermarkSparkline
-                          points={item.sparkline}
-                          changePct={item.changePct}
-                          hasWatermarkDelta={Boolean(item.lastViewedAt)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Thesis notes & Quick Action Buttons */}
-                  <div className="mt-2 pt-2 border-t border-surfaceBorder/40 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-                      {/* Signal History Dots */}
-                      {item.tierHistory && item.tierHistory.length > 0 && (
-                        <div className="flex items-center gap-1 shrink-0" title="Signal History">
-                          <span className="text-[9px] font-mono text-muted uppercase">History:</span>
-                          <div className="flex items-center gap-1">
-                            {item.tierHistory.map((tier, idx) => (
-                              <span
-                                key={idx}
-                                className={`w-1.5 h-1.5 rounded-full inline-block ${
-                                  tier === "CONFIRMED"
-                                    ? "bg-emerald-500"
-                                    : tier === "UNEXPLAINED"
-                                    ? "bg-amber-500"
-                                    : "bg-rose-500"
-                                }`}
-                                title={TIER_LABELS[tier] || tier}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                      {/* Signal strength */}
+                      {item.latestEvent?.magnitude && (
+                        <span className="text-[9px] font-mono text-muted">
+                          Signal {item.latestEvent.magnitude}/100
+                        </span>
                       )}
+                    </div>
+                  )}
 
-                      {/* Research Thesis Preview */}
-                      {(() => {
-                        let parsedThesis = "";
-                        if (item.notes) {
-                          try {
-                            const parsed = JSON.parse(item.notes);
-                            if (parsed?.thesisText) parsedThesis = parsed.thesisText;
-                          } catch (_) {
-                            parsedThesis = item.notes;
-                          }
-                        }
-                        if (parsedThesis) {
-                          return (
-                            <button
-                              onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                              className="text-[11px] text-foreground hover:text-brand-500 font-mono bg-surfaceElevated hover:bg-surface border border-surfaceBorder px-2.5 py-0.5 rounded-lg flex items-center gap-1.5 transition-all text-left max-w-full"
-                              title="Click to edit research thesis & invalidation point"
-                            >
-                              <BookOpen className="w-3 h-3 shrink-0 text-brand-500" />
-                              <span className="truncate max-w-[200px] sm:max-w-[320px] font-medium">Thesis: &quot;{parsedThesis}&quot;</span>
-                            </button>
-                          );
-                        }
-                        return (
+                  {/* ── Story narrative strip ── */}
+                  {isConfirmed && item.latestEvent?.filingTitle && (
+                    <div className="px-3 py-1.5 bg-emerald-500/5 border-b border-emerald-500/15 flex items-start gap-2">
+                      <Radio className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                          {item.latestEvent.filingTitle}
+                        </p>
+                        {/* Mini causal chain: Filing → Volume → Price */}
+                        <div className="flex items-center gap-1 mt-1">
+                          {[
+                            { emoji: "📄", label: "Filing" },
+                            { emoji: "📈", label: "Volume" },
+                            { emoji: "💰", label: "Price" },
+                          ].map((step, i) => (
+                            <span key={i} className="flex items-center gap-0.5">
+                              {i > 0 && <span className="text-emerald-500/60 text-[9px]">→</span>}
+                              <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded">
+                                {step.emoji} {step.label}
+                              </span>
+                            </span>
+                          ))}
+                          <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 ml-1 font-bold">✓ Verified</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isUninformed && (
+                    <div className="px-3 py-1.5 bg-amber-500/5 border-b border-amber-500/15 flex items-start gap-2">
+                      <AlertOctagon className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-mono font-semibold text-amber-700 dark:text-amber-300">
+                          {item.changePct >= 0 ? "▲" : "▼"} {Math.abs(item.changePct).toFixed(2)}% move — no exchange disclosure found
+                        </p>
+                        {/* Volume bar vs 20d avg */}
+                        {item.volumeRatio && (
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[9px] font-mono text-muted shrink-0">Volume vs avg:</span>
+                            <div className="flex-1 h-1.5 bg-surfaceBorder rounded-full overflow-hidden max-w-[100px]">
+                              <div
+                                className="h-full bg-amber-500 rounded-full"
+                                style={{ width: `${Math.min(100, (item.volumeRatio / 4) * 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-300 shrink-0">
+                              {item.volumeRatio.toFixed(1)}×
+                            </span>
+                            <span className="text-[9px] font-mono text-muted shrink-0">⚠ Smart money or noise?</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {isStaleCard && !tierConfig && (
+                    // Only show stale strip if no other tier is active
+                    <div className="px-3 py-1.5 bg-rose-500/5 border-b border-rose-500/15 flex items-center gap-2">
+                      <ShieldAlert className="w-3 h-3 text-rose-500 shrink-0" />
+                      <p className="text-[11px] font-mono text-rose-600 dark:text-rose-400">
+                        Feed heartbeat delayed — price unverified{staleLabel ? ` · last seen ${staleLabel}` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── Main card body ── */}
+                  <div className={`p-3 hover:bg-surfaceElevated/50 transition-colors`}>
+                    {/* Row 1: Symbol + Company | LTP + Change + Sparkline */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`font-bold text-sm sm:text-base font-mono tracking-tight shrink-0 ${
+                            isStaleCard ? "text-muted line-through decoration-rose-400" : "text-foreground"
+                          } transition-colors ${flash === "up" ? "text-emerald-500" : flash === "down" ? "text-rose-500" : ""}`}>
+                            {item.symbol}
+                          </span>
+                          {/* Signal history dots */}
+                          {item.tierHistory && item.tierHistory.length > 0 && (
+                            <div className="flex items-center gap-0.5 shrink-0" title="Recent signal history">
+                              {item.tierHistory.slice(0, 5).map((t, idx) => (
+                                <span key={idx} className={`w-1.5 h-1.5 rounded-full inline-block ${
+                                  t === "CONFIRMED" ? "bg-emerald-500" : t === "UNEXPLAINED" ? "bg-amber-500" : "bg-rose-400"
+                                }`} title={TIER_LABELS[t]} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted truncate mt-0.5 font-medium flex items-center gap-1">
+                          <span>{item.name}</span>
+                          <span className="opacity-40">·</span>
+                          <span className="opacity-70">{t(`sector_${item.sector.toLowerCase()}`) || item.sector}</span>
+                        </div>
+                        {/* Thesis preview */}
+                        {parsedThesis && (
                           <button
                             onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
-                            className="text-[10px] text-muted hover:text-foreground font-mono flex items-center gap-1 opacity-75 hover:opacity-100 transition-opacity"
-                            title="Record why you track this stock and when thesis breaks"
+                            className="mt-1 text-[10px] text-brand-600 dark:text-brand-400 font-mono bg-brand-500/8 hover:bg-brand-500/15 border border-brand-500/20 px-2 py-0.5 rounded-md flex items-center gap-1 transition-all text-left max-w-full"
+                            title="Edit thesis"
                           >
-                            <BookOpen className="w-3 h-3 text-muted" />
-                            <span>+ Thesis</span>
+                            <BookOpen className="w-2.5 h-2.5 shrink-0" />
+                            <span className="truncate max-w-[180px] sm:max-w-[280px]">"{parsedThesis}"</span>
                           </button>
-                        );
-                      })()}
+                        )}
+                      </div>
+
+                      {/* Right: price + change + sparkline */}
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <div className="text-right">
+                          <div className={`font-bold font-mono text-sm sm:text-base tabular-nums transition-colors ${
+                            isStaleCard ? "text-muted" : "text-foreground"
+                          } ${flash === "up" ? "!text-emerald-500" : flash === "down" ? "!text-rose-500" : ""}`}>
+                            {isStaleCard && <span className="text-[9px] font-mono text-rose-400 mr-1">~</span>}
+                            ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </div>
+                          <div className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
+                            isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                          }`}>
+                            {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span>{sign}{item.changePct.toFixed(2)}%</span>
+                          </div>
+                        </div>
+
+                        {/* Sparkline */}
+                        <div
+                          onClick={() => { setSelectedVisualizerItem(item); setShowVisualizerModal(true); }}
+                          className={`cursor-pointer hover:scale-105 transition-transform ${isStaleCard ? "opacity-40 grayscale" : ""}`}
+                          title="Open Evidence-Pinned Stock Visualizer"
+                        >
+                          <WatermarkSparkline
+                            points={item.sparkline}
+                            changePct={item.changePct}
+                            hasWatermarkDelta={Boolean(item.lastViewedAt)}
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Micro-Action Buttons */}
-                    <div className="flex items-center gap-1 shrink-0 ml-auto">
-                      <button
-                        onClick={() => {
-                          setSelectedVisualizerItem(item);
-                          setShowVisualizerModal(true);
-                        }}
-                        className="h-7 px-2 text-muted hover:text-foreground flex items-center gap-1 rounded-lg hover:bg-surfaceElevated transition-colors text-xs font-mono"
-                        title="Open Catalyst-Pinned Visualizer"
-                      >
-                        <BarChart2 className="w-3.5 h-3.5 text-brand-500" />
-                        <span>Trace</span>
-                      </button>
+                    {/* Row 2: Actions */}
+                    <div className="mt-2 pt-2 border-t border-surfaceBorder/40 flex items-center justify-between gap-2 flex-wrap">
+                      {/* Add thesis CTA if no thesis */}
+                      {!parsedThesis ? (
+                        <button
+                          onClick={() => { setSelectedThesisItem(item); setShowThesisModal(true); }}
+                          className="text-[10px] text-muted hover:text-foreground font-mono flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity"
+                          title="Record why you track this stock"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          <span>+ Add thesis</span>
+                        </button>
+                      ) : <span />}
 
-                      <button
-                        onClick={() => handleMarkItemSeen(item.id)}
-                        className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Mark seen (update watermark for this item)"
-                      >
-                        <CheckCheck className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
-                        title="Remove from Watchlist"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Micro-actions */}
+                      <div className="flex items-center gap-1 ml-auto shrink-0">
+                        <button
+                          onClick={() => { setSelectedVisualizerItem(item); setShowVisualizerModal(true); }}
+                          className="h-7 px-2 text-muted hover:text-foreground flex items-center gap-1 rounded-lg hover:bg-surfaceElevated transition-colors text-xs font-mono"
+                          title="Open Catalyst-Pinned Visualizer"
+                        >
+                          <BarChart2 className="w-3.5 h-3.5 text-brand-500" />
+                          <span>Trace</span>
+                        </button>
+                        <button
+                          onClick={() => handleMarkItemSeen(item.id)}
+                          className="h-7 w-7 text-muted hover:text-emerald-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                          title="Mark seen"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="h-7 w-7 text-muted hover:text-rose-500 flex items-center justify-center rounded-lg hover:bg-surfaceElevated transition-colors"
+                          title="Remove from Watchlist"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

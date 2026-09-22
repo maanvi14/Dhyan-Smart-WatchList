@@ -136,12 +136,20 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
         const snap = priceFeed.getLatestSnapshot(item.symbol);
         const info = getSymbolInfo(item.symbol);
 
-        // Fetch recent change events for this item (for tier history strip)
+        // Fetch recent change events for this item (for tier history strip + story card)
         const recentItemEvents = await prisma.changeEvent.findMany({
           where: { watchlistItemId: item.id },
           orderBy: { detectedAt: "desc" },
           take: 6,
-          select: { id: true, confidenceTier: true, magnitude: true, detectedAt: true, sectorDivergence: true }
+          select: {
+            id: true,
+            confidenceTier: true,
+            magnitude: true,
+            detectedAt: true,
+            sectorDivergence: true,
+            volumeDivergence: true,
+            narrative: true
+          }
         });
 
         const latestEvent = recentItemEvents.length > 0 ? recentItemEvents[0] : null;
@@ -151,7 +159,7 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
         const ltp = snap?.ltp || info?.basePrice || 100;
         const changePct = snap?.changePct || 0;
         const basePrice = ltp / (1 + changePct / 100);
-        
+
         // 12 points spanning from morning open to current ltp
         const sparklinePoints: number[] = [];
         for (let i = 0; i < 12; i++) {
@@ -160,6 +168,16 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           const interpolated = basePrice + (ltp - basePrice) * progress + noise;
           sparklinePoints.push(Number(interpolated.toFixed(2)));
         }
+
+        // Enrich card story: filing headline for CONFIRMED, volumeRatio for UNINFORMED, staleAgeMs for STALE
+        const recentFilings = getFilingsForSymbol(item.symbol, 6);
+        const latestFiling = recentFilings.length > 0 ? recentFilings[0] : null;
+        const volumeRatio = (snap?.volume && snap?.avgVolume20d && snap.avgVolume20d > 0)
+          ? Number((snap.volume / snap.avgVolume20d).toFixed(2))
+          : null;
+        const staleAgeMs = (snap?.isStale && snap?.timestamp)
+          ? Date.now() - new Date(snap.timestamp).getTime()
+          : null;
 
         return {
           id: item.id,
@@ -176,6 +194,8 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
           sourceTrust: snap?.sourceTrust || 1,
           sourceType: snap?.sourceType || "simulated",
           isStale: snap?.isStale ?? true,
+          volumeRatio,
+          staleAgeMs,
           sparkline: sparklinePoints,
           tierHistory,
           latestEvent: latestEvent ? {
@@ -183,7 +203,11 @@ router.get("/:id/live", async (req: AuthRequest, res: Response) => {
             confidenceTier: latestEvent.confidenceTier,
             magnitude: latestEvent.magnitude,
             detectedAt: latestEvent.detectedAt,
-            sectorDivergence: latestEvent.sectorDivergence
+            sectorDivergence: latestEvent.sectorDivergence,
+            volumeDivergence: latestEvent.volumeDivergence,
+            narrative: latestEvent.narrative,
+            filingTitle: latestFiling?.title || null,
+            filingCategory: latestFiling?.category || null
           } : null
         };
       })

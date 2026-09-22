@@ -50,6 +50,8 @@ export interface WatchlistItemPrice {
   sourceTrust: number;
   sourceType: "live" | "simulated";
   isStale: boolean;
+  volumeRatio?: number | null;
+  staleAgeMs?: number | null;
   sparkline?: number[];
   tierHistory?: ("CONFIRMED" | "UNEXPLAINED" | "UNCERTAIN")[];
   latestEvent?: {
@@ -58,6 +60,10 @@ export interface WatchlistItemPrice {
     magnitude: number;
     detectedAt: string;
     sectorDivergence: boolean;
+    volumeDivergence?: boolean;
+    narrative?: string | null;
+    filingTitle?: string | null;
+    filingCategory?: string | null;
   } | null;
 }
 
