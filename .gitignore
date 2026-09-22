@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 .next/
 dist/
 *.zip
@@ -8,4 +8,6 @@ __pycache__/
 backend/prisma/*.db
 backend/prisma/*.db-journal
 .env*.local
+.env
+**/.env
 .DS_Store
