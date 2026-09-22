@@ -359,7 +359,7 @@ export default function WatchlistHomePage() {
 
         {/* 🔔 Real-time Slide-in Event Toast */}
         {liveEventToast && (
-          <div className="fixed top-16 right-4 z-50 max-w-sm w-full animate-in slide-in-from-top-3 duration-300">
+          <div className="fixed top-16 right-2 sm:right-4 z-50 w-[calc(100vw-1rem)] sm:max-w-sm animate-in slide-in-from-top-3 duration-300">
             <div className="bg-surfaceElevated border border-brand-500/40 rounded-2xl p-3.5 shadow-2xl backdrop-blur-xl">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center space-x-2">
@@ -450,8 +450,6 @@ export default function WatchlistHomePage() {
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] font-mono font-bold tracking-wider text-muted uppercase flex items-center gap-1.5">
                     <span>{language === "hi" ? "व्यक्तिगत समयरेखा" : "PERSONAL WATERMARK TIMELINE"}</span>
-                    <span className="text-brand-500">•</span>
-                    <span className="text-[9px] text-brand-500">Zero-CPU Indexed Catchup (&lt;12ms)</span>
                   </div>
                   <div className="text-xs font-medium text-foreground leading-relaxed mt-0.5">
                     {timeAwayString}
@@ -561,7 +559,7 @@ export default function WatchlistHomePage() {
               </h1>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               {/* Instant Search Bar */}
               <div className="relative flex-1 sm:w-48">
                 <Search className="w-3.5 h-3.5 text-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -576,7 +574,7 @@ export default function WatchlistHomePage() {
 
               <button
                 onClick={() => setShowChat(true)}
-                className="h-8 px-2.5 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                className="h-8 px-2.5 bg-surface hover:bg-surfaceElevated border border-surfaceBorder text-brand-500 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
               >
                 <Bot className="w-3.5 h-3.5 text-brand-500 shrink-0" />
                 <span className="hidden sm:inline">{t("ask_dhyan")}</span>
@@ -584,7 +582,7 @@ export default function WatchlistHomePage() {
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="h-8 px-3 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                className="h-8 px-3 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm shrink-0"
               >
                 <Plus className="w-3.5 h-3.5 text-white shrink-0" />
                 <span>{t("add_stock")}</span>
@@ -734,7 +732,7 @@ export default function WatchlistHomePage() {
                           setSelectedVisualizerItem(item);
                           setShowVisualizerModal(true);
                         }}
-                        className="hidden sm:block cursor-pointer hover:scale-105 transition-transform"
+                        className="cursor-pointer hover:scale-105 transition-transform"
                         title="Click to open Evidence-Pinned Stock Visualizer"
                       >
                         <WatermarkSparkline
@@ -818,7 +816,7 @@ export default function WatchlistHomePage() {
                         title="Open Catalyst-Pinned Visualizer"
                       >
                         <BarChart2 className="w-3.5 h-3.5 text-brand-500" />
-                        <span className="hidden sm:inline">Trace</span>
+                        <span>Trace</span>
                       </button>
 
                       <button

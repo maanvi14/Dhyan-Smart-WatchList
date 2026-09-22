@@ -144,7 +144,7 @@ export default function SinceLastCheckedPage() {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* 60s Voice Briefing Button */}
             <VoiceBriefingButton story={story} />
 
@@ -152,7 +152,7 @@ export default function SinceLastCheckedPage() {
               <button
                 onClick={handleMarkSeen}
                 disabled={markingSeen}
-                className="h-8 px-3.5 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-md text-xs flex items-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50"
+                className="flex-1 sm:flex-none h-9 sm:h-8 px-3.5 bg-brand-500 hover:bg-brand-600 font-bold text-white rounded-md text-xs flex items-center justify-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                 <span>{markingSeen ? (language === "hi" ? "अपडेट हो रहा..." : "Updating...") : t("mark_all_seen")}</span>
@@ -238,7 +238,7 @@ export default function SinceLastCheckedPage() {
                           Signal {event.magnitude}/100
                         </span>
 
-                        <span className="text-[10px] text-muted font-mono ml-auto">
+                        <span className="text-[10px] text-muted font-mono sm:ml-auto">
                           {event.detectedAt ? new Date(event.detectedAt).toLocaleTimeString() : ""}
                         </span>
                       </div>
