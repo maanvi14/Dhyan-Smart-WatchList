@@ -84,14 +84,20 @@ export function VoiceBriefingButton({ story }: VoiceBriefingButtonProps) {
   return (
     <button
       onClick={handlePlayBriefing}
+      disabled={isLoading}
       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold font-mono flex items-center space-x-2 transition-all shadow-md active:scale-95 border ${
         isPlaying
           ? "bg-rose-500 text-white border-rose-600 animate-pulse"
           : "bg-surface hover:bg-surfaceElevated text-brand-500 border-surfaceBorder hover:border-brand-500/40"
-      }`}
+      } ${isLoading ? "opacity-75 cursor-wait" : ""}`}
       title={language === "hi" ? "60 सेकंड का ऑडियो सारांश सुनें" : "Listen to 60-second audio summary"}
     >
-      {isPlaying ? (
+      {isLoading ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin text-brand-500" />
+          <span>{language === "hi" ? "ऑडियो तैयार हो रहा है..." : "Synthesizing audio..."}</span>
+        </>
+      ) : isPlaying ? (
         <>
           <VolumeX className="w-4 h-4" />
           <span>{stopLabel}</span>

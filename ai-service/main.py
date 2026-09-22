@@ -361,15 +361,15 @@ async def synthesize_sarvam_voice(req: VoiceBriefingRequest):
       payload = {
         "inputs": [req.text[:500]],
         "target_language_code": language_code,
-        "speaker": "meera",
+        "speaker": "kavya",
         "pitch": 0,
         "pace": 1.05,
         "loudness": 1.5,
         "speech_sample_rate": 22050,
         "enable_preprocessing": True,
-        "model": "bulbul:v1"
+        "model": "bulbul:v3"
       }
-      async with httpx.AsyncClient(timeout=8.0) as client:
+      async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.post("https://api.sarvam.ai/text-to-speech", headers=headers, json=payload)
         if resp.status_code == 200:
           data = resp.json()
@@ -377,7 +377,7 @@ async def synthesize_sarvam_voice(req: VoiceBriefingRequest):
           return {
             "status": "ok",
             "provider": "sarvam-ai",
-            "model": "bulbul:v1",
+            "model": "bulbul:v3",
             "language": language_code,
             "audioBase64": audio_base64
           }

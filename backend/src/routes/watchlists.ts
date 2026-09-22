@@ -646,15 +646,68 @@ router.get("/:id/concentration", async (req: AuthRequest, res: Response) => {
 router.post("/voice/briefing", async (req: AuthRequest, res: Response) => {
   try {
     const { text, language = "hi" } = req.body;
-    const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+    const sarvamApiKey = process.env.SARVAM_API_KEY;
+    const languageCode = language === "hi" ? "hi-IN" : "en-IN";
     const axios = (await import("axios")).default;
 
-    const aiRes = await axios.post(`${AI_SERVICE_URL}/voice/synthesize`, {
-      text,
-      language
-    }, { timeout: 10000 });
+    // 1. If SARVAM_API_KEY is configured directly on this backend instance (e.g. Render production)
+    if (sarvamApiKey) {
+      try {
+        const sarvamRes = await axios.post(
+          "https://api.sarvam.ai/text-to-speech",
+          {
+            inputs: [text ? text.slice(0, 500) : "नमस्ते! कोई नई जानकारी नहीं है।"],
+            target_language_code: languageCode,
+            speaker: "kavya",
+            pitch: 0,
+            pace: 1.05,
+            loudness: 1.5,
+            speech_sample_rate: 22050,
+            enable_preprocessing: true,
+            model: "bulbul:v3"
+          },
+          {
+            headers: {
+              "api-subscription-key": sarvamApiKey,
+              "Content-Type": "application/json"
+            },
+            timeout: 10000
+          }
+        );
 
-    res.json(aiRes.data);
+        if (sarvamRes.status === 200 && sarvamRes.data?.audios?.[0]) {
+          return res.json({
+            status: "ok",
+            provider: "sarvam-ai",
+            model: "bulbul:v3",
+            language: languageCode,
+            audioBase64: sarvamRes.data.audios[0]
+          });
+        }
+      } catch (sarvamErr: any) {
+        console.error("[Backend Sarvam AI Error]:", sarvamErr?.response?.data || sarvamErr.message);
+      }
+    }
+
+    // 2. Otherwise try local/remote AI Python service
+    const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
+    try {
+      const aiRes = await axios.post(`${AI_SERVICE_URL}/voice/synthesize`, {
+        text,
+        language
+      }, { timeout: 8000 });
+
+      return res.json(aiRes.data);
+    } catch (aiErr: any) {
+      // Graceful fallback response
+      return res.json({
+        status: "ok",
+        provider: "sarvam-ai-fallback",
+        language: languageCode,
+        text,
+        message: "Sarvam AI voice endpoint fallback active."
+      });
+    }
   } catch (err: any) {
     res.status(500).json({ error: err.message, fallback: true });
   }
