@@ -185,24 +185,33 @@ export function StockVisualizerModal({
       }
     };
 
-    // Timeframe-sensitive timestamps
+    const now = new Date();
+
+    // Timeframe-sensitive timestamps computed dynamically from the current date
     const getTimeLabelForIndex = (idx: number, xPct: number): string => {
       if (timeframe === "1D") {
         // Intraday timestamps strictly clamped between 9:20 AM and 3:20 PM
         const times = ["09:35 AM", "10:50 AM", "12:15 PM", "01:45 PM", "03:10 PM"];
-        return times[idx] || `${Math.floor(9 + xPct * 0.06)}:${Math.floor((xPct * 3.6) % 60).toString().padStart(2, "0")} PM`;
+        return times[idx] || "03:15 PM";
       } else if (timeframe === "1W") {
-        const days = ["Mon 10:15 AM", "Tue 02:30 PM", "Wed 11:45 AM", "Thu 01:20 PM", "Today 03:00 PM"];
-        return days[idx] || `Day ${idx + 1}`;
+        if (idx === 4) return "Today 03:15 PM";
+        const d = new Date(now.getTime() - (4 - idx) * 24 * 60 * 60 * 1000);
+        const dayName = d.toLocaleDateString("en-IN", { weekday: "short" });
+        const timeStr = `${(9 + idx).toString().padStart(2, "0")}:${((idx * 17) % 60).toString().padStart(2, "0")} ${9 + idx < 12 ? "AM" : "PM"}`;
+        return `${dayName} ${timeStr}`;
       } else if (timeframe === "1M") {
-        const dates = ["04 Mar", "11 Mar", "18 Mar", "24 Mar", "Today"];
-        return dates[idx] || `Wk ${idx + 1}`;
+        if (idx === 4) return "Today";
+        const daysAgo = (4 - idx) * 6; // ~24d, 18d, 12d, 6d ago
+        const d = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+        return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
       } else if (timeframe === "1Y") {
-        const months = ["May 2025", "Aug 2025", "Nov 2025", "Jan 2026", "Latest Q4"];
-        return months[idx] || `Q${idx + 1}`;
+        if (idx === 4) return "Latest Q4";
+        const monthsAgo = (4 - idx) * 3; // ~12m, 9m, 6m, 3m ago
+        const d = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+        return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
       } else {
-        const years = ["2022", "2023", "2024", "2025", "2026"];
-        return years[idx] || `Year ${idx + 1}`;
+        const yr = now.getFullYear() - (4 - idx);
+        return `${yr}`;
       }
     };
 
@@ -234,12 +243,7 @@ export function StockVisualizerModal({
       const pinType = ev.confidenceTier === "CONFIRMED" ? "filing"
         : ev.confidenceTier === "UNEXPLAINED" ? "volume" : "flow";
       
-      const latestTime = timeframe === "1D" 
-        ? "03:15 PM" // Clamped to regular market session close
-        : timeframe === "1W" ? "Today 03:15 PM"
-        : timeframe === "1M" ? "Today"
-        : timeframe === "1Y" ? "Latest Q4"
-        : "Present";
+      const latestTime = getTimeLabelForIndex(4, 76);
 
       pins.push({
         id: "pin-event",
@@ -607,27 +611,27 @@ export function StockVisualizerModal({
               </>
             ) : timeframe === "1W" ? (
               <>
-                <span>5 Days Ago (Mon)</span>
-                <span>Mid-Week (Wed)</span>
-                <span>Today (Live)</span>
+                <span>5 Days Ago ({new Date(Date.now() - 5 * 24 * 3600 * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })})</span>
+                <span>Mid-Week</span>
+                <span>Today ({new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short" })})</span>
               </>
             ) : timeframe === "1M" ? (
               <>
-                <span>1 Month Ago</span>
+                <span>1 Month Ago ({new Date(Date.now() - 30 * 24 * 3600 * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })})</span>
                 <span>15 Days Ago</span>
-                <span>Today (Live)</span>
+                <span>Today ({new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short" })})</span>
               </>
             ) : timeframe === "1Y" ? (
               <>
-                <span>1 Year Ago (May 2025)</span>
-                <span>6 Months Ago (Nov 2025)</span>
+                <span>1 Year Ago ({new Date(new Date().getFullYear() - 1, new Date().getMonth(), 1).toLocaleDateString("en-IN", { month: "short", year: "numeric" })})</span>
+                <span>6 Months Ago ({new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1).toLocaleDateString("en-IN", { month: "short", year: "numeric" })})</span>
                 <span>Today (Live)</span>
               </>
             ) : (
               <>
-                <span>2022 (5Y Baseline)</span>
-                <span>2024 (Mid-Cycle)</span>
-                <span>Present</span>
+                <span>{new Date().getFullYear() - 4}</span>
+                <span>{new Date().getFullYear() - 2}</span>
+                <span>Present ({new Date().getFullYear()})</span>
               </>
             )}
           </div>
