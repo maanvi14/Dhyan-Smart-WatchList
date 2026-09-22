@@ -814,9 +814,9 @@ export default function WatchlistHomePage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`font-bold text-sm sm:text-base font-mono tracking-tight shrink-0 ${
-                            isStaleCard ? "text-muted line-through decoration-rose-400" : "text-foreground"
-                          } transition-colors ${flash === "up" ? "text-emerald-500" : flash === "down" ? "text-rose-500" : ""}`}>
+                          <span className={`font-bold text-sm sm:text-base font-mono tracking-tight shrink-0 text-foreground transition-colors ${
+                            flash === "up" ? "text-emerald-500" : flash === "down" ? "text-rose-500" : ""
+                          }`}>
                             {item.symbol}
                           </span>
                           {/* Signal history dots */}
@@ -851,10 +851,9 @@ export default function WatchlistHomePage() {
                       {/* Right: price + change + sparkline */}
                       <div className="flex items-center gap-2.5 shrink-0">
                         <div className="text-right">
-                          <div className={`font-bold font-mono text-sm sm:text-base tabular-nums transition-colors ${
-                            isStaleCard ? "text-muted" : "text-foreground"
-                          } ${flash === "up" ? "!text-emerald-500" : flash === "down" ? "!text-rose-500" : ""}`}>
-                            {isStaleCard && <span className="text-[9px] font-mono text-rose-400 mr-1">~</span>}
+                          <div className={`font-bold font-mono text-sm sm:text-base tabular-nums transition-colors text-foreground ${
+                            flash === "up" ? "!text-emerald-500" : flash === "down" ? "!text-rose-500" : ""
+                          }`}>
                             ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </div>
                           <div className={`text-xs font-mono font-semibold flex items-center justify-end gap-0.5 ${
@@ -868,7 +867,7 @@ export default function WatchlistHomePage() {
                         {/* Sparkline */}
                         <div
                           onClick={() => { setSelectedVisualizerItem(item); setShowVisualizerModal(true); }}
-                          className={`cursor-pointer hover:scale-105 transition-transform ${isStaleCard ? "opacity-40 grayscale" : ""}`}
+                          className="cursor-pointer hover:scale-105 transition-transform"
                           title="Open Evidence-Pinned Stock Visualizer"
                         >
                           <WatermarkSparkline
