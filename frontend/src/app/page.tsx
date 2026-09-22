@@ -355,31 +355,6 @@ export default function WatchlistHomePage() {
         feedStatus={feedStatus}
       />
 
-      {/* 📊 Live Institutional Market Pulse Ribbon */}
-      <div className="border-b border-surfaceBorder/60 bg-surface/80 backdrop-blur-md sticky top-0 z-30 px-3 sm:px-4 py-1.5 overflow-x-auto no-scrollbar">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4 text-[11px] font-mono whitespace-nowrap">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-foreground font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>NIFTY 50</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">24,834.10 (+0.42%)</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-foreground font-bold border-l border-surfaceBorder pl-4">
-              <span>SENSEX</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">81,455.40 (+0.38%)</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-foreground font-bold border-l border-surfaceBorder pl-4">
-              <span>BANK NIFTY</span>
-              <span className="text-rose-600 dark:text-rose-400 font-semibold">51,210.80 (-0.18%)</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-muted text-[10px]">
-            <Radio className="w-3 h-3 text-brand-500 animate-pulse" />
-            <span>Groww 915 Binary WebSocket Stream: Active</span>
-          </div>
-        </div>
-      </div>
-
       <main className="max-w-4xl mx-auto px-3 sm:px-4 pt-4">
 
         {/* 🔔 Real-time Slide-in Event Toast */}
